@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#3d3028"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Yoga with Agnes"/>
+<title>Yoga with Agnes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --cream: #f5f0e8;
+    --bark: #3d3028;
+    --bark-light: #5c4a38;
+    --sand: #c8b89a;
+    --sage: #5c7a55;
+    --sage-dark: #4a6844;
+    --muted: #8a7968;
+    --pale: #e8ddd0;
+    --glass: rgba(255,255,255,0.5);
+  }
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--bark);
+    overflow: hidden;
+  }
+  #app {
+    max-width: 430px;
+    margin: 0 auto;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: var(--cream);
+  }
+
+  /* Blobs */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(55px);
+    opacity: 0.38;
+    pointer-events: none;
+    z-index: 0;
+    animation: drift 12s ease-in-out infinite alternate;
+  }
+  .blob1 { width: 280px; height: 280px; background: #c8b89a; top: -70px; right: -70px; animation-delay: 0s; }
+  .blob2 { width: 220px; height: 220px; background: #a8c4a2; bottom: 80px; left: -60px; animation-delay: -4s; }
+  .blob3 { width: 180px; height: 180px; background: #d4c5b0; top: 45%; right: -50px; animation-delay: -8s; }
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(10px, 15px) scale(1.05); }
+  }
+
+  /* Scroll area */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+    scrollbar-width: none;
+    padding-bottom: 80px;
+  }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* Pages */
+  .page { display: none; animation: pageIn 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Header */
+  .header { padding: 52px 28px 20px; }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .greeting { font-size: 12px; font-weight: 400; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .streak-pill {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--pale); border-radius: 20px; padding: 6px 12px;
+    font-size: 12px; font-weight: 500; color: #7a6a58;
+  }
+  .title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; line-height: 1.15; }
+  .title em { font-style: italic; color: var(--muted); }
+
+  /* Quote card */
+  .quote-card {
+    margin: 0 28px 22px;
+    background: linear-gradient(135deg, var(--bark) 0%, var(--bark-light) 100%);
+    border-radius: 22px; padding: 22px 24px; position: relative; overflow: hidden;
+  }
+  .quote-card::before {
+    content: '"'; position: absolute; top: -12px; left: 14px;
+    font-family: 'Cormorant Garamond', serif; font-size: 110px;
+    color: rgba(255,255,255,0.05); line-height: 1; pointer-events: none;
+  }
+  .quote-text { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: var(--pale); line-height: 1.65; position: relative; }
+  .quote-author { font-size: 11px; color: #a09080; margin-top: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 0 28px 22px; }
+  .stat {
+    background: var(--glass); border: 1px solid rgba(255,255,255,0.75);
+    border-radius: 16px; padding: 16px 10px; text-align: center;
+  }
+  .stat-n { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; color: var(--bark); line-height: 1; }
+  .stat-l { font-size: 10px; color: var(--muted); margin-top: 4px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* Log button */
+  .log-wrap { margin: 0 28px 22px; }
+  .log-btn {
+    width: 100%; background: var(--sage); color: #fff; border: none;
+    border-radius: 16px; padding: 17px; font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: background 0.2s, transform 0.15s; letter-spacing: 0.02em;
+  }
+  .log-btn:hover { background: var(--sage-dark); }
+  .log-btn:active { transform: scale(0.98); }
+
+  /* Calendar */
+  .section { margin: 0 28px 24px; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+  .cal-head { text-align: center; font-size: 10px; color: #b0a090; font-weight: 500; letter-spacing: 0.04em; padding-bottom: 4px; }
+  .cal-cell {
+    aspect-ratio: 1; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #6a5a48; background: rgba(255,255,255,0.38);
+    cursor: pointer; transition: all 0.18s; border: 1.5px solid transparent; user-select: none;
+  }
+  .cal-cell:hover:not(.empty) { background: rgba(255,255,255,0.7); }
+  .cal-cell.empty { background: transparent; cursor: default; }
+  .cal-cell.done { background: var(--bark); color: var(--pale); }
+  .cal-cell.today { border-color: var(--muted); font-weight: 600; }
+  .cal-cell.done.today { background: var(--sage); border-color: var(--sage); color: #fff; }
+
+  /* ---- COURSES ---- */
+  .courses-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 0 28px 4px; margin-bottom: 24px; scrollbar-width: none; }
+  .courses-scroll::-webkit-scrollbar { display: none; }
+  .course-card {
+    flex: 0 0 155px; border-radius: 20px; padding: 18px 16px;
+    position: relative; overflow: hidden; cursor: pointer;
+    transition: transform 0.2s; -webkit-user-select: none; user-select: none;
+  }
+  .course-card:active { transform: scale(0.97); }
+  .c1 { background: linear-gradient(145deg,#c8b89a,#a89070); }
+  .c2 { background: linear-gradient(145deg,#a8c4a2,#7a9e74); }
+  .c3 { background: linear-gradient(145deg,#b0b8d4,#7880a8); }
+  .c4 { background: linear-gradient(145deg,#d4a8a8,#b07070); }
+  .course-icon { font-size: 26px; margin-bottom: 10px; }
+  .course-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: #fff; line-height: 1.2; margin-bottom: 4px; }
+  .course-meta { font-size: 11px; color: rgba(255,255,255,0.75); }
+  .course-play {
+    position: absolute; bottom: 14px; right: 14px; width: 28px; height: 28px;
+    background: rgba(255,255,255,0.22); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff;
+  }
+  .all-courses { padding: 0 28px; }
+  .course-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--glass); border: 1px solid rgba(255,255,255,0.75);
+    border-radius: 16px; padding: 16px; margin-bottom: 10px; cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .course-row:active { transform: scale(0.98); }
+  .cr-icon { font-size: 26px; flex-shrink: 0; }
+  .cr-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--bark); }
+  .cr-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .cr-arrow { margin-left: auto; color: var(--sand); font-size: 18px; }
+
+  /* ---- COMMUNITY ---- */
+  .feed { padding: 0 28px; }
+  .feed-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .feed-name { font-size: 13px; font-weight: 500; color: var(--bark); }
+  .feed-action { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .feed-time { font-size: 11px; color: #b0a090; margin-top: 4px; }
+  .like-btn { margin-left: auto; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; background: none; border: none; padding: 4px 6px; }
+  .like-icon { font-size: 18px; transition: transform 0.15s; }
+  .like-btn:active .like-icon { transform: scale(1.4); }
+  .like-count { font-size: 11px; color: var(--muted); }
+
+  /* ---- MODAL ---- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(30,20,10,0.5); z-index: 200;
+    display: flex; align-items: flex-end; justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .modal {
+    background: var(--cream); border-radius: 28px 28px 0 0;
+    padding: 24px 28px 44px; width: 100%; max-width: 430px;
+    animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1);
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--sand); border-radius: 2px; margin: 0 auto 22px; }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; margin-bottom: 22px; }
+  .field-label { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .chip {
+    padding: 8px 14px; border-radius: 20px; font-size: 13px;
+    border: 1.5px solid var(--sand); background: transparent; color: #6a5a48;
+    cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .chip.on { background: var(--bark); color: var(--pale); border-color: var(--bark); }
+  .dur-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .dur-btn {
+    flex: 1; padding: 12px 6px; border-radius: 12px; font-size: 13px;
+    border: 1.5px solid var(--sand); background: transparent; color: #6a5a48;
+    cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; text-align: center;
+  }
+  .dur-btn.on { background: var(--bark); color: var(--pale); border-color: var(--bark); }
+  .mood-row { display: flex; gap: 8px; margin-bottom: 24px; }
+  .mood-btn {
+    flex: 1; padding: 12px 6px; border-radius: 14px; font-size: 22px;
+    border: 1.5px solid transparent; background: rgba(255,255,255,0.5);
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .mood-btn.on { border-color: var(--sage); background: rgba(92,122,85,0.12); }
+  .save-btn {
+    width: 100%; background: var(--bark); color: var(--pale); border: none;
+    border-radius: 14px; padding: 18px; font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s;
+  }
+  .save-btn:hover { background: var(--bark-light); }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav {
+    position: relative; z-index: 10; flex-shrink: 0;
+    background: rgba(245,240,232,0.92); backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(0,0,0,0.07);
+    display: flex; padding: 10px 0 env(safe-area-inset-bottom, 14px);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 0; transition: opacity 0.15s; border: none; background: none;
+  }
+  .nav-item:hover { opacity: 0.65; }
+  .nav-ico { font-size: 20px; }
+  .nav-lbl { font-size: 10px; font-weight: 500; color: #b0a090; letter-spacing: 0.04em; text-transform: uppercase; }
+  .nav-item.on .nav-lbl { color: var(--bark); }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--bark); margin-top: 1px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--sage); color: #fff; border-radius: 20px; padding: 10px 20px;
+    font-size: 13px; font-weight: 500; z-index: 300; pointer-events: none;
+    animation: toastAnim 2.2s ease forwards;
+  }
+  @keyframes toastAnim {
+    0% { opacity:0; transform: translateX(-50%) translateY(10px); }
+    15% { opacity:1; transform: translateX(-50%) translateY(0); }
+    75% { opacity:1; }
+    100% { opacity:0; transform: translateX(-50%) translateY(-6px); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+
+  <div class="scroll-area">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="header">
+        <div class="header-row">
+          <span class="greeting">Good morning</span>
+          <div class="streak-pill">🔥 <span id="streak-count">7</span> day streak</div>
+        </div>
+        <div class="title">Your <em>practice</em><br/>awaits</div>
+      </div>
+
+      <div class="quote-card">
+        <div class="quote-text">Yoga is the journey of the self, through the self, to the self.</div>
+        <div class="quote-author">— The Bhagavad Gita</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="s-sessions">21</div><div class="stat-l">Sessions</div></div>
+        <div class="stat"><div class="stat-n" id="s-streak">7</div><div class="stat-l">Streak</div></div>
+        <div class="stat"><div class="stat-n" id="s-mins">588</div><div class="stat-l">Minutes</div></div>
+      </div>
+
+      <div class="log-wrap">
+        <button class="log-btn" onclick="openModal()">＋ &nbsp;Log Today's Practice</button>
+      </div>
+
+      <div class="section">
+        <div class="section-label" id="cal-label">March 2026</div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+    </div>
+
+    <!-- COURSES -->
+    <div class="page" id="page-courses">
+      <div class="header">
+        <div class="greeting">Explore</div>
+        <div class="title">Find your <em>flow</em></div>
+      </div>
+      <div class="section-label" style="padding:0 28px;margin-bottom:14px">Featured Classes</div>
+      <div class="courses-scroll">
+        <div class="course-card c1"><div class="course-icon">🌅</div><div class="course-name">Morning Flow</div><div class="course-meta">20 min · Beginner</div><div class="course-play">▶</div></div>
+        <div class="course-card c2"><div class="course-icon">🌿</div><div class="course-name">Yin &amp; Restore</div><div class="course-meta">45 min · All levels</div><div class="course-play">▶</div></div>
+        <div class="course-card c3"><div class="course-icon">⚡</div><div class="course-name">Power Vinyasa</div><div class="course-meta">30 min · Intermediate</div><div class="course-play">▶</div></div>
+        <div class="course-card c4"><div class="course-icon">🌙</div><div class="course-name">Evening Wind Down</div><div class="course-meta">25 min · Beginner</div><div class="course-play">▶</div></div>
+      </div>
+      <div class="section-label" style="padding:0 28px;margin-bottom:14px">All Classes</div>
+      <div class="all-courses">
+        <div class="course-row"><div class="cr-icon">🌅</div><div><div class="cr-name">Morning Flow</div><div class="cr-meta">20 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
+        <div class="course-row"><div class="cr-icon">🌿</div><div><div class="cr-name">Yin &amp; Restore</div><div class="cr-meta">45 min · All levels</div></div><div class="cr-arrow">▶</div></div>
+        <div class="course-row"><div class="cr-icon">⚡</div><div><div class="cr-name">Power Vinyasa</div><div class="cr-meta">30 min · Intermediate</div></div><div class="cr-arrow">▶</div></div>
+        <div class="course-row"><div class="cr-icon">🌙</div><div><div class="cr-name">Evening Wind Down</div><div class="cr-meta">25 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
+        <div class="course-row"><div class="cr-icon">🧘</div><div><div class="cr-name">Deep Stretch</div><div class="cr-meta">40 min · All levels</div></div><div class="cr-arrow">▶</div></div>
+        <div class="course-row"><div class="cr-icon">🌬️</div><div><div class="cr-name">Breathwork &amp; Meditation</div><div class="cr-meta">15 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
+      </div>
+    </div>
+
+    <!-- COMMUNITY -->
+    <div class="page" id="page-community">
+      <div class="header">
+        <div class="greeting">Community</div>
+        <div class="title"><em>Together</em> we grow</div>
+      </div>
+      <div class="section-label" style="padding:0 28px;margin-bottom:14px">Recent Activity</div>
+      <div class="feed" id="feed"></div>
+    </div>
+
+  </div><!-- end scroll-area -->
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item on" id="nav-home" onclick="switchTab('home')">
+      <span class="nav-ico">🏠</span><span class="nav-lbl">Home</span><div class="nav-dot"></div>
+    </button>
+    <button class="nav-item" id="nav-courses" onclick="switchTab('courses')">
+      <span class="nav-ico">🎬</span><span class="nav-lbl">Classes</span>
+    </button>
+    <button class="nav-item" id="nav-community" onclick="switchTab('community')">
+      <span class="nav-ico">🌿</span><span class="nav-lbl">Community</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Log Modal -->
+<div class="overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Log Practice</div>
+
+    <div class="field-label">Style</div>
+    <div class="chips" id="style-chips"></div>
+
+    <div class="field-label">Duration</div>
+    <div class="dur-row" id="dur-btns"></div>
+
+    <div class="field-label">How do you feel?</div>
+    <div class="mood-row" id="mood-btns"></div>
+
+    <button class="save-btn" onclick="saveSession()">Save Session ✓</button>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+const STATE = {
+  streak: 7,
+  sessions: 21,
+  mins: 588,
+  practiced: new Set([1,3,5,7,8,10,12,14,15,17,18,20,21]),
+  likes: {1:12, 2:34, 3:8, 4:21},
+  style: 'Hatha',
+  duration: '30',
+  mood: '😌',
+};
+
+const FEED_DATA = [
+  {id:1, icon:'🧘', bg:'#c8b89a', name:'Sarah L.', action:'Completed Morning Flow · 20 min', time:'2 min ago'},
+  {id:2, icon:'✨', bg:'#a8c4a2', name:'Mia T.', action:'7-day streak achieved! 🔥', time:'18 min ago'},
+  {id:3, icon:'🌸', bg:'#d4a8a8', name:'Jane K.', action:'Logged Power Vinyasa · 30 min', time:'1 hr ago'},
+  {id:4, icon:'🌿', bg:'#b0b8d4', name:'Alex W.', action:'Reached 30 sessions milestone!', time:'3 hr ago'},
+];
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_LABELS = ['S','M','T','W','T','F','S'];
+
+// ── Init ───────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  buildCalendar();
+  buildFeed();
+  buildModal();
+  updateStats();
+});
+
+function updateStats() {
+  document.getElementById('streak-count').textContent = STATE.streak;
+  document.getElementById('s-sessions').textContent = STATE.sessions;
+  document.getElementById('s-streak').textContent = STATE.streak;
+  document.getElementById('s-mins').textContent = STATE.mins;
+}
+
+// ── Calendar ───────────────────────────────────────────
+function buildCalendar() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth(), today = now.getDate();
+  document.getElementById('cal-label').textContent = `${MONTHS[m]} ${y}`;
+  const firstDay = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  DAY_LABELS.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-head'; el.textContent = d;
+    grid.appendChild(el);
+  });
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-cell empty';
+    grid.appendChild(el);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const el = document.createElement('div');
+    const classes = ['cal-cell'];
+    if (STATE.practiced.has(d)) classes.push('done');
+    if (d === today) classes.push('today');
+    el.className = classes.join(' ');
+    el.textContent = d;
+    el.addEventListener('click', () => toggleDay(d, el));
+    grid.appendChild(el);
+  }
+}
+
+function toggleDay(d, el) {
+  if (STATE.practiced.has(d)) {
+    STATE.practiced.delete(d);
+    el.classList.remove('done');
+    STATE.sessions = Math.max(0, STATE.sessions - 1);
+    STATE.mins = Math.max(0, STATE.mins - 28);
+  } else {
+    STATE.practiced.add(d);
+    el.classList.add('done');
+    STATE.sessions++;
+    STATE.mins += 28;
+  }
+  updateStats();
+}
+
+// ── Feed ───────────────────────────────────────────────
+function buildFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+  FEED_DATA.forEach(f => {
+    feed.innerHTML += `
+      <div class="feed-item">
+        <div class="avatar" style="background:${f.bg}">${f.icon}</div>
+        <div style="flex:1">
+          <div class="feed-name">${f.name}</div>
+          <div class="feed-action">${f.action}</div>
+          <div class="feed-time">${f.time}</div>
+        </div>
+        <button class="like-btn" onclick="likeItem(${f.id}, this)">
+          <span class="like-icon">♡</span>
+          <span class="like-count">${STATE.likes[f.id]}</span>
+        </button>
+      </div>`;
+  });
+}
+
+function likeItem(id, btn) {
+  STATE.likes[id]++;
+  btn.querySelector('.like-count').textContent = STATE.likes[id];
+  btn.querySelector('.like-icon').textContent = '♥';
+  btn.style.color = '#c0695a';
+}
+
+// ── Modal ──────────────────────────────────────────────
+function buildModal() {
+  // Styles
+  const styles = ['Hatha','Vinyasa','Yin','Restorative','Power'];
+  const sc = document.getElementById('style-chips');
+  styles.forEach(s => {
+    const el = document.createElement('button');
+    el.className = 'chip' + (s === STATE.style ? ' on' : '');
+    el.textContent = s;
+    el.onclick = () => { STATE.style = s; sc.querySelectorAll('.chip').forEach(c => c.classList.remove('on')); el.classList.add('on'); };
+    sc.appendChild(el);
+  });
+  // Durations
+  const durs = ['15','30','45','60'];
+  const dr = document.getElementById('dur-btns');
+  durs.forEach(d => {
+    const el = document.createElement('button');
+    el.className = 'dur-btn' + (d === STATE.duration ? ' on' : '');
+    el.textContent = d + ' min';
+    el.onclick = () => { STATE.duration = d; dr.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('on')); el.classList.add('on'); };
+    dr.appendChild(el);
+  });
+  // Moods
+  const moods = ['😌','😊','🥰','💪','😴'];
+  const mr = document.getElementById('mood-btns');
+  moods.forEach(m => {
+    const el = document.createElement('button');
+    el.className = 'mood-btn' + (m === STATE.mood ? ' on' : '');
+    el.textContent = m;
+    el.onclick = () => { STATE.mood = m; mr.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('on')); el.classList.add('on'); };
+    mr.appendChild(el);
+  });
+}
+
+function openModal() {
+  document.getElementById('modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function saveSession() {
+  const today = new Date().getDate();
+  const isNew = !STATE.practiced.has(today);
+  if (isNew) {
+    STATE.practiced.add(today);
+    STATE.sessions++;
+    STATE.streak++;
+    STATE.mins += parseInt(STATE.duration);
+    buildCalendar();
+    updateStats();
+  }
+  closeModal();
+  showToast(isNew ? '🧘 Session logged! Great work!' : '✓ Already logged today!');
+}
+
+// ── Nav ────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('on');
+    const dot = n.querySelector('.nav-dot');
+    if (dot) dot.remove();
+  });
+  document.getElementById('page-'+tab).classList.add('active');
+  const navEl = document.getElementById('nav-'+tab);
+  navEl.classList.add('on');
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot';
+  navEl.appendChild(dot);
+  document.querySelector('.scroll-area').scrollTop = 0;
+}
+
+// ── Toast ──────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+</script>
+</body>
+</html>
