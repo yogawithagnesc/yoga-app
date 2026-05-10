@@ -270,6 +270,13 @@
 </head>
 <body>
 <div id="app">
+ <!-- Auth loading overlay -->
+<div id="auth-overlay" style="position:fixed;inset:0;background:#f5f0e8;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:28px;letter-spacing:0.2em;color:#3d3028;margin-bottom:8px">LUMEN</div>
+    <div style="font-size:12px;color:#8a7968;letter-spacing:0.1em">ILLUMINATE YOUR PRACTICE</div>
+  </div>
+</div>
   <div class="blob blob1"></div>
   <div class="blob blob2"></div>
   <div class="blob blob3"></div>
@@ -384,7 +391,37 @@
 let currentUser = null
 
 ;(async () => {
+  // 隱藏頁面直到 auth 確認
+  const overlay = document.getElementById('auth-overlay')
+
   const { data: { session } } = await db.auth.getSession()
+
+  if (!session) {
+    window.location.href = 'login.html'
+    return
+  }
+
+  currentUser = session.user
+
+  // 顯示用戶名字
+  const { data: profile } = await db
+    .from('users')
+    .select('display_name, role')
+    .eq('id', currentUser.id)
+    .single()
+
+  if (profile) {
+    const greetEl = document.querySelector('.greeting')
+    if (greetEl) {
+      const hour = new Date().getHours()
+      const timeGreet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+      greetEl.textContent = `${timeGreet}, ${profile.display_name}`
+    }
+  }
+
+  // Auth 確認完成，移除遮罩
+  if (overlay) overlay.remove()
+})()
   if (!session) {
     window.location.href = 'login.html'
     return
