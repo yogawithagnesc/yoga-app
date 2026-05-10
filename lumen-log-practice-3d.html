@@ -196,6 +196,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .mt14{margin-top:14px}
 .info-note{margin-top:8px;font-size:11px;color:var(--tx-3);line-height:1.6}
 </style>
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://vuodmnhebsjmwdeazdtc.supabase.co'
+  const SUPABASE_KEY = 'sb_publishable_Xkhwx_hNFyRGNp0Njqne3g_qD9VdFHy'  // 換成你複製的完整 key
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+</script>
 </head>
 <body>
 
