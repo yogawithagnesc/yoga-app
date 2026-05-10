@@ -4,12 +4,16 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="theme-color" content="#3d3028"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="apple-mobile-web-app-title" content="Yoga with Agnes"/>
-<title>Yoga with Agnes</title>
+<meta name="apple-mobile-web-app-title" content="Lumen"/>
+<title>Lumen — Illuminate Your Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+<!-- ═══════════════════════════════════════
+     STYLES
+═══════════════════════════════════════ -->
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   :root {
@@ -95,7 +99,7 @@
     border-radius: 22px; padding: 22px 24px; position: relative; overflow: hidden;
   }
   .quote-card::before {
-    content: '"'; position: absolute; top: -12px; left: 14px;
+    content: '\201C'; position: absolute; top: -12px; left: 14px;
     font-family: 'Cormorant Garamond', serif; font-size: 110px;
     color: rgba(255,255,255,0.05); line-height: 1; pointer-events: none;
   }
@@ -139,13 +143,13 @@
   .cal-cell.today { border-color: var(--muted); font-weight: 600; }
   .cal-cell.done.today { background: var(--sage); border-color: var(--sage); color: #fff; }
 
-  /* ---- COURSES ---- */
+  /* Courses */
   .courses-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 0 28px 4px; margin-bottom: 24px; scrollbar-width: none; }
   .courses-scroll::-webkit-scrollbar { display: none; }
   .course-card {
     flex: 0 0 155px; border-radius: 20px; padding: 18px 16px;
     position: relative; overflow: hidden; cursor: pointer;
-    transition: transform 0.2s; -webkit-user-select: none; user-select: none;
+    transition: transform 0.2s; user-select: none;
   }
   .course-card:active { transform: scale(0.97); }
   .c1 { background: linear-gradient(145deg,#c8b89a,#a89070); }
@@ -173,7 +177,7 @@
   .cr-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .cr-arrow { margin-left: auto; color: var(--sand); font-size: 18px; }
 
-  /* ---- COMMUNITY ---- */
+  /* Community */
   .feed { padding: 0 28px; }
   .feed-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
   .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
@@ -185,7 +189,7 @@
   .like-btn:active .like-icon { transform: scale(1.4); }
   .like-count { font-size: 11px; color: var(--muted); }
 
-  /* ---- MODAL ---- */
+  /* Modal */
   .overlay {
     position: fixed; inset: 0; background: rgba(30,20,10,0.5); z-index: 200;
     display: flex; align-items: flex-end; justify-content: center;
@@ -229,7 +233,7 @@
   }
   .save-btn:hover { background: var(--bark-light); }
 
-  /* ---- BOTTOM NAV ---- */
+  /* Bottom nav */
   .bottom-nav {
     position: relative; z-index: 10; flex-shrink: 0;
     background: rgba(245,240,232,0.92); backdrop-filter: blur(16px);
@@ -260,7 +264,10 @@
     100% { opacity:0; transform: translateX(-50%) translateY(-6px); }
   }
 </style>
-<!-- Supabase SDK -->
+
+<!-- ═══════════════════════════════════════
+     SUPABASE SDK
+═══════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = 'https://vuodmnhebsjmwdeazdtc.supabase.co'
@@ -268,30 +275,37 @@
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 </script>
 </head>
+
+<!-- ═══════════════════════════════════════
+     HTML BODY
+═══════════════════════════════════════ -->
 <body>
 <div id="app">
- <!-- Auth loading overlay -->
-<div id="auth-overlay" style="position:fixed;inset:0;background:#f5f0e8;z-index:9999;display:flex;align-items:center;justify-content:center;">
-  <div style="text-align:center">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:28px;letter-spacing:0.2em;color:#3d3028;margin-bottom:8px">LUMEN</div>
-    <div style="font-size:12px;color:#8a7968;letter-spacing:0.1em">ILLUMINATE YOUR PRACTICE</div>
+
+  <!-- Auth loading overlay (shown until session confirmed) -->
+  <div id="auth-overlay" style="position:fixed;inset:0;background:#f5f0e8;z-index:9999;display:flex;align-items:center;justify-content:center;">
+    <div style="text-align:center">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:28px;letter-spacing:0.2em;color:#3d3028;margin-bottom:8px">LUMEN</div>
+      <div style="font-size:12px;color:#8a7968;letter-spacing:0.1em">ILLUMINATE YOUR PRACTICE</div>
+    </div>
   </div>
-</div>
+
+  <!-- Decorative blobs -->
   <div class="blob blob1"></div>
   <div class="blob blob2"></div>
   <div class="blob blob3"></div>
 
   <div class="scroll-area">
 
-    <!-- HOME -->
+    <!-- ─── HOME PAGE ─── -->
     <div class="page active" id="page-home">
       <div class="header">
         <div class="header-row">
           <span class="greeting">Good morning</span>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="streak-pill">🔥 <span id="streak-count">7</span> day streak</div>
-          <button onclick="handleLogout()" style="background:none;border:none;cursor:pointer;font-size:18px;padding:4px;opacity:0.6" title="Logout">⎋</button>
-        </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="streak-pill">🔥 <span id="streak-count">7</span> day streak</div>
+            <button onclick="handleLogout()" style="background:none;border:none;cursor:pointer;font-size:18px;padding:4px;opacity:0.6" title="Logout">⎋</button>
+          </div>
         </div>
         <div class="title">Your <em>practice</em><br/>awaits</div>
       </div>
@@ -308,7 +322,7 @@
       </div>
 
       <div class="log-wrap">
-        <button onclick="window.location.href='lumen-log-practice-3d.html'">＋  Log Today's Practice</button>
+        <button class="log-btn" onclick="window.location.href='lumen-log-practice-3d.html'">＋  Log Today's Practice</button>
       </div>
 
       <div class="section">
@@ -317,7 +331,7 @@
       </div>
     </div>
 
-    <!-- COURSES -->
+    <!-- ─── COURSES PAGE ─── -->
     <div class="page" id="page-courses">
       <div class="header">
         <div class="greeting">Explore</div>
@@ -341,7 +355,7 @@
       </div>
     </div>
 
-    <!-- COMMUNITY -->
+    <!-- ─── COMMUNITY PAGE ─── -->
     <div class="page" id="page-community">
       <div class="header">
         <div class="greeting">Community</div>
@@ -353,7 +367,7 @@
 
   </div><!-- end scroll-area -->
 
-  <!-- Bottom nav -->
+  <!-- Bottom navigation -->
   <nav class="bottom-nav">
     <button class="nav-item on" id="nav-home" onclick="switchTab('home')">
       <span class="nav-ico">🏠</span><span class="nav-lbl">Home</span><div class="nav-dot"></div>
@@ -367,59 +381,74 @@
   </nav>
 </div>
 
-<!-- Log Modal -->
+<!-- Log Practice Modal (legacy, kept for fallback) -->
 <div class="overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">Log Practice</div>
-
     <div class="field-label">Style</div>
     <div class="chips" id="style-chips"></div>
-
     <div class="field-label">Duration</div>
     <div class="dur-row" id="dur-btns"></div>
-
     <div class="field-label">How do you feel?</div>
     <div class="mood-row" id="mood-btns"></div>
-
     <button class="save-btn" onclick="saveSession()">Save Session ✓</button>
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT — ONE SINGLE SCRIPT BLOCK
+═══════════════════════════════════════ -->
 <script>
-<script>
-// ── Auth ──────────────────────────────────────────────
-let currentUser = null
 
-;(async () => {
-  const overlay = document.getElementById('auth-overlay')
-  const { data: { session } } = await db.auth.getSession()
+/* ─────────────────────────────────────────
+   1. AUTH — Check session, redirect if needed
+───────────────────────────────────────── */
+let currentUser = null;
 
-  if (!session) {
-    window.location.href = 'login.html'
-    return
-  }
+(async function checkAuth() {
+  const overlay = document.getElementById('auth-overlay');
 
-  currentUser = session.user
+  try {
+    const { data: { session } } = await db.auth.getSession();
 
-  const { data: profile } = await db
-    .from('users')
-    .select('display_name, role')
-    .eq('id', currentUser.id)
-    .single()
-
-  if (profile) {
-    const greetEl = document.querySelector('.greeting')
-    if (greetEl) {
-      const hour = new Date().getHours()
-      const timeGreet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-      greetEl.textContent = `${timeGreet}, ${profile.display_name}`
+    // No session → go to login
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
     }
+
+    // Session exists → save user
+    currentUser = session.user;
+
+    // Fetch profile from users table
+    const { data: profile } = await db
+      .from('users')
+      .select('display_name, role')
+      .eq('id', currentUser.id)
+      .single();
+
+    // Show personalised greeting
+    if (profile && profile.display_name) {
+      const greetEl = document.querySelector('.greeting');
+      if (greetEl) {
+        const hour = new Date().getHours();
+        const timeGreet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        greetEl.textContent = timeGreet + ', ' + profile.display_name;
+      }
+    }
+  } catch (err) {
+    console.error('Auth check failed:', err);
   }
 
-  if (overlay) overlay.remove()
-})()
+  // Auth confirmed → remove loading overlay
+  if (overlay) overlay.remove();
+})();
 
+
+/* ─────────────────────────────────────────
+   2. STATE — App data (will connect to Supabase in Sprint 3)
+───────────────────────────────────────── */
 const STATE = {
   streak: 7,
   sessions: 21,
@@ -441,8 +470,11 @@ const FEED_DATA = [
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_LABELS = ['S','M','T','W','T','F','S'];
 
-// ── Init ───────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
+
+/* ─────────────────────────────────────────
+   3. INIT — Build UI on page load
+───────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', function() {
   buildCalendar();
   buildFeed();
   buildModal();
@@ -456,33 +488,43 @@ function updateStats() {
   document.getElementById('s-mins').textContent = STATE.mins;
 }
 
-// ── Calendar ───────────────────────────────────────────
+
+/* ─────────────────────────────────────────
+   4. CALENDAR
+───────────────────────────────────────── */
 function buildCalendar() {
-  const now = new Date();
-  const y = now.getFullYear(), m = now.getMonth(), today = now.getDate();
-  document.getElementById('cal-label').textContent = `${MONTHS[m]} ${y}`;
-  const firstDay = new Date(y, m, 1).getDay();
-  const daysInMonth = new Date(y, m+1, 0).getDate();
-  const grid = document.getElementById('cal-grid');
+  var now = new Date();
+  var y = now.getFullYear(), m = now.getMonth(), today = now.getDate();
+  document.getElementById('cal-label').textContent = MONTHS[m] + ' ' + y;
+
+  var firstDay = new Date(y, m, 1).getDay();
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
-  DAY_LABELS.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'cal-head'; el.textContent = d;
+
+  DAY_LABELS.forEach(function(d) {
+    var el = document.createElement('div');
+    el.className = 'cal-head';
+    el.textContent = d;
     grid.appendChild(el);
   });
-  for (let i = 0; i < firstDay; i++) {
-    const el = document.createElement('div');
+
+  for (var i = 0; i < firstDay; i++) {
+    var el = document.createElement('div');
     el.className = 'cal-cell empty';
     grid.appendChild(el);
   }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const el = document.createElement('div');
-    const classes = ['cal-cell'];
+
+  for (var d = 1; d <= daysInMonth; d++) {
+    var el = document.createElement('div');
+    var classes = ['cal-cell'];
     if (STATE.practiced.has(d)) classes.push('done');
     if (d === today) classes.push('today');
     el.className = classes.join(' ');
     el.textContent = d;
-    el.addEventListener('click', () => toggleDay(d, el));
+    el.addEventListener('click', (function(day, cell) {
+      return function() { toggleDay(day, cell); };
+    })(d, el));
     grid.appendChild(el);
   }
 }
@@ -502,24 +544,27 @@ function toggleDay(d, el) {
   updateStats();
 }
 
-// ── Feed ───────────────────────────────────────────────
+
+/* ─────────────────────────────────────────
+   5. COMMUNITY FEED
+───────────────────────────────────────── */
 function buildFeed() {
-  const feed = document.getElementById('feed');
+  var feed = document.getElementById('feed');
   feed.innerHTML = '';
-  FEED_DATA.forEach(f => {
-    feed.innerHTML += `
-      <div class="feed-item">
-        <div class="avatar" style="background:${f.bg}">${f.icon}</div>
-        <div style="flex:1">
-          <div class="feed-name">${f.name}</div>
-          <div class="feed-action">${f.action}</div>
-          <div class="feed-time">${f.time}</div>
-        </div>
-        <button class="like-btn" onclick="likeItem(${f.id}, this)">
-          <span class="like-icon">♡</span>
-          <span class="like-count">${STATE.likes[f.id]}</span>
-        </button>
-      </div>`;
+  FEED_DATA.forEach(function(f) {
+    feed.innerHTML +=
+      '<div class="feed-item">' +
+        '<div class="avatar" style="background:' + f.bg + '">' + f.icon + '</div>' +
+        '<div style="flex:1">' +
+          '<div class="feed-name">' + f.name + '</div>' +
+          '<div class="feed-action">' + f.action + '</div>' +
+          '<div class="feed-time">' + f.time + '</div>' +
+        '</div>' +
+        '<button class="like-btn" onclick="likeItem(' + f.id + ', this)">' +
+          '<span class="like-icon">♡</span>' +
+          '<span class="like-count">' + STATE.likes[f.id] + '</span>' +
+        '</button>' +
+      '</div>';
   });
 }
 
@@ -530,36 +575,50 @@ function likeItem(id, btn) {
   btn.style.color = '#c0695a';
 }
 
-// ── Modal ──────────────────────────────────────────────
+
+/* ─────────────────────────────────────────
+   6. LOG PRACTICE MODAL (legacy)
+───────────────────────────────────────── */
 function buildModal() {
-  // Styles
-  const styles = ['Hatha','Vinyasa','Yin','Restorative','Power'];
-  const sc = document.getElementById('style-chips');
-  styles.forEach(s => {
-    const el = document.createElement('button');
+  var styles = ['Hatha','Vinyasa','Yin','Restorative','Power'];
+  var sc = document.getElementById('style-chips');
+  styles.forEach(function(s) {
+    var el = document.createElement('button');
     el.className = 'chip' + (s === STATE.style ? ' on' : '');
     el.textContent = s;
-    el.onclick = () => { STATE.style = s; sc.querySelectorAll('.chip').forEach(c => c.classList.remove('on')); el.classList.add('on'); };
+    el.onclick = function() {
+      STATE.style = s;
+      sc.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+      el.classList.add('on');
+    };
     sc.appendChild(el);
   });
-  // Durations
-  const durs = ['15','30','45','60'];
-  const dr = document.getElementById('dur-btns');
-  durs.forEach(d => {
-    const el = document.createElement('button');
+
+  var durs = ['15','30','45','60'];
+  var dr = document.getElementById('dur-btns');
+  durs.forEach(function(d) {
+    var el = document.createElement('button');
     el.className = 'dur-btn' + (d === STATE.duration ? ' on' : '');
     el.textContent = d + ' min';
-    el.onclick = () => { STATE.duration = d; dr.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('on')); el.classList.add('on'); };
+    el.onclick = function() {
+      STATE.duration = d;
+      dr.querySelectorAll('.dur-btn').forEach(function(b) { b.classList.remove('on'); });
+      el.classList.add('on');
+    };
     dr.appendChild(el);
   });
-  // Moods
-  const moods = ['😌','😊','🥰','💪','😴'];
-  const mr = document.getElementById('mood-btns');
-  moods.forEach(m => {
-    const el = document.createElement('button');
+
+  var moods = ['😌','😊','🥰','💪','😴'];
+  var mr = document.getElementById('mood-btns');
+  moods.forEach(function(m) {
+    var el = document.createElement('button');
     el.className = 'mood-btn' + (m === STATE.mood ? ' on' : '');
     el.textContent = m;
-    el.onclick = () => { STATE.mood = m; mr.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('on')); el.classList.add('on'); };
+    el.onclick = function() {
+      STATE.mood = m;
+      mr.querySelectorAll('.mood-btn').forEach(function(b) { b.classList.remove('on'); });
+      el.classList.add('on');
+    };
     mr.appendChild(el);
   });
 }
@@ -568,13 +627,15 @@ function openModal() {
   document.getElementById('modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
+
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
   document.body.style.overflow = '';
 }
+
 function saveSession() {
-  const today = new Date().getDate();
-  const isNew = !STATE.practiced.has(today);
+  var today = new Date().getDate();
+  var isNew = !STATE.practiced.has(today);
   if (isNew) {
     STATE.practiced.add(today);
     STATE.sessions++;
@@ -587,35 +648,47 @@ function saveSession() {
   showToast(isNew ? '🧘 Session logged! Great work!' : '✓ Already logged today!');
 }
 
-// ── Nav ────────────────────────────────────────────────
+
+/* ─────────────────────────────────────────
+   7. NAVIGATION
+───────────────────────────────────────── */
 function switchTab(tab) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) {
     n.classList.remove('on');
-    const dot = n.querySelector('.nav-dot');
+    var dot = n.querySelector('.nav-dot');
     if (dot) dot.remove();
   });
-  document.getElementById('page-'+tab).classList.add('active');
-  const navEl = document.getElementById('nav-'+tab);
+  document.getElementById('page-' + tab).classList.add('active');
+  var navEl = document.getElementById('nav-' + tab);
   navEl.classList.add('on');
-  const dot = document.createElement('div');
+  var dot = document.createElement('div');
   dot.className = 'nav-dot';
   navEl.appendChild(dot);
   document.querySelector('.scroll-area').scrollTop = 0;
 }
 
-// ── Toast ──────────────────────────────────────────────
-// ── Logout ──────────────────────────────────────────────
+
+/* ─────────────────────────────────────────
+   8. LOGOUT
+───────────────────────────────────────── */
 async function handleLogout() {
-  await db.auth.signOut()
-  window.location.href = 'login.html'
+  await db.auth.signOut();
+  window.location.href = 'login.html';
 }
- function showToast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
+
+
+/* ─────────────────────────────────────────
+   9. TOAST NOTIFICATION
+───────────────────────────────────────── */
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2400);
+  setTimeout(function() { t.remove(); }, 2400);
 }
+
 </script>
 </body>
 </html>
