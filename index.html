@@ -387,13 +387,12 @@
 </div>
 
 <script>
-// ── Auth: 未登入跳到 login ──────────────────────────────
+<script>
+// ── Auth ──────────────────────────────────────────────
 let currentUser = null
 
 ;(async () => {
-  // 隱藏頁面直到 auth 確認
   const overlay = document.getElementById('auth-overlay')
-
   const { data: { session } } = await db.auth.getSession()
 
   if (!session) {
@@ -403,7 +402,6 @@ let currentUser = null
 
   currentUser = session.user
 
-  // 顯示用戶名字
   const { data: profile } = await db
     .from('users')
     .select('display_name, role')
@@ -419,30 +417,7 @@ let currentUser = null
     }
   }
 
-  // Auth 確認完成，移除遮罩
   if (overlay) overlay.remove()
-})()
-  if (!session) {
-    window.location.href = 'login.html'
-    return
-  }
-  currentUser = session.user
-
-  // 顯示用戶名字
-  const { data: profile } = await db
-    .from('users')
-    .select('display_name, role')
-    .eq('id', currentUser.id)
-    .single()
-
-  if (profile) {
-    const greetEl = document.querySelector('.greeting')
-    if (greetEl) {
-      const hour = new Date().getHours()
-      const timeGreet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-      greetEl.textContent = `${timeGreet}, ${profile.display_name}`
-    }
-  }
 })()
 
 const STATE = {
