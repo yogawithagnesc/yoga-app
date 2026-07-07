@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<title>Lumen — Choose Your Role</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Tenor+Sans&display=swap" rel="stylesheet"/>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://vuodmnhebsjmwdeazdtc.supabase.co'
+  const SUPABASE_KEY = 'sb_publishable_Xkhwx_hNFyRGNp0Njqne3g_qD9VdFHy'
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:      #080807;
+  --bg-el:   #111110;
+  --bg-ov:   #1A1917;
+  --br-sub:  #1E1E1C;
+  --br-def:  #2A2A27;
+  --tx-1:    #E8E0D0;
+  --tx-2:    #9A9080;
+  --tx-3:    #5A5448;
+  --accent:  #C8A96E;
+  --adim:    rgba(200,169,110,0.12);
+  --success: #7B9E87;
+  --error:   #C47070;
+  --r-md:    10px;
+  --r-lg:    14px;
+  --r-xl:    20px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--tx-1);
+  overflow: hidden;
+}
+
+#app {
+  max-width: 430px;
+  margin: 0 auto;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient glow */
+.glow { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+.glow-1 { width: 300px; height: 300px; background: rgba(200,169,110,0.07); top: -80px; right: -80px; }
+.glow-2 { width: 200px; height: 200px; background: rgba(123,158,135,0.05); bottom: 80px; left: -60px; }
+
+/* Scroll */
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 28px 60px;
+}
+.scroll::-webkit-scrollbar { display: none; }
+
+/* Logo */
+.logo-wrap { text-align: center; margin-bottom: 40px; }
+.logo-word {
+  font-family: 'Tenor Sans', sans-serif;
+  font-size: 36px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--tx-1);
+  padding-right: 0.28em;
+  display: block;
+  line-height: 1;
+}
+.logo-rule { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.rule-line { flex: 1; height: 1px; background: var(--accent); }
+.rule-text {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  font-size: 8px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* Card */
+.card {
+  background: var(--bg-el);
+  border: 1px solid var(--br-sub);
+  border-radius: var(--r-xl);
+  padding: 28px 24px;
+}
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--tx-1);
+  margin-bottom: 6px;
+}
+.card-sub {
+  font-size: 13px;
+  color: var(--tx-3);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* Role grid — 3 equal columns */
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.role-card {
+  background: var(--bg);
+  border: 1.5px solid var(--br-def);
+  border-radius: var(--r-lg);
+  padding: 18px 10px 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.role-card:hover { background: var(--bg-ov); border-color: var(--br-def); }
+.role-card.selected { background: var(--adim); border-color: var(--accent); }
+.role-icon { font-size: 26px; line-height: 1; }
+.role-name { font-size: 12px; font-weight: 600; color: var(--tx-1); letter-spacing: 0.04em; }
+.role-desc { font-size: 10px; color: var(--tx-3); line-height: 1.5; }
+.role-card.selected .role-name { color: var(--accent); }
+
+/* Role detail — shown below grid after selection */
+.role-detail {
+  background: var(--adim);
+  border: 1px solid rgba(200,169,110,0.2);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: var(--tx-2);
+  line-height: 1.7;
+  display: none;
+  animation: fadeIn 0.2s ease;
+}
+.role-detail.show { display: block; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform: translateY(0); } }
+.role-detail strong { color: var(--accent); font-weight: 600; display: block; margin-bottom: 4px; }
+
+/* Error */
+.err-msg { font-size: 12px; color: var(--error); margin-top: 5px; display: none; }
+.err-msg.show { display: block; }
+
+/* Alert */
+.alert-box {
+  background: rgba(196,112,112,0.1);
+  border: 1px solid rgba(196,112,112,0.3);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--error);
+  margin-bottom: 16px;
+  display: none;
+  line-height: 1.6;
+}
+.alert-box.show { display: block; }
+
+/* Primary button */
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: 15px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-primary:hover { background: #D8BA80; }
+.btn-primary:active { background: #A88848; transform: scale(0.99); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* Spinner */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top-color: var(--bg);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Logout link */
+.logout-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--tx-3);
+}
+.logout-link button {
+  background: none;
+  border: none;
+  color: var(--tx-3);
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+.logout-link button:hover { color: var(--tx-2); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+
+  <div class="scroll">
+
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <span class="logo-word">LUMEN</span>
+      <div class="logo-rule">
+        <div class="rule-line"></div>
+        <span class="rule-text">ILLUMINATE YOUR PRACTICE</span>
+        <div class="rule-line"></div>
+      </div>
+    </div>
+
+    <!-- Role Selection Card -->
+    <div class="card">
+      <div class="card-title">Choose your role</div>
+      <div class="card-sub">This shapes what you see in Lumen. You cannot change this later without contacting support.</div>
+
+      <!-- Alert -->
+      <div class="alert-box" id="alert-box"></div>
+
+      <!-- 3 role cards -->
+      <div class="role-grid">
+        <div class="role-card" id="role-student" onclick="selectRole('student')">
+          <span class="role-icon">🧘</span>
+          <span class="role-name">Student</span>
+          <span class="role-desc">Track my personal practice</span>
+        </div>
+        <div class="role-card" id="role-teacher" onclick="selectRole('teacher')">
+          <span class="role-icon">🧑‍🏫</span>
+          <span class="role-name">Teacher</span>
+          <span class="role-desc">Guide students & share schedules</span>
+        </div>
+        <div class="role-card" id="role-studio" onclick="selectRole('studio')">
+          <span class="role-icon">🏛️</span>
+          <span class="role-name">Studio</span>
+          <span class="role-desc">Manage teachers & classes</span>
+        </div>
+      </div>
+
+      <!-- Role detail description -->
+      <div class="role-detail" id="role-detail"></div>
+
+      <div class="err-msg" id="role-err">Please select a role to continue</div>
+
+      <!-- Continue button -->
+      <button class="btn-primary" id="continue-btn" disabled onclick="handleContinue()">
+        Continue
+      </button>
+    </div>
+
+    <div class="logout-link">
+      Not you? <button onclick="handleLogout()">Sign out</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const ROLE_DETAILS = {
+  student: {
+    label: 'Student',
+    detail: 'You will have full access to personal practice tracking, body mapping, streak analytics, and custom categories. Link to a teacher or studio using their join code to share your progress with them.'
+  },
+  teacher: {
+    label: 'Teacher',
+    detail: 'You can create and share practice templates with your linked students, view their shared session data, and broadcast your teaching schedule. A unique join code will be generated for your profile.'
+  },
+  studio: {
+    label: 'Studio',
+    detail: 'You gain administrative access to oversee multiple teacher profiles, analyse class attendance, and manage your institutional content library. A unique join code will be generated for your studio.'
+  },
+}
+
+let currentUser = null
+let selectedRole = null
+
+// ── Auth guard ──────────────────────────────────────────────
+;(async () => {
+  const { data: { session } } = await db.auth.getSession()
+
+  if (!session) {
+    window.location.href = 'login.html'
+    return
+  }
+
+  currentUser = session.user
+
+  // If the user already has a role, skip this screen
+  const { data: profile } = await db
+    .from('profiles')
+    .select('role')
+    .eq('id', currentUser.id)
+    .single()
+
+  if (profile?.role) {
+    window.location.href = 'index.html'
+  }
+})()
+
+// ── Role selection ──────────────────────────────────────────
+function selectRole(role) {
+  selectedRole = role
+
+  // Update card highlights
+  ;['student', 'teacher', 'studio'].forEach(r => {
+    document.getElementById('role-' + r).classList.toggle('selected', r === role)
+  })
+
+  // Show detail description
+  const detail = document.getElementById('role-detail')
+  const info = ROLE_DETAILS[role]
+  detail.innerHTML = `<strong>${info.label}</strong>${info.detail}`
+  detail.classList.add('show')
+
+  // Enable button & clear error
+  document.getElementById('continue-btn').disabled = false
+  document.getElementById('role-err').classList.remove('show')
+}
+
+// ── Continue ────────────────────────────────────────────────
+async function handleContinue() {
+  if (!selectedRole) {
+    document.getElementById('role-err').classList.add('show')
+    return
+  }
+
+  if (!currentUser) {
+    window.location.href = 'login.html'
+    return
+  }
+
+  const btn   = document.getElementById('continue-btn')
+  const alert = document.getElementById('alert-box')
+  alert.classList.remove('show')
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div> Saving…'
+
+  try {
+    const { error } = await db
+      .from('profiles')
+      .update({ role: selectedRole, updated_at: new Date().toISOString() })
+      .eq('id', currentUser.id)
+
+    if (error) throw error
+
+    btn.innerHTML = '✓ Role saved!'
+    btn.style.background = '#7B9E87'
+    setTimeout(() => { window.location.href = 'index.html' }, 600)
+
+  } catch (e) {
+    console.error('Role save failed:', e)
+    alert.textContent = 'Could not save your role. Please try again.'
+    alert.classList.add('show')
+    btn.disabled = false
+    btn.innerHTML = 'Continue'
+  }
+}
+
+// ── Logout ──────────────────────────────────────────────────
+async function handleLogout() {
+  await db.auth.signOut()
+  window.location.href = 'login.html'
+}
+</script>
+</body>
+</html>

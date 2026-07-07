@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Lumen — Video</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Tenor+Sans&display=swap" rel="stylesheet"/>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://vuodmnhebsjmwdeazdtc.supabase.co'
+  const SUPABASE_KEY = 'sb_publishable_Xkhwx_hNFyRGNp0Njqne3g_qD9VdFHy'
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg:      #080807;
+  --bg-el:   #111110;
+  --bg-ov:   #1A1917;
+  --br-sub:  #1E1E1C;
+  --br-def:  #2A2A27;
+  --tx-1:    #E8E0D0;
+  --tx-2:    #9A9080;
+  --tx-3:    #5A5448;
+  --accent:  #C8A96E;
+  --adim:    rgba(200,169,110,0.12);
+  --success: #7B9E87;
+  --error:   #C47070;
+  --r-md:    10px;
+  --r-lg:    14px;
+  --r-xl:    20px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--tx-1);
+}
+
+#app {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Loading overlay */
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.3s;
+}
+#loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+.spinner-lg {
+  width: 32px; height: 32px;
+  border: 2px solid var(--br-def);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--br-sub);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--tx-2);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.back-btn:hover { color: var(--tx-1); }
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--tx-1);
+  flex: 1;
+}
+
+/* Player section */
+.player-wrap {
+  padding: 20px 20px 0;
+}
+
+/* mux-player inherits width:100% and border-radius from MuxVideoPlayer.js */
+
+/* Save indicator */
+.save-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--tx-3);
+  padding: 8px 20px 0;
+  height: 28px;
+  transition: opacity 0.3s;
+}
+.save-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--tx-3);
+  transition: background 0.3s;
+}
+.save-indicator.saving .save-dot  { background: var(--accent); }
+.save-indicator.saved  .save-dot  { background: var(--success); }
+
+/* Video metadata card */
+.meta-card {
+  margin: 16px 20px 0;
+  background: var(--bg-el);
+  border: 1px solid var(--br-sub);
+  border-radius: var(--r-xl);
+  padding: 20px;
+}
+.meta-style {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--adim);
+  border: 1px solid rgba(200,169,110,0.2);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 10px;
+}
+.meta-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--tx-1);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.meta-teacher {
+  font-size: 13px;
+  color: var(--tx-3);
+  margin-bottom: 12px;
+}
+.meta-desc {
+  font-size: 13px;
+  color: var(--tx-2);
+  line-height: 1.7;
+}
+
+/* Progress pill */
+.progress-row {
+  margin: 12px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.progress-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: var(--br-def);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 1s linear;
+  width: 0%;
+}
+.progress-label {
+  font-size: 11px;
+  color: var(--tx-3);
+  white-space: nowrap;
+  min-width: 70px;
+  text-align: right;
+}
+
+/* Bottom padding */
+.bottom-pad { height: 40px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div class="spinner-lg"></div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <button class="back-btn" onclick="window.location.href='index.html'">←</button>
+    <span class="header-title">On-Demand Class</span>
+  </div>
+
+  <!-- Player mount point -->
+  <div class="player-wrap">
+    <div id="player-container"></div>
+  </div>
+
+  <!-- Save status -->
+  <div class="save-indicator" id="save-indicator">
+    <div class="save-dot"></div>
+    <span id="save-label">Progress tracked</span>
+  </div>
+
+  <!-- Video metadata — populated by JS from VIDEO_CATALOG -->
+  <div class="meta-card">
+    <span class="meta-style" id="meta-style"></span>
+    <div class="meta-title" id="meta-title"></div>
+    <div class="meta-teacher">with Lumen</div>
+    <div class="meta-desc" id="meta-desc"></div>
+
+    <!-- Watch progress bar -->
+    <div class="progress-row">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <span class="progress-label" id="progress-label">— / —</span>
+    </div>
+  </div>
+
+  <div class="bottom-pad"></div>
+</div>
+
+<script type="module">
+import MuxVideoPlayer from './MuxVideoPlayer.js'
+
+// ── Video catalog (mirrors VIDEO_CATALOG in index.html) ─────
+// Add one entry per Mux upload. video_id is the stable key used
+// in video_progress and in ?videoId= URL params.
+const VIDEO_CATALOG = {
+  'intro-vinyasa-flow': {
+    playbackId:  'QSq3Bgs005a0132Qb00AYgn7fyZggqHZWVZxoUrqx1Gzig',
+    title:       'Intro to Vinyasa Flow',
+    style:       'Vinyasa',
+    description: 'A foundational Vinyasa class linking breath to movement. ' +
+                 'Build heat through a balanced sequence of standing poses, ' +
+                 'forward folds, and a grounding savasana.',
+  },
+}
+
+// ── Resolve which video to play ─────────────────────────────
+const params  = new URLSearchParams(window.location.search)
+const videoId = params.get('videoId') || 'intro-vinyasa-flow'
+const video   = VIDEO_CATALOG[videoId] || VIDEO_CATALOG['intro-vinyasa-flow']
+
+// Populate metadata panel
+document.getElementById('meta-style').textContent = video.style
+document.getElementById('meta-title').textContent = video.title
+document.getElementById('meta-desc').textContent  = video.description
+
+let player = null
+
+// ── Auth guard ──────────────────────────────────────────────
+const { data: { session } } = await db.auth.getSession()
+if (!session) {
+  window.location.href = 'login.html'
+}
+
+const userId = session.user.id
+
+// ── Mount player ────────────────────────────────────────────
+player = new MuxVideoPlayer({
+  container:  document.getElementById('player-container'),
+  playbackId: video.playbackId,
+  videoId,
+  title:      video.title,
+  db,
+  userId,
+})
+
+await player.init()
+
+// ── Progress bar + save indicator updates ───────────────────
+const fill      = document.getElementById('progress-fill')
+const label     = document.getElementById('progress-label')
+const indicator = document.getElementById('save-indicator')
+const saveLabel = document.getElementById('save-label')
+
+const el = document.querySelector('mux-player')
+
+function formatTime(secs) {
+  if (!secs || isNaN(secs)) return '—'
+  const m = Math.floor(secs / 60)
+  const s = Math.floor(secs % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function updateProgressBar() {
+  const cur = el?.currentTime || 0
+  const dur = el?.duration    || 0
+  const pct = dur > 0 ? Math.min((cur / dur) * 100, 100) : 0
+  fill.style.width   = pct.toFixed(1) + '%'
+  label.textContent  = `${formatTime(cur)} / ${formatTime(dur)}`
+}
+
+// Show saving → saved feedback around each DB write
+const _origSave = player._saveProgress.bind(player)
+player._saveProgress = async function () {
+  indicator.className = 'save-indicator saving'
+  saveLabel.textContent = 'Saving…'
+  await _origSave()
+  indicator.className = 'save-indicator saved'
+  saveLabel.textContent = 'Progress saved'
+  setTimeout(() => {
+    indicator.className = 'save-indicator'
+    saveLabel.textContent = 'Progress tracked'
+  }, 2000)
+}
+
+el?.addEventListener('timeupdate', updateProgressBar)
+el?.addEventListener('loadedmetadata', updateProgressBar)
+
+// ── Hide loading overlay ────────────────────────────────────
+const overlay = document.getElementById('loading-overlay')
+overlay.classList.add('hidden')
+setTimeout(() => overlay.remove(), 400)
+
+// ── Cleanup on page leave ───────────────────────────────────
+window.addEventListener('pagehide', () => player?.destroy())
+</script>
+</body>
+</html>

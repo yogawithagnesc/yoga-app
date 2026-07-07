@@ -195,6 +195,21 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .mt10{margin-top:10px}
 .mt14{margin-top:14px}
 .info-note{margin-top:8px;font-size:11px;color:var(--tx-3);line-height:1.6}
+
+/* ── PRIVACY TOGGLE ── */
+.privacy-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md)}
+.privacy-label{font-size:13px;color:var(--tx-1);font-weight:500}
+.privacy-sub{font-size:11px;color:var(--tx-3);margin-top:2px}
+.toggle-wrap{position:relative;width:44px;height:26px;flex-shrink:0;cursor:pointer}
+.toggle-wrap input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--br-def);border-radius:13px;transition:background .25s}
+.toggle-track::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .25s}
+.toggle-wrap input:checked + .toggle-track{background:var(--accent)}
+.toggle-wrap input:checked + .toggle-track::after{transform:translateX(18px)}
+
+/* ── LOG PAGE SPINNER ── */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(8,8,7,.2);border-top-color:var(--bg);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -420,6 +435,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <span style="font-size:11px;color:var(--tx-3)">Intense</span>
       </div>
     </div>
+
+    <!-- Privacy toggle -->
+    <div class="privacy-row mt14">
+      <div>
+        <div class="privacy-label">Keep this practice private</div>
+        <div class="privacy-sub">Uncheck to share with linked teachers</div>
+      </div>
+      <label class="toggle-wrap" aria-label="Privacy toggle">
+        <input type="checkbox" id="privacy-toggle" checked onchange="updPrivacy(this)">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
   </div>
 
   <div style="height:20px"></div>
@@ -428,7 +455,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <!-- BOTTOM CTA -->
 <div class="bottom-cta">
   <button class="cta-btn" onclick="savePractice()">Save Practice ✦</button>
-  <div class="cta-sub">Shared with Agnes for feedback after saving</div>
+  <div class="cta-sub" id="cta-sub">Only you can see this session</div>
 </div>
 
 </div><!-- end phone -->
@@ -564,6 +591,10 @@ scene.add(rim);
 const markers = []; // {mesh, zone, feeling}
 const areaStates = {}; // zone -> feeling
 let pendingZone = null;
+
+// Bridge module scope → non-module savePractice()
+window.getMuscleFeelings = () =>
+  Object.entries(areaStates).map(([zone, feeling]) => ({ zone, feeling }));
 
 const FEELINGS = {
   worked: { emoji:'🎯', label:'Worked', bg:'rgba(200,169,110,0.15)', border:'#C8A96E', color:'#C8A96E', hex:0xC8A96E },
@@ -804,6 +835,22 @@ function renderAreaTags() {
      PAGE LOGIC (non-module)
 ══════════════════════════════════════ -->
 <script>
+// ─── AUTH + CATEGORY INIT ───
+let currentUser = null;
+let categoryMap = {}; // lowercase style name → { id, name, category_type }
+
+(async function initPage() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+
+  const { data: cats } = await db
+    .from('practice_categories')
+    .select('id, name, category_type')
+    .eq('is_active', true);
+  if (cats) cats.forEach(c => { categoryMap[c.name.toLowerCase()] = c; });
+})();
+
 // ─── DATA ───
 const CATS = [
   {id:'yoga',label:'Yoga'},
@@ -947,10 +994,16 @@ function renderMedia() {
 }
 function rmMedia(i) { mediaItems.splice(i,1); renderMedia(); }
 
-// ─── MOOD / NOTES ───
+// ─── MOOD / NOTES / PRIVACY ───
 function pickMood(el) { document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); }
 function updChar() { document.getElementById('char-count').textContent=document.getElementById('notes').value.length+' / 1000'; }
 function updIntensity() { document.getElementById('int-lbl').textContent=INT_LBLS[document.getElementById('intensity').value]; }
+function updPrivacy(el) {
+  const sub = document.getElementById('cta-sub');
+  if (sub) sub.textContent = el.checked
+    ? 'Only you can see this session'
+    : 'Will be visible to your linked teachers after saving';
+}
 
 // ─── STEP PROGRESS ───
 const SECS=['sec-0','sec-1','sec-2','sec-3','sec-4','sec-5'];
@@ -965,20 +1018,54 @@ function onScroll() {
 }
 
 // ─── SAVE ───
-function savePractice() {
-  const data={
-    date: selDate.toISOString(),
-    time: document.getElementById('start-time').value,
-    duration: parseInt(document.getElementById('dur-val').value),
-    type: selType,
-    focus: [...selFocus],
-    media: mediaItems.length,
-    notes: document.getElementById('notes').value,
-    mood: document.querySelector('.mood-btn.sel .mood-lbl')?.textContent,
-    intensity: document.getElementById('intensity').value,
+async function savePractice() {
+  if (!currentUser) { window.location.href = 'login.html'; return; }
+
+  if (!selType) {
+    showToast('Please select a practice type first');
+    scrollTo(1);
+    return;
+  }
+
+  const styleName      = TYPES.find(t => t.id === selType)?.name || selType;
+  const category       = categoryMap[styleName.toLowerCase()];
+  const muscleFeelings = window.getMuscleFeelings ? window.getMuscleFeelings() : [];
+  const isPrivate      = document.getElementById('privacy-toggle')?.checked ?? true;
+  const durationVal    = parseInt(document.getElementById('dur-val').value) || 45;
+
+  const payload = {
+    user_id:          currentUser.id,
+    category_id:      category?.id || null,
+    style_name:       styleName,
+    is_custom:        !category,
+    duration_minutes: Math.max(1, durationVal),
+    practice_date:    selDate.toISOString().split('T')[0],
+    start_time:       document.getElementById('start-time').value || null,
+    mood:             document.querySelector('.mood-btn.sel .mood-lbl')?.textContent || null,
+    notes:            document.getElementById('notes').value || null,
+    intensity:        parseInt(document.getElementById('intensity').value) || null,
+    muscle_feelings:  muscleFeelings,
+    is_private:       isPrivate,
   };
-  console.log('Saved:', data);
-  showToast('Practice Saved! ✦');
+
+  const btn = document.querySelector('.cta-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Saving…';
+
+  const { error } = await db.from('practice_logs').insert(payload);
+
+  if (error) {
+    console.error('Save error:', error);
+    showToast('Save failed — please try again');
+    btn.disabled = false;
+    btn.innerHTML = 'Save Practice ✦';
+    return;
+  }
+
+  btn.innerHTML = '✓ Saved!';
+  btn.style.background = 'var(--success)';
+  showToast('Practice saved! ✦');
+  setTimeout(() => { window.location.href = 'index.html'; }, 1200);
 }
 
 // ─── TOAST ───
