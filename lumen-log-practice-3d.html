@@ -301,7 +301,14 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="sec-hdr"><div class="sec-num">2</div><div class="sec-title">Practice Type</div></div>
     <div class="cat-tabs" id="cat-tabs"></div>
     <div class="type-grid" id="type-grid"></div>
-    <div class="info-note">✦ Managed from Teacher admin panel</div>
+    <div class="custom-cat-form" id="custom-cat-form" style="display:none;margin-top:10px">
+      <input class="finput" id="custom-cat-name" placeholder="Category name (e.g. Running)" maxlength="40">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="cta-btn" style="width:auto;flex:1;padding:11px;font-size:13px" onclick="submitCustomCategory()">Add</button>
+        <button style="width:auto;padding:0 16px;border-radius:var(--r-md);background:var(--bg-el);border:1px solid var(--br-def);color:var(--tx-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer" onclick="toggleCustomCatForm(false)">Cancel</button>
+      </div>
+    </div>
+    <div class="info-note">✦ Add your own, or use one shared by your teacher/studio</div>
   </div>
 
   <div class="divider"></div>
@@ -393,11 +400,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="sec-hdr"><div class="sec-num">5</div><div class="sec-title">Photos & Videos</div></div>
     <div style="font-size:12px;color:var(--tx-2);margin-bottom:14px">Optional · Capture your practice or progress</div>
 
-    <div class="upload-zone" onclick="addMedia()">
-      <input type="file" accept="image/*,video/*" multiple style="pointer-events:none">
+    <div class="upload-zone">
+      <input type="file" accept="image/*,video/*" multiple onchange="handleFileSelect(event)">
       <div style="font-size:32px;margin-bottom:8px">📷</div>
       <div style="font-size:14px;color:var(--tx-1);font-weight:500;margin-bottom:4px">Add Photos or Videos</div>
-      <div style="font-size:11px;color:var(--tx-3)">Tap to select · JPG, PNG, MP4 · Max 100MB per file</div>
+      <div style="font-size:11px;color:var(--tx-3)">Tap to select · JPG, PNG, MP4 · Max 50MB per file</div>
     </div>
 
     <div class="media-grid" id="media-grid"></div>
@@ -835,75 +842,73 @@ function renderAreaTags() {
      PAGE LOGIC (non-module)
 ══════════════════════════════════════ -->
 <script>
-// ─── AUTH + CATEGORY INIT ───
+// ─── AUTH + DATA INIT ───
 let currentUser = null;
-let categoryMap = {}; // lowercase style name → { id, name, category_type }
+let currentUserRole = 'student';
+let CATEGORIES = [];   // practice_categories rows visible to this user (system + own + linked)
+let FOCUS_AREAS = [];  // focus_areas rows
 
-(async function initPage() {
+async function initPage() {
   const { data: { session } } = await db.auth.getSession();
   if (!session) { window.location.href = 'login.html'; return; }
   currentUser = session.user;
 
-  const { data: cats } = await db
-    .from('practice_categories')
-    .select('id, name, category_type')
-    .eq('is_active', true);
-  if (cats) cats.forEach(c => { categoryMap[c.name.toLowerCase()] = c; });
-})();
+  const [{ data: profile }, { data: cats }, { data: focusAreas }] = await Promise.all([
+    db.from('profiles').select('role').eq('id', currentUser.id).single(),
+    db.from('practice_categories')
+      .select('id,name,category_type,icon,subtitle,sort_order,is_system,visibility,created_by')
+      .eq('is_active', true),
+    db.from('focus_areas').select('id,label,sort_order').eq('is_active', true).order('sort_order'),
+  ]);
 
-// ─── DATA ───
+  currentUserRole = profile?.role || 'student';
+  CATEGORIES = cats || [];
+  FOCUS_AREAS = focusAreas || [];
+
+  buildTypes();
+  buildFocus();
+}
+
+// ─── STATIC UI DATA (not user data — fixed taxonomy / labels) ───
 const CATS = [
   {id:'yoga',label:'Yoga'},
   {id:'movement',label:'Movement'},
   {id:'breathwork',label:'Breathwork'},
 ];
-const TYPES = [
-  {id:'vinyasa',  cat:'yoga',       icon:'🌊', name:'Vinyasa',    sub:'Flow & breath'},
-  {id:'hatha',    cat:'yoga',       icon:'☀️', name:'Hatha',      sub:'Classic alignment'},
-  {id:'yin',      cat:'yoga',       icon:'🌿', name:'Yin',        sub:'Deep passive holds'},
-  {id:'yang',     cat:'yoga',       icon:'⚡', name:'Yang',       sub:'Active & dynamic'},
-  {id:'ashtanga', cat:'yoga',       icon:'🔥', name:'Ashtanga',   sub:'Traditional series'},
-  {id:'restore',  cat:'yoga',       icon:'🌙', name:'Restorative',sub:'Rest & recovery'},
-  {id:'pilates',  cat:'movement',   icon:'💎', name:'Pilates',    sub:'Core & control'},
-  {id:'reformer', cat:'movement',   icon:'🏋️', name:'Reformer',   sub:'Machine-based'},
-  {id:'strength', cat:'movement',   icon:'💪', name:'Strength',   sub:'Resistance training'},
-  {id:'mobility', cat:'movement',   icon:'🔄', name:'Mobility',   sub:'Range of motion'},
-  {id:'pranayama',cat:'breathwork', icon:'🌬️', name:'Pranayama', sub:'Breath techniques'},
-  {id:'meditate', cat:'breathwork', icon:'✨', name:'Meditation', sub:'Stillness & focus'},
-];
-const FOCUSES = [
-  {id:'lower-back',label:'Lower Back'},{id:'upper-back',label:'Upper Back'},
-  {id:'core',label:'Core / Abs'},{id:'hips',label:'Hips'},
-  {id:'glutes',label:'Glutes'},{id:'hamstrings',label:'Hamstrings'},
-  {id:'quads',label:'Quads'},{id:'shoulders',label:'Shoulders'},
-  {id:'chest',label:'Chest'},{id:'arms',label:'Arms'},
-  {id:'inversions',label:'Inversions'},{id:'balance',label:'Balance'},
-  {id:'flexibility',label:'Flexibility'},{id:'breathwork',label:'Breath'},
-  {id:'mindfulness',label:'Mindfulness'},
-];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DOWS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const INT_LBLS=['','Gentle (1/5)','Light (2/5)','Moderate (3/5)','Challenging (4/5)','Intense (5/5)'];
-const LOGGED_DAYS=[3,7,10,14,17,21,24,26,28];
+let LOGGED_DAYS = new Set(); // real practiced_on days for the visible calendar month, fetched on demand
 
 // ─── STATE ───
 let selDate = new Date();
 let calDate = new Date();
-let selType = null;
-let selFocus = new Set();
+let selType = null;       // practice_categories.id
+let selFocus = new Set(); // focus_areas.id values
 let activeCat = 'yoga';
-let mediaItems = [];
-let mockIdx = 0;
-const MOCK = ['🧘','📸','🎥','🌅','💪','🌿'];
+let mediaItems = [];      // { file, url, type: 'image'|'video' }
 
 // ─── DATE ───
-function toggleCal() {
+async function refreshLoggedDays() {
+  LOGGED_DAYS = new Set();
+  if (!currentUser) return;
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  const start = new Date(y, m, 1).toISOString().split('T')[0];
+  const end   = new Date(y, m + 1, 0).toISOString().split('T')[0];
+  const { data } = await db.from('practice_logs')
+    .select('practice_date')
+    .eq('user_id', currentUser.id)
+    .gte('practice_date', start)
+    .lte('practice_date', end);
+  (data || []).forEach(r => LOGGED_DAYS.add(new Date(r.practice_date + 'T00:00:00').getDate()));
+}
+async function toggleCal() {
   const cal = document.getElementById('mini-cal');
   const box = document.getElementById('date-box');
   const show = !cal.classList.contains('show');
   cal.classList.toggle('show', show);
   box.classList.toggle('open', show);
-  if (show) renderCal();
+  if (show) { await refreshLoggedDays(); renderCal(); }
 }
 function renderCal() {
   const grid = document.getElementById('cal-grid');
@@ -920,7 +925,7 @@ function renderCal() {
     const cell=document.createElement('div'); cell.className='cal-day'; cell.textContent=d;
     if (d===today.getDate()&&calDate.getMonth()===today.getMonth()&&calDate.getFullYear()===today.getFullYear()) cell.classList.add('today');
     if (d===selDate.getDate()&&calDate.getMonth()===selDate.getMonth()&&calDate.getFullYear()===selDate.getFullYear()) cell.classList.add('sel');
-    if (LOGGED_DAYS.includes(d)) cell.classList.add('logged');
+    if (LOGGED_DAYS.has(d)) cell.classList.add('logged');
     cell.onclick=()=>pickDay(d);
     grid.appendChild(cell);
   }
@@ -929,8 +934,10 @@ function pickDay(d) {
   selDate=new Date(calDate.getFullYear(),calDate.getMonth(),d);
   updDate(); renderCal(); toggleCal();
 }
-function chgMonth(delta) {
-  calDate.setMonth(calDate.getMonth()+delta); renderCal();
+async function chgMonth(delta) {
+  calDate.setMonth(calDate.getMonth()+delta);
+  await refreshLoggedDays();
+  renderCal();
 }
 function updDate() {
   document.getElementById('d-day').textContent=selDate.getDate();
@@ -949,6 +956,7 @@ function stepDur(delta) {
 // ─── TYPES ───
 function buildTypes() {
   const tabs=document.getElementById('cat-tabs');
+  tabs.innerHTML = '';
   CATS.forEach(c => {
     const btn=document.createElement('div'); btn.className='cat-tab'+(c.id===activeCat?' active':'');
     btn.textContent=c.label;
@@ -959,18 +967,58 @@ function buildTypes() {
 }
 function buildTypeGrid() {
   const grid=document.getElementById('type-grid'); grid.innerHTML='';
-  TYPES.filter(t=>t.cat===activeCat).forEach(t=>{
+  const list = CATEGORIES
+    .filter(t => t.category_type === activeCat)
+    .sort((a,b) => a.is_system === b.is_system ? a.sort_order - b.sort_order : (a.is_system ? -1 : 1));
+
+  list.forEach(t=>{
     const card=document.createElement('div'); card.className='type-card'+(selType===t.id?' sel':'');
-    card.innerHTML=`<div class="type-icon">${t.icon}</div><div style="flex:1;min-width:0"><div class="type-name">${t.name}</div><div class="type-sub">${t.sub}</div></div><div class="type-chk">${selType===t.id?'✓':''}</div>`;
+    const sub = t.subtitle || (t.is_system ? '' : 'Custom');
+    card.innerHTML=`<div class="type-icon">${t.icon||'✦'}</div><div style="flex:1;min-width:0"><div class="type-name">${t.name}</div><div class="type-sub">${sub}</div></div><div class="type-chk">${selType===t.id?'✓':''}</div>`;
     card.onclick=()=>{ selType=t.id; buildTypeGrid(); };
     grid.appendChild(card);
   });
+
+  const addCard=document.createElement('div');
+  addCard.className='type-card';
+  addCard.style.cssText='border-style:dashed;justify-content:center;text-align:center';
+  addCard.innerHTML=`<div class="type-icon" style="color:var(--accent)">＋</div><div class="type-name" style="color:var(--accent)">Add Custom</div>`;
+  addCard.onclick=()=>toggleCustomCatForm(true);
+  grid.appendChild(addCard);
+}
+
+// ─── CUSTOM CATEGORY ───
+function toggleCustomCatForm(show) {
+  const form = document.getElementById('custom-cat-form');
+  form.style.display = show ? 'block' : 'none';
+  if (show) document.getElementById('custom-cat-name').focus();
+}
+async function submitCustomCategory() {
+  const input = document.getElementById('custom-cat-name');
+  const name = input.value.trim();
+  if (!name) return;
+
+  const visibility = (currentUserRole === 'teacher' || currentUserRole === 'studio') ? 'linked' : 'private';
+  const { data, error } = await db.from('practice_categories').insert({
+    name, category_type: activeCat, icon: '✦', is_system: false,
+    created_by: currentUser.id, visibility, is_active: true,
+  }).select().single();
+
+  if (error) { console.error('Add category failed:', error); showToast('Could not add category — please try again'); return; }
+
+  CATEGORIES.push(data);
+  selType = data.id;
+  input.value = '';
+  toggleCustomCatForm(false);
+  buildTypeGrid();
+  showToast(`${name} added ✓`);
 }
 
 // ─── FOCUS ───
 function buildFocus() {
   const c=document.getElementById('focus-chips');
-  FOCUSES.forEach(f=>{
+  c.innerHTML = '';
+  FOCUS_AREAS.forEach(f=>{
     const chip=document.createElement('div'); chip.className='chip'+(selFocus.has(f.id)?' sel':'');
     chip.textContent=f.label;
     chip.onclick=()=>{ selFocus.has(f.id)?selFocus.delete(f.id):selFocus.add(f.id); chip.classList.toggle('sel'); };
@@ -979,20 +1027,36 @@ function buildFocus() {
 }
 
 // ─── MEDIA ───
-function addMedia() {
-  if (mediaItems.length>=9) return;
-  mediaItems.push(MOCK[mockIdx++%MOCK.length]);
-  renderMedia(); showToast('Photo added ✓');
+const MAX_MEDIA_FILES = 9;
+const MAX_MEDIA_BYTES = 50 * 1024 * 1024; // 50MB, matches practice-media bucket limit
+
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files || []);
+  files.forEach(file => {
+    if (mediaItems.length >= MAX_MEDIA_FILES) { showToast(`Max ${MAX_MEDIA_FILES} files per session`); return; }
+    if (file.size > MAX_MEDIA_BYTES) { showToast(`${file.name} is over 50MB — skipped`); return; }
+    const type = file.type.startsWith('video') ? 'video' : 'image';
+    mediaItems.push({ file, url: URL.createObjectURL(file), type });
+  });
+  e.target.value = ''; // allow re-selecting the same file later
+  renderMedia();
 }
 function renderMedia() {
   const g=document.getElementById('media-grid'); g.innerHTML='';
-  mediaItems.forEach((em,i)=>{
+  mediaItems.forEach((item,i)=>{
     const t=document.createElement('div'); t.className='media-thumb';
-    t.innerHTML=`<span style="font-size:28px">${em}</span><div class="thumb-del" onclick="rmMedia(${i})">✕</div>`;
+    const inner = item.type === 'image'
+      ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md)">`
+      : `<span style="font-size:28px">🎥</span>`;
+    t.innerHTML = inner + `<div class="thumb-del" onclick="rmMedia(${i})">✕</div>`;
     g.appendChild(t);
   });
 }
-function rmMedia(i) { mediaItems.splice(i,1); renderMedia(); }
+function rmMedia(i) {
+  const [removed] = mediaItems.splice(i,1);
+  if (removed) URL.revokeObjectURL(removed.url);
+  renderMedia();
+}
 
 // ─── MOOD / NOTES / PRIVACY ───
 function pickMood(el) { document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); }
@@ -1017,6 +1081,24 @@ function onScroll() {
   }
 }
 
+// ─── MEDIA UPLOAD (after the log row exists) ───
+async function uploadSessionMedia(sessionId) {
+  let failures = 0;
+  for (const item of mediaItems) {
+    const ext  = (item.file.name.split('.').pop() || 'dat').toLowerCase();
+    const path = `${currentUser.id}/${sessionId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error: upErr } = await db.storage.from('practice-media').upload(path, item.file, { upsert: false });
+    if (upErr) { console.error('Media upload failed:', upErr); failures++; continue; }
+
+    const { error: rowErr } = await db.from('session_media').insert({
+      session_id: sessionId, user_id: currentUser.id, storage_path: path, media_type: item.type,
+    });
+    if (rowErr) { console.error('session_media insert failed:', rowErr); failures++; }
+  }
+  return failures;
+}
+
 // ─── SAVE ───
 async function savePractice() {
   if (!currentUser) { window.location.href = 'login.html'; return; }
@@ -1027,17 +1109,24 @@ async function savePractice() {
     return;
   }
 
-  const styleName      = TYPES.find(t => t.id === selType)?.name || selType;
-  const category       = categoryMap[styleName.toLowerCase()];
+  const category = CATEGORIES.find(c => c.id === selType);
+  if (!category) {
+    showToast('Please select a practice type first');
+    scrollTo(1);
+    return;
+  }
+
   const muscleFeelings = window.getMuscleFeelings ? window.getMuscleFeelings() : [];
   const isPrivate      = document.getElementById('privacy-toggle')?.checked ?? true;
   const durationVal    = parseInt(document.getElementById('dur-val').value) || 45;
+  const sessionId      = crypto.randomUUID();
 
   const payload = {
+    id:               sessionId,
     user_id:          currentUser.id,
-    category_id:      category?.id || null,
-    style_name:       styleName,
-    is_custom:        !category,
+    category_id:      category.id,
+    style_name:       category.name,
+    is_custom:        !category.is_system,
     duration_minutes: Math.max(1, durationVal),
     practice_date:    selDate.toISOString().split('T')[0],
     start_time:       document.getElementById('start-time').value || null,
@@ -1045,6 +1134,7 @@ async function savePractice() {
     notes:            document.getElementById('notes').value || null,
     intensity:        parseInt(document.getElementById('intensity').value) || null,
     muscle_feelings:  muscleFeelings,
+    focus_area_ids:   Array.from(selFocus),
     is_private:       isPrivate,
   };
 
@@ -1060,6 +1150,12 @@ async function savePractice() {
     btn.disabled = false;
     btn.innerHTML = 'Save Practice ✦';
     return;
+  }
+
+  if (mediaItems.length) {
+    btn.innerHTML = '<div class="spinner"></div> Uploading media…';
+    const failures = await uploadSessionMedia(sessionId);
+    if (failures) showToast(`Saved — ${failures} file(s) failed to upload`);
   }
 
   btn.innerHTML = '✓ Saved!';
@@ -1114,8 +1210,7 @@ function svgTap(el) {
 
 // ─── INIT ───
 updDate();
-buildTypes();
-buildFocus();
+initPage();
 </script>
 
 </body>
