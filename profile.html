@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<title>Lumen — Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://vuodmnhebsjmwdeazdtc.supabase.co'
+  const SUPABASE_KEY = 'sb_publishable_Xkhwx_hNFyRGNp0Njqne3g_qD9VdFHy'
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+</script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080807;--bg-el:#111110;--bg-ov:#1A1917;
+  --br-sub:#1E1E1C;--br-def:#2A2A27;--br-str:#3A3A35;
+  --tx-1:#E8E0D0;--tx-2:#9A9080;--tx-3:#5A5448;--tx-inv:#111110;
+  --accent:#C8A96E;--accent-dim:rgba(200,169,110,0.13);--accent-h:#D8BA80;--accent-p:#A88848;
+  --success:#7B9E87;--error:#C47070;--warning:#D4956A;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;--r-full:9999px
+}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;justify-content:center}
+.phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}
+
+.hdr{position:sticky;top:0;z-index:60;background:rgba(8,8,7,0.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--br-sub);padding:16px 20px 14px;display:flex;align-items:center;gap:12px}
+.back-btn{width:32px;height:32px;border-radius:50%;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hdr-title{font-family:'Tenor Sans',sans-serif;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-1)}
+
+.scroll{flex:1;overflow-y:auto;padding:20px 20px 60px}
+.scroll::-webkit-scrollbar{display:none}
+
+.card{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:20px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-2);margin-bottom:14px}
+
+/* Identity card */
+.id-row{display:flex;align-items:center;gap:14px}
+.id-avatar{width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;flex-shrink:0}
+.id-name{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--tx-1);line-height:1.2}
+.id-email{font-size:12px;color:var(--tx-3);margin-top:2px}
+.role-badge{margin-top:6px;display:inline-block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border-radius:var(--r-sm);padding:3px 9px}
+
+/* Join code display */
+.code-row{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:14px 16px;margin-bottom:10px}
+.code-row.inactive{opacity:0.45}
+.code-val{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);letter-spacing:.18em;flex:1}
+.code-meta{font-size:10px;color:var(--tx-3)}
+.code-actions{display:flex;gap:6px}
+.code-btn{font-size:11px;font-weight:500;background:none;border:1px solid var(--br-def);border-radius:var(--r-sm);color:var(--tx-2);cursor:pointer;padding:6px 10px;transition:all .15s;font-family:'DM Sans',sans-serif}
+.code-btn:hover{border-color:var(--accent);color:var(--accent)}
+.code-btn.danger:hover{border-color:var(--error);color:var(--error)}
+
+.btn-primary{width:100%;padding:14px;background:var(--accent);border:none;border-radius:var(--r-lg);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--tx-inv);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+.btn-primary:hover{background:var(--accent-h)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+/* Link form */
+.finput{width:100%;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-1);outline:none;transition:border-color .2s;margin-bottom:10px;-webkit-appearance:none}
+.finput:focus{border-color:var(--accent)}
+.finput::placeholder{letter-spacing:.04em;font-weight:400;text-transform:none;color:var(--tx-3)}
+.consent-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;cursor:pointer}
+.consent-row input{margin-top:2px;accent-color:var(--accent);flex-shrink:0}
+.consent-text{font-size:12px;color:var(--tx-2);line-height:1.6}
+.form-err{font-size:12px;color:var(--error);margin-top:6px;display:none}
+.form-err.show{display:block}
+
+/* Link list */
+.link-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--br-sub)}
+.link-row:last-child{border-bottom:none}
+.link-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0}
+.link-name{font-size:13px;font-weight:500;color:var(--tx-1)}
+.link-role{font-size:11px;color:var(--tx-2);text-transform:capitalize}
+.unlink-btn{margin-left:auto;font-size:11px;color:var(--error);background:rgba(196,112,112,0.1);border:1px solid rgba(196,112,112,0.3);border-radius:var(--r-sm);padding:6px 10px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.unlink-btn:hover{background:rgba(196,112,112,0.2)}
+
+.empty-hint{font-size:12px;color:var(--tx-3);padding:8px 0}
+.teacher-link{display:block;text-align:center;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 0;font-weight:500}
+.teacher-link:hover{text-decoration:underline}
+
+.logout-row{margin-top:8px}
+.logout-btn{width:100%;padding:13px;background:none;border:1px solid var(--br-def);border-radius:var(--r-lg);color:var(--tx-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px}
+.logout-btn:hover{border-color:var(--error);color:var(--error)}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(17,17,16,.2);border-top-color:var(--tx-inv);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--success);color:#fff;padding:10px 20px;border-radius:var(--r-full);font-size:13px;font-weight:500;white-space:nowrap;opacity:0;transition:all .3s;z-index:200;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="phone">
+  <div class="hdr">
+    <button class="back-btn" onclick="window.location.href='index.html'">←</button>
+    <div class="hdr-title">Profile</div>
+  </div>
+
+  <div class="scroll" id="scroll">
+
+    <!-- Identity -->
+    <div class="card">
+      <div class="id-row">
+        <div class="id-avatar" id="id-avatar">—</div>
+        <div>
+          <div class="id-name" id="id-name">—</div>
+          <div class="id-email" id="id-email">—</div>
+          <span class="role-badge" id="id-role">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teacher/Studio: Generate Join Code -->
+    <div class="card" id="codes-card" style="display:none">
+      <div class="card-title">Generate Join Code</div>
+      <div id="codes-list"></div>
+      <button class="btn-primary" id="new-code-btn" style="margin-top:6px" onclick="createNewCode()">✦ Generate New Code</button>
+      <a class="teacher-link" href="teacher.html">View My Students →</a>
+    </div>
+
+    <!-- Student: Link to a Teacher/Studio -->
+    <div class="card" id="link-card" style="display:none">
+      <div class="card-title">Link to a Teacher or Studio</div>
+      <input class="finput" id="join-code-input" type="text" maxlength="6" placeholder="Enter 6-character code" autocapitalize="characters"/>
+      <label class="consent-row">
+        <input type="checkbox" id="join-consent"/>
+        <span class="consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the Data Sharing Agreement.</span>
+      </label>
+      <button class="btn-primary" id="connect-btn" onclick="submitJoinCode()">Connect</button>
+      <div class="form-err" id="connect-err"></div>
+    </div>
+
+    <!-- Current links (both roles use this, framed differently) -->
+    <div class="card" id="links-card" style="display:none">
+      <div class="card-title" id="links-title">Your Connections</div>
+      <div id="links-list"></div>
+    </div>
+
+    <div class="logout-row">
+      <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentUser = null
+let currentUserRole = null
+
+;(async function init() {
+  const { data: { session } } = await db.auth.getSession()
+  if (!session) { window.location.href = 'login.html'; return }
+  currentUser = session.user
+
+  const { data: profile } = await db.from('profiles')
+    .select('display_name, email, role')
+    .eq('id', currentUser.id)
+    .single()
+
+  if (!profile?.role) { window.location.href = 'role-select.html'; return }
+  currentUserRole = profile.role
+
+  const name = profile.display_name || 'Practitioner'
+  document.getElementById('id-avatar').textContent = name.charAt(0).toUpperCase()
+  document.getElementById('id-name').textContent = name
+  document.getElementById('id-email').textContent = profile.email || currentUser.email || ''
+  document.getElementById('id-role').textContent = currentUserRole
+
+  if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
+    document.getElementById('codes-card').style.display = 'block'
+    document.getElementById('links-card').style.display = 'block'
+    document.getElementById('links-title').textContent = 'Linked Students'
+    await loadCodes()
+    await loadEntityLinks()
+  } else {
+    document.getElementById('link-card').style.display = 'block'
+    document.getElementById('links-card').style.display = 'block'
+    document.getElementById('links-title').textContent = 'Your Connections'
+    await loadStudentLinks()
+  }
+})()
+
+// ── JOIN CODES (teacher/studio) ──────────────────────────
+async function loadCodes() {
+  const { data } = await db.from('join_codes')
+    .select('code, is_active, created_at')
+    .eq('owner_id', currentUser.id)
+    .order('created_at', { ascending: false })
+
+  let codes = data || []
+
+  // Auto-provision a first code so the card is never empty for a new teacher/studio
+  if (!codes.length) {
+    const { data: created, error } = await db.rpc('create_join_code')
+    if (!error && created) codes = [created]
+  }
+
+  renderCodes(codes)
+}
+
+function renderCodes(codes) {
+  const el = document.getElementById('codes-list')
+  el.innerHTML = ''
+  if (!codes.length) {
+    el.innerHTML = '<div class="empty-hint">Could not load your join codes.</div>'
+    return
+  }
+  codes.forEach(c => {
+    const row = document.createElement('div')
+    row.className = 'code-row' + (c.is_active ? '' : ' inactive')
+    row.innerHTML =
+      '<span class="code-val">' + c.code + '</span>' +
+      '<span class="code-meta">' + (c.is_active ? 'Active' : 'Deactivated') + '</span>' +
+      '<div class="code-actions">' +
+        '<button class="code-btn" onclick="copyCode(\'' + c.code + '\')">Copy</button>' +
+        (c.is_active ? '<button class="code-btn danger" onclick="deactivateCode(\'' + c.code + '\')">Deactivate</button>' : '') +
+      '</div>'
+    el.appendChild(row)
+  })
+}
+
+function copyCode(code) {
+  navigator.clipboard.writeText(code).then(() => showToast('Join code copied!'))
+}
+
+async function deactivateCode(code) {
+  const { error } = await db.from('join_codes')
+    .update({ is_active: false })
+    .eq('code', code)
+    .eq('owner_id', currentUser.id)
+  if (error) { showToast('Could not deactivate — please try again'); return }
+  showToast('Code deactivated')
+  await loadCodes()
+}
+
+async function createNewCode() {
+  const btn = document.getElementById('new-code-btn')
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div> Generating…'
+  const { error } = await db.rpc('create_join_code')
+  btn.disabled = false
+  btn.innerHTML = '✦ Generate New Code'
+  if (error) { showToast('Could not generate a new code'); return }
+  await loadCodes()
+  showToast('New join code generated ✓')
+}
+
+// ── ENTITY VIEW: linked students ─────────────────────────
+async function loadEntityLinks() {
+  const { data } = await db.from('studio_linkages')
+    .select('student_id, created_at, profiles!studio_linkages_student_id_fkey(display_name)')
+    .eq('entity_id', currentUser.id)
+    .eq('status', 'active')
+
+  const el = document.getElementById('links-list')
+  el.innerHTML = ''
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-hint">No linked students yet. Share your join code above.</div>'
+    return
+  }
+  data.forEach(link => {
+    const name = link.profiles ? link.profiles.display_name : 'Unknown'
+    const row = document.createElement('div')
+    row.className = 'link-row'
+    row.innerHTML =
+      '<div class="link-avatar">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+      '<div><div class="link-name">' + name + '</div><div class="link-role">Student</div></div>'
+    el.appendChild(row)
+  })
+}
+
+// ── STUDENT VIEW: my connections ─────────────────────────
+async function loadStudentLinks() {
+  const { data } = await db.from('studio_linkages')
+    .select('entity_id, entity_type, profiles!studio_linkages_entity_id_fkey(display_name)')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'active')
+
+  const el = document.getElementById('links-list')
+  el.innerHTML = ''
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-hint">You are not linked to a teacher or studio yet.</div>'
+    return
+  }
+  data.forEach(link => {
+    const name = link.profiles ? link.profiles.display_name : 'Unknown'
+    const row = document.createElement('div')
+    row.className = 'link-row'
+    row.innerHTML =
+      '<div class="link-avatar">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+      '<div><div class="link-name">' + name + '</div><div class="link-role">' + link.entity_type + '</div></div>' +
+      '<button class="unlink-btn" onclick="unlink(\'' + link.entity_id + '\')">Unlink</button>'
+    el.appendChild(row)
+  })
+}
+
+async function unlink(entityId) {
+  const { error } = await db.from('studio_linkages')
+    .update({ status: 'revoked' })
+    .eq('student_id', currentUser.id)
+    .eq('entity_id', entityId)
+  if (error) { showToast('Could not unlink — please try again'); return }
+  showToast('Unlinked')
+  await loadStudentLinks()
+}
+
+async function submitJoinCode() {
+  const code    = (document.getElementById('join-code-input').value || '').trim().toUpperCase()
+  const consent = document.getElementById('join-consent').checked
+  const errEl   = document.getElementById('connect-err')
+  const btn     = document.getElementById('connect-btn')
+
+  errEl.classList.remove('show')
+  errEl.textContent = ''
+
+  if (!code || code.length < 4) {
+    errEl.textContent = 'Please enter a valid join code.'
+    errEl.classList.add('show')
+    return
+  }
+  if (!consent) {
+    errEl.textContent = 'You must agree to the data sharing terms to connect.'
+    errEl.classList.add('show')
+    return
+  }
+
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div> Connecting…'
+
+  const { data, error } = await db.rpc('redeem_join_code', { p_code: code })
+
+  btn.disabled = false
+  btn.innerHTML = 'Connect'
+
+  if (error) {
+    let msg = 'Could not complete the connection. Please try again.'
+    if (error.message.includes('invalid_or_expired_code')) msg = 'Invalid or expired join code. Please check with your teacher or studio.'
+    if (error.message.includes('cannot_link_to_self')) msg = 'You cannot link to your own code.'
+    if (error.message.includes('only_students_can_redeem')) msg = 'Only student accounts can link to a teacher or studio.'
+    errEl.textContent = msg
+    errEl.classList.add('show')
+    return
+  }
+
+  document.getElementById('join-code-input').value = ''
+  document.getElementById('join-consent').checked = false
+  showToast('Connected to ' + (data?.display_name || 'your teacher') + '! ✦')
+  await loadStudentLinks()
+}
+
+// ── LOGOUT ────────────────────────────────────────────────
+async function handleLogout() {
+  await db.auth.signOut()
+  window.location.href = 'login.html'
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2400)
+}
+</script>
+</body>
+</html>

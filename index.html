@@ -547,6 +547,9 @@
     <button class="nav-item" id="nav-community" onclick="switchTab('community')">
       <span class="nav-ico">🌿</span><span class="nav-lbl">Community</span>
     </button>
+    <button class="nav-item" id="nav-profile" onclick="window.location.href='profile.html'">
+      <span class="nav-ico">👤</span><span class="nav-lbl">Profile</span>
+    </button>
   </nav>
 </div>
 
@@ -1146,188 +1149,23 @@ function formatTimeAgo(iso) {
 }
 
 // ── CONNECTIONS ─────────────────────────────────────────────
+// Full connection management (generate/deactivate join codes, link by
+// code + consent, unlink) now lives in profile.html so it isn't
+// duplicated across two different join-code systems. This just shows
+// a lightweight pointer so the Community tab stays focused on the feed.
 async function loadConnections() {
   var section = document.getElementById('connections-section');
   if (!section || !currentUserRole) return;
 
-  if (currentUserRole === 'student') {
-    await renderStudentConnections(section);
-  } else {
-    await renderEntityConnections(section);
-  }
-}
-
-// Student view: join-code input form + list of their active linkages
-async function renderStudentConnections(section) {
-  section.innerHTML =
-    '<div class="section-label" style="margin-bottom:14px">Connect to a Teacher or Studio</div>' +
-    '<div class="connect-card">' +
-      '<div class="connect-card-title">Enter Join Code</div>' +
-      '<input class="join-input" id="join-code-input" type="text" maxlength="8" placeholder="e.g. ABCD1234" autocapitalize="characters"/>' +
-      '<label class="consent-row">' +
-        '<input type="checkbox" id="join-consent"/>' +
-        '<span class="consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the Data Sharing Agreement.</span>' +
-      '</label>' +
-      '<button class="connect-btn" id="connect-btn" onclick="submitJoinCode()">Connect</button>' +
-      '<div class="connect-err" id="connect-err"></div>' +
-    '</div>';
-
-  // Fetch existing linkages
-  var result = await db
-    .from('studio_linkages')
-    .select('entity_id, entity_type, status, created_at, profiles!studio_linkages_entity_id_fkey(display_name)')
-    .eq('student_id', currentUser.id)
-    .eq('status', 'active');
-
-  if (result.data && result.data.length) {
-    var listHtml = '<div class="connect-card-title" style="margin-bottom:10px">Your Connections</div><div class="link-list">';
-    result.data.forEach(function(link) {
-      var name    = link.profiles ? link.profiles.display_name : 'Unknown';
-      var initial = name.charAt(0).toUpperCase();
-      listHtml +=
-        '<div class="link-row">' +
-          '<div class="link-avatar">' + initial + '</div>' +
-          '<div>' +
-            '<div class="link-name">' + name + '</div>' +
-            '<div class="link-role">' + link.entity_type + '</div>' +
-          '</div>' +
-          '<span class="link-status">Active</span>' +
-        '</div>';
-    });
-    listHtml += '</div>';
-    section.innerHTML += '<div class="connect-card">' + listHtml + '</div>';
-  }
-}
-
-// Teacher / Studio view: display join code + list of linked students
-async function renderEntityConnections(section) {
-  // Own profile has the join_code
-  var profileResult = await db
-    .from('profiles')
-    .select('join_code, display_name')
-    .eq('id', currentUser.id)
-    .single();
-
-  var code = profileResult.data ? profileResult.data.join_code : '—';
+  var label = currentUserRole === 'student'
+    ? 'Manage your teacher/studio connections'
+    : 'Manage your join code & linked students';
 
   section.innerHTML =
-    '<div class="section-label" style="margin-bottom:14px">Your Join Code</div>' +
-    '<div class="connect-card">' +
-      '<div class="join-code-display">' +
-        '<span class="join-code-val">' + (code || '—') + '</span>' +
-        '<button class="copy-btn" onclick="copyJoinCode(\'' + code + '\')">Copy</button>' +
-      '</div>' +
-      '<div style="font-size:12px;color:var(--tx-2)">Share this code with students to link their practice data to your account.</div>' +
-    '</div>';
-
-  // Fetch linked students
-  var linkResult = await db
-    .from('studio_linkages')
-    .select('student_id, status, created_at, profiles!studio_linkages_student_id_fkey(display_name)')
-    .eq('entity_id', currentUser.id)
-    .eq('status', 'active');
-
-  if (linkResult.data && linkResult.data.length) {
-    var listHtml = '<div class="connect-card-title" style="margin-bottom:10px">Linked Students</div><div class="link-list">';
-    linkResult.data.forEach(function(link) {
-      var name    = link.profiles ? link.profiles.display_name : 'Unknown';
-      var initial = name.charAt(0).toUpperCase();
-      listHtml +=
-        '<div class="link-row">' +
-          '<div class="link-avatar">' + initial + '</div>' +
-          '<div>' +
-            '<div class="link-name">' + name + '</div>' +
-            '<div class="link-role">Student</div>' +
-          '</div>' +
-          '<span class="link-status">Active</span>' +
-        '</div>';
-    });
-    listHtml += '</div>';
-    section.innerHTML += '<div class="connect-card">' + listHtml + '</div>';
-  } else {
-    section.innerHTML += '<div class="connect-card"><div class="feed-empty" style="padding:8px 0">No linked students yet. Share your join code above.</div></div>';
-  }
-}
-
-function copyJoinCode(code) {
-  navigator.clipboard.writeText(code).then(function() {
-    showToast('Join code copied!');
-  });
-}
-
-// ── JOIN CODE SUBMISSION ─────────────────────────────────────
-async function submitJoinCode() {
-  var code    = (document.getElementById('join-code-input').value || '').trim().toUpperCase();
-  var consent = document.getElementById('join-consent').checked;
-  var errEl   = document.getElementById('connect-err');
-  var btn     = document.getElementById('connect-btn');
-
-  errEl.classList.remove('show');
-  errEl.textContent = '';
-
-  if (!code || code.length < 6) {
-    errEl.textContent = 'Please enter a valid join code.';
-    errEl.classList.add('show');
-    return;
-  }
-  if (!consent) {
-    errEl.textContent = 'You must agree to the data sharing terms to connect.';
-    errEl.classList.add('show');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Verifying…';
-
-  // Look up teacher/studio by join code (allowed by profiles_entity_public_select policy)
-  var lookupResult = await db
-    .from('profiles')
-    .select('id, display_name, role')
-    .eq('join_code', code)
-    .in('role', ['teacher', 'studio'])
-    .maybeSingle();
-
-  if (!lookupResult.data) {
-    errEl.textContent = 'Invalid join code. Please check with your teacher or studio.';
-    errEl.classList.add('show');
-    btn.disabled = false;
-    btn.textContent = 'Connect';
-    return;
-  }
-
-  var entity = lookupResult.data;
-
-  // Insert linkage — WITH CHECK in RLS validates join_code_used server-side
-  var insertResult = await db
-    .from('studio_linkages')
-    .insert({
-      student_id:     currentUser.id,
-      entity_id:      entity.id,
-      entity_type:    entity.role,
-      join_code_used: code,
-      consent_given:  true,
-      status:         'active',
-    });
-
-  if (insertResult.error) {
-    var msg = 'Could not complete the connection. Please try again.';
-    if (insertResult.error.code === '23505') {
-      msg = 'You are already connected to ' + entity.display_name + '.';
-    }
-    errEl.textContent = msg;
-    errEl.classList.add('show');
-    btn.disabled = false;
-    btn.textContent = 'Connect';
-    return;
-  }
-
-  showToast('Connected to ' + entity.display_name + '! ✦');
-  // Refresh the connections section
-  communityLoaded = false;
-  var section = document.getElementById('connections-section');
-  if (section) await renderStudentConnections(section);
-  btn.disabled = false;
-  btn.textContent = 'Connect';
+    '<a class="connect-card" href="profile.html" style="display:block;text-decoration:none;color:inherit;cursor:pointer">' +
+      '<div class="connect-card-title" style="margin-bottom:6px">Connections</div>' +
+      '<div style="font-size:13px;color:var(--tx-1)">' + label + ' →</div>' +
+    '</a>';
 }
 
 
