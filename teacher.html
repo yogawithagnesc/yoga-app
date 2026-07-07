@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <title>Lumen — My Students</title>
-<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -26,13 +26,13 @@
   --success:#7B9E87;--error:#C47070;--warning:#D4956A;
   --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;--r-full:9999px
 }
-body{background:var(--bg);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;justify-content:center}
+body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:100vh;display:flex;justify-content:center}
 .phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}
 
 .hdr{position:sticky;top:0;z-index:60;background:rgba(8,8,7,0.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--br-sub);padding:16px 20px 14px;display:flex;align-items:center;gap:12px}
-.back-btn{width:32px;height:32px;border-radius:50%;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.back-btn{width:44px;height:44px;border-radius:50%;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .back-btn:hover{border-color:var(--accent);color:var(--accent)}
-.hdr-title{font-family:'Tenor Sans',sans-serif;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-1)}
+.hdr-title{font-family:'Tenor Sans','Noto Sans TC',sans-serif;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-1)}
 
 .scroll{flex:1;overflow-y:auto;padding:20px 20px 60px}
 .scroll::-webkit-scrollbar{display:none}
@@ -46,13 +46,13 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;min-height:100vh;disp
 .cat-name{font-size:13px;color:var(--tx-1);font-weight:500}
 .cat-type{font-size:10px;color:var(--tx-3);text-transform:capitalize}
 .cat-row.inactive{opacity:0.4}
-.cat-del{margin-left:auto;font-size:11px;color:var(--error);background:rgba(196,112,112,0.1);border:1px solid rgba(196,112,112,0.3);border-radius:var(--r-sm);padding:6px 10px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.cat-del{margin-left:auto;font-size:11px;color:var(--error);background:rgba(196,112,112,0.1);border:1px solid rgba(196,112,112,0.3);border-radius:var(--r-sm);padding:6px 10px;cursor:pointer;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .cat-del:hover{background:rgba(196,112,112,0.2)}
 .cat-form{display:flex;gap:8px;margin-top:10px}
-.cat-form input{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:11px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--tx-1);outline:none}
+.cat-form input{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:11px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;color:var(--tx-1);outline:none}
 .cat-form input:focus{border-color:var(--accent)}
-.cat-form select{background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx-2)}
-.cat-add-btn{background:var(--accent);border:none;border-radius:var(--r-md);padding:0 16px;color:var(--tx-inv);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.cat-form select{background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:0 10px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-2)}
+.cat-add-btn{background:var(--accent);border:none;border-radius:var(--r-md);padding:0 16px;color:var(--tx-inv);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
 .cat-add-btn:hover{background:var(--accent-h)}
 .empty-hint{font-size:12px;color:var(--tx-3);padding:6px 0}
 

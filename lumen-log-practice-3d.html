@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Lumen — Log Practice</title>
-<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <!-- Three.js importmap -->
 <script type="importmap">
@@ -26,15 +26,15 @@
   --success:#7B9E87;--error:#C47070;--warning:#D4956A;
   --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;--r-full:9999px
 }
-body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;justify-content:center}
+body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:100vh;display:flex;justify-content:center}
 .phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}
 
 /* ── HEADER ── */
 .hdr{position:sticky;top:0;z-index:60;background:rgba(8,8,7,0.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--br-sub);padding:16px 20px 14px;display:flex;align-items:center;justify-content:space-between}
-.back-btn{width:32px;height:32px;border-radius:50%;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.back-btn{width:44px;height:44px;border-radius:50%;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .back-btn:hover{border-color:var(--accent);color:var(--accent)}
-.hdr-title{font-family:'Tenor Sans',sans-serif;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-1)}
-.save-btn{background:var(--accent);color:var(--tx-inv);border:none;border-radius:var(--r-md);padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
+.hdr-title{font-family:'Tenor Sans','Noto Sans TC',sans-serif;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-1)}
+.save-btn{background:var(--accent);color:var(--tx-inv);border:none;border-radius:var(--r-md);padding:8px 18px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
 .save-btn:hover{background:var(--accent-h)}
 
 /* ── STEP BAR ── */
@@ -54,20 +54,20 @@ body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:f
 .sec{padding:22px 20px 0}
 .sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .sec-num{width:24px;height:24px;border-radius:50%;border:1px solid var(--accent);color:var(--accent);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.sec-title{font-family:'Tenor Sans',sans-serif;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-1)}
+.sec-title{font-family:'Tenor Sans','Noto Sans TC',sans-serif;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-1)}
 .divider{height:1px;background:var(--br-sub);margin:22px 20px 0}
 
 /* ── DATE ── */
 .date-box{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color .2s;margin-bottom:10px}
 .date-box:hover,.date-box.open{border-color:var(--accent)}
-.date-day{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--tx-1);line-height:1}
+.date-day{font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:28px;font-weight:400;color:var(--tx-1);line-height:1}
 .date-month{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-top:3px}
 .date-dow{font-size:12px;color:var(--tx-2);margin-top:2px}
 .mini-cal{display:none;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:16px;margin-bottom:10px;animation:fadeIn .2s ease}
 .mini-cal.show{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.cal-nbtn{width:28px;height:28px;background:var(--bg-ov);border:1px solid var(--br-def);border-radius:var(--r-sm);color:var(--tx-2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cal-nbtn{width:44px;height:44px;background:var(--bg-ov);border:1px solid var(--br-def);border-radius:var(--r-sm);color:var(--tx-2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .cal-nbtn:hover{border-color:var(--accent);color:var(--accent)}
 .cal-mlbl{font-size:13px;font-weight:500;color:var(--tx-1)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
@@ -82,17 +82,17 @@ body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:f
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .field-wrap{display:flex;flex-direction:column;gap:6px}
 .flbl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-3)}
-.finput{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--tx-1);width:100%;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+.finput{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:11px 14px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;color:var(--tx-1);width:100%;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
 .finput:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
 .stepper{display:flex;align-items:center;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);overflow:hidden;height:44px}
 .step-btn{width:44px;height:44px;background:var(--bg-ov);border:none;color:var(--tx-2);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .step-btn:hover{background:var(--br-def);color:var(--tx-1)}
-.step-val{flex:1;text-align:center;font-size:16px;font-weight:500;color:var(--tx-1);background:var(--bg-el);border:none;outline:none;font-family:'DM Sans',sans-serif}
+.step-val{flex:1;text-align:center;font-size:16px;font-weight:500;color:var(--tx-1);background:var(--bg-el);border:none;outline:none;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .dur-unit{font-size:10px;color:var(--tx-3);text-align:center;margin-top:4px;letter-spacing:.1em}
 
 /* ── PRACTICE TYPE ── */
 .cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.cat-tab{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.cat-tab{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .cat-tab:hover{border-color:var(--br-str);color:var(--tx-1)}
 .cat-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:500}
 .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -107,7 +107,7 @@ body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:f
 
 /* ── FOCUS CHIPS ── */
 .chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{padding:7px 13px;border-radius:var(--r-full);font-size:12px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.chip{padding:7px 13px;border-radius:var(--r-full);font-size:12px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .chip:hover{border-color:var(--br-str);color:var(--tx-1)}
 .chip.sel{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 
@@ -122,12 +122,12 @@ body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:f
 .load-spinner{width:32px;height:32px;border:2px solid var(--br-str);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .load-txt{font-size:12px;color:var(--tx-3);letter-spacing:.08em}
-.load-pct{font-size:20px;font-family:'Cormorant Garamond',serif;color:var(--accent)}
+.load-pct{font-size:20px;font-family:'Cormorant Garamond','Noto Serif TC',serif;color:var(--accent)}
 
 /* Hint bar above canvas */
 .body3d-controls{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--br-sub)}
 .view-btns{display:flex;gap:6px}
-.view-btn{padding:5px 12px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:none;color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.view-btn{padding:5px 12px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:none;color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .view-btn:hover,.view-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
 .hint-txt{font-size:10px;color:var(--tx-3);letter-spacing:.05em}
 
@@ -140,7 +140,7 @@ body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:f
 .feel-pick.show{display:block}
 .fp-title{font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px}
 .fp-row{display:flex;gap:7px;flex-wrap:wrap}
-.fp-btn{padding:7px 13px;border-radius:var(--r-full);font-size:12px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.fp-btn{padding:7px 13px;border-radius:var(--r-full);font-size:12px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .fp-btn:hover{border-color:var(--br-str);color:var(--tx-1)}
 .fp-clear{border-color:rgba(196,112,112,.4);color:var(--error)}
 
@@ -164,8 +164,8 @@ body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:f
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
 .media-thumb{aspect-ratio:1;background:var(--bg-ov);border-radius:var(--r-md);border:1px solid var(--br-def);display:flex;align-items:center;justify-content:center;font-size:26px;position:relative;cursor:pointer}
-.thumb-del{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
-.media-thumb:hover .thumb-del{opacity:1}
+.thumb-del{position:absolute;top:0;right:0;width:44px;height:44px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px;cursor:pointer}
+.thumb-del-badge{width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.75);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none}
 
 /* ── MOOD + NOTES ── */
 .mood-row{display:flex;gap:8px;justify-content:space-between}
@@ -175,7 +175,7 @@ body{background:#000;font-family:'DM Sans',sans-serif;min-height:100vh;display:f
 .mood-emoji{font-size:22px}
 .mood-lbl{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx-3)}
 .mood-btn.sel .mood-lbl{color:var(--accent)}
-.notes-area{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--tx-1);width:100%;min-height:110px;outline:none;resize:none;line-height:1.7;transition:border-color .2s,box-shadow .2s}
+.notes-area{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:14px 16px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;color:var(--tx-1);width:100%;min-height:110px;outline:none;resize:none;line-height:1.7;transition:border-color .2s,box-shadow .2s}
 .notes-area:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
 .notes-area::placeholder{color:var(--tx-3)}
 .notes-footer{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--tx-3)}
@@ -184,7 +184,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 /* ── BOTTOM CTA ── */
 .bottom-cta{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(8,8,7,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--br-sub);padding:12px 20px 28px;z-index:40}
-.cta-btn{width:100%;padding:15px;background:var(--accent);border:none;border-radius:var(--r-lg);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:var(--tx-inv);cursor:pointer;transition:all .2s;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:8px}
+.cta-btn{width:100%;padding:15px;background:var(--accent);border:none;border-radius:var(--r-lg);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:15px;font-weight:600;color:var(--tx-inv);cursor:pointer;transition:all .2s;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:8px}
 .cta-btn:hover{background:var(--accent-h)}
 .cta-sub{text-align:center;font-size:11px;color:var(--tx-3);margin-top:6px;letter-spacing:.05em}
 
@@ -305,7 +305,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <input class="finput" id="custom-cat-name" placeholder="Category name (e.g. Running)" maxlength="40">
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="cta-btn" style="width:auto;flex:1;padding:11px;font-size:13px" onclick="submitCustomCategory()">Add</button>
-        <button style="width:auto;padding:0 16px;border-radius:var(--r-md);background:var(--bg-el);border:1px solid var(--br-def);color:var(--tx-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer" onclick="toggleCustomCatForm(false)">Cancel</button>
+        <button style="width:auto;padding:0 16px;border-radius:var(--r-md);background:var(--bg-el);border:1px solid var(--br-def);color:var(--tx-2);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer" onclick="toggleCustomCatForm(false)">Cancel</button>
       </div>
     </div>
     <div class="info-note">✦ Add your own, or use one shared by your teacher/studio</div>
@@ -443,16 +443,16 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
     </div>
 
-    <!-- Privacy toggle -->
-    <div class="privacy-row mt14">
+    <!-- Privacy toggle — whole row is tappable (>=44px), not just the small switch -->
+    <div class="privacy-row mt14" onclick="togglePrivacyRow()" style="cursor:pointer">
       <div>
         <div class="privacy-label">Keep this practice private</div>
         <div class="privacy-sub">Uncheck to share with linked teachers</div>
       </div>
-      <label class="toggle-wrap" aria-label="Privacy toggle">
-        <input type="checkbox" id="privacy-toggle" checked onchange="updPrivacy(this)">
+      <span class="toggle-wrap" aria-hidden="true">
+        <input type="checkbox" id="privacy-toggle" checked onchange="updPrivacy(this)" onclick="event.stopPropagation()">
         <span class="toggle-track"></span>
-      </label>
+      </span>
     </div>
   </div>
 
@@ -761,7 +761,7 @@ window.applyFeeling = function(feeling) {
   feelPick.classList.remove('show');
   pendingZone = null;
   renderAreaTags();
-  window.showToast(`${zone} marked`);
+  window.showToast(STRINGS.zoneMarked(zone));
 };
 
 // Camera presets
@@ -847,6 +847,20 @@ let currentUser = null;
 let currentUserRole = 'student';
 let CATEGORIES = [];   // practice_categories rows visible to this user (system + own + linked)
 let FOCUS_AREAS = [];  // focus_areas rows
+
+// User-facing JS-rendered text, kept in one place for a future language
+// switch (Cantonese/Chinese, per the Noto TC fonts already loaded).
+const STRINGS = {
+  selectTypeFirst:     'Please select a practice type first',
+  addCategoryFailed:   'Could not add category — please try again',
+  categoryAdded:       (name) => `${name} added ✓`,
+  zoneMarked:          (zone) => `${zone} marked`,
+  mediaLimitReached:   () => `Max ${MAX_MEDIA_FILES} files per session`,
+  mediaTooLarge:       (fileName) => `${fileName} is over 50MB — skipped`,
+  saveFailed:          'Save failed — please try again',
+  practiceSaved:       'Practice saved! ✦',
+  mediaUploadFailures: (n) => `Saved — ${n} file(s) failed to upload`,
+};
 
 async function initPage() {
   const { data: { session } } = await db.auth.getSession();
@@ -1004,14 +1018,14 @@ async function submitCustomCategory() {
     created_by: currentUser.id, visibility, is_active: true,
   }).select().single();
 
-  if (error) { console.error('Add category failed:', error); showToast('Could not add category — please try again'); return; }
+  if (error) { console.error('Add category failed:', error); showToast(STRINGS.addCategoryFailed); return; }
 
   CATEGORIES.push(data);
   selType = data.id;
   input.value = '';
   toggleCustomCatForm(false);
   buildTypeGrid();
-  showToast(`${name} added ✓`);
+  showToast(STRINGS.categoryAdded(name));
 }
 
 // ─── FOCUS ───
@@ -1033,8 +1047,8 @@ const MAX_MEDIA_BYTES = 50 * 1024 * 1024; // 50MB, matches practice-media bucket
 function handleFileSelect(e) {
   const files = Array.from(e.target.files || []);
   files.forEach(file => {
-    if (mediaItems.length >= MAX_MEDIA_FILES) { showToast(`Max ${MAX_MEDIA_FILES} files per session`); return; }
-    if (file.size > MAX_MEDIA_BYTES) { showToast(`${file.name} is over 50MB — skipped`); return; }
+    if (mediaItems.length >= MAX_MEDIA_FILES) { showToast(STRINGS.mediaLimitReached()); return; }
+    if (file.size > MAX_MEDIA_BYTES) { showToast(STRINGS.mediaTooLarge(file.name)); return; }
     const type = file.type.startsWith('video') ? 'video' : 'image';
     mediaItems.push({ file, url: URL.createObjectURL(file), type });
   });
@@ -1048,7 +1062,7 @@ function renderMedia() {
     const inner = item.type === 'image'
       ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md)">`
       : `<span style="font-size:28px">🎥</span>`;
-    t.innerHTML = inner + `<div class="thumb-del" onclick="rmMedia(${i})">✕</div>`;
+    t.innerHTML = inner + `<div class="thumb-del" onclick="rmMedia(${i})"><span class="thumb-del-badge">✕</span></div>`;
     g.appendChild(t);
   });
 }
@@ -1067,6 +1081,11 @@ function updPrivacy(el) {
   if (sub) sub.textContent = el.checked
     ? 'Only you can see this session'
     : 'Will be visible to your linked teachers after saving';
+}
+function togglePrivacyRow() {
+  const cb = document.getElementById('privacy-toggle');
+  cb.checked = !cb.checked;
+  updPrivacy(cb);
 }
 
 // ─── STEP PROGRESS ───
@@ -1104,14 +1123,14 @@ async function savePractice() {
   if (!currentUser) { window.location.href = 'login.html'; return; }
 
   if (!selType) {
-    showToast('Please select a practice type first');
+    showToast(STRINGS.selectTypeFirst);
     scrollTo(1);
     return;
   }
 
   const category = CATEGORIES.find(c => c.id === selType);
   if (!category) {
-    showToast('Please select a practice type first');
+    showToast(STRINGS.selectTypeFirst);
     scrollTo(1);
     return;
   }
@@ -1146,7 +1165,7 @@ async function savePractice() {
 
   if (error) {
     console.error('Save error:', error);
-    showToast('Save failed — please try again');
+    showToast(STRINGS.saveFailed);
     btn.disabled = false;
     btn.innerHTML = 'Save Practice ✦';
     return;
@@ -1155,12 +1174,12 @@ async function savePractice() {
   if (mediaItems.length) {
     btn.innerHTML = '<div class="spinner"></div> Uploading media…';
     const failures = await uploadSessionMedia(sessionId);
-    if (failures) showToast(`Saved — ${failures} file(s) failed to upload`);
+    if (failures) showToast(STRINGS.mediaUploadFailures(failures));
   }
 
   btn.innerHTML = '✓ Saved!';
   btn.style.background = 'var(--success)';
-  showToast('Practice saved! ✦');
+  showToast(STRINGS.practiceSaved);
   setTimeout(() => { window.location.href = 'index.html'; }, 1200);
 }
 

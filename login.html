@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <title>Lumen — Login</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Tenor+Sans&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Tenor+Sans&family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -40,7 +40,7 @@
 html, body {
   height: 100%;
   background: var(--bg);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
   color: var(--tx-1);
   overflow: hidden;
 }
@@ -94,7 +94,7 @@ html, body {
   margin-bottom: 48px;
 }
 .logo-word {
-  font-family: 'Tenor Sans', sans-serif;
+  font-family: 'Tenor Sans', 'Noto Sans TC', sans-serif;
   font-size: 36px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -111,7 +111,7 @@ html, body {
 }
 .rule-line { flex: 1; height: 1px; background: var(--accent); }
 .rule-text {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
   font-weight: 300;
   font-size: 8px;
   letter-spacing: 0.32em;
@@ -128,7 +128,7 @@ html, body {
   padding: 28px 24px;
 }
 .card-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Cormorant Garamond', 'Noto Serif TC', serif;
   font-size: 26px;
   font-weight: 300;
   color: var(--tx-1);
@@ -157,7 +157,7 @@ html, body {
   border: 1px solid var(--br-def);
   border-radius: var(--r-md);
   padding: 13px 16px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
   font-size: 15px;
   color: var(--tx-1);
   outline: none;
@@ -177,7 +177,7 @@ html, body {
   position: absolute; right: 14px; top: 50%;
   transform: translateY(-50%);
   background: none; border: none; cursor: pointer;
-  color: var(--tx-3); font-size: 16px; padding: 4px;
+  color: var(--tx-3); font-size: 16px; padding: 14px;
   transition: color 0.15s;
 }
 .pw-toggle:hover { color: var(--tx-1); }
@@ -214,7 +214,7 @@ html, body {
   border: none;
   border-radius: var(--r-lg);
   padding: 15px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -259,7 +259,7 @@ html, body {
 .btn-oauth {
   flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px;
   background: var(--bg-el); border: 1px solid var(--br-def); border-radius: var(--r-lg);
-  color: var(--tx-1); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--tx-1); font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 500;
   cursor: pointer; transition: all 0.18s;
 }
 .btn-oauth:hover { border-color: var(--accent); background: var(--bg-ov); }

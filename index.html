@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Lumen"/>
 <title>Lumen — Illuminate Your Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 
 <!-- ═══════════════════════════════════════
      STYLES
@@ -39,7 +39,7 @@
   html, body {
     height: 100%;
     background: var(--bg);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
     color: var(--tx-1);
     overflow: hidden;
   }
@@ -97,7 +97,7 @@
     background: var(--adim); border-radius: var(--r-full); padding: 6px 12px;
     font-size: 12px; font-weight: 500; color: var(--accent);
   }
-  .title { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; line-height: 1.15; color: var(--tx-1); }
+  .title { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 36px; font-weight: 300; line-height: 1.15; color: var(--tx-1); }
   .title em { font-style: italic; color: var(--accent); }
 
   /* Quote card */
@@ -109,10 +109,10 @@
   }
   .quote-card::before {
     content: '\201C'; position: absolute; top: -12px; left: 14px;
-    font-family: 'Cormorant Garamond', serif; font-size: 110px;
+    font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 110px;
     color: rgba(200,169,110,0.08); line-height: 1; pointer-events: none;
   }
-  .quote-text { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: var(--tx-1); line-height: 1.65; position: relative; }
+  .quote-text { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 16px; font-style: italic; color: var(--tx-1); line-height: 1.65; position: relative; }
   .quote-author { font-size: 11px; color: var(--tx-2); margin-top: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
 
   /* Stats */
@@ -121,14 +121,14 @@
     background: var(--card-bg); border: 1px solid var(--card-br);
     border-radius: var(--r-lg); padding: 16px 10px; text-align: center;
   }
-  .stat-n { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; color: var(--tx-1); line-height: 1; }
+  .stat-n { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 30px; font-weight: 600; color: var(--tx-1); line-height: 1; }
   .stat-l { font-size: 10px; color: var(--tx-2); margin-top: 4px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
 
   /* Log button */
   .log-wrap { margin: 0 28px 22px; }
   .log-btn {
     width: 100%; background: var(--accent); color: var(--bg); border: none;
-    border-radius: var(--r-lg); padding: 17px; font-family: 'DM Sans', sans-serif;
+    border-radius: var(--r-lg); padding: 17px; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
     font-size: 15px; font-weight: 500; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 10px;
     transition: background 0.2s, transform 0.15s; letter-spacing: 0.02em;
@@ -144,7 +144,7 @@
   .persp-btn {
     flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center;
     border: none; background: none; border-radius: var(--r-full);
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 12px; font-weight: 500;
     color: var(--tx-2); cursor: pointer; transition: all 0.2s;
   }
   .persp-btn.active { background: var(--accent); color: var(--bg); }
@@ -195,7 +195,7 @@
   .c3 { background: linear-gradient(145deg,rgba(154,144,128,0.28),rgba(154,144,128,0.08)); border: 1px solid rgba(154,144,128,0.35); }
   .c4 { background: linear-gradient(145deg,rgba(196,112,112,0.28),rgba(196,112,112,0.08)); border: 1px solid rgba(196,112,112,0.35); }
   .course-icon { font-size: 26px; margin-bottom: 10px; }
-  .course-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; color: var(--tx-1); line-height: 1.2; margin-bottom: 4px; }
+  .course-name { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 17px; font-weight: 600; color: var(--tx-1); line-height: 1.2; margin-bottom: 4px; }
   .course-meta { font-size: 11px; color: var(--tx-2); }
   .course-play {
     position: absolute; bottom: 14px; right: 14px; width: 28px; height: 28px;
@@ -211,7 +211,7 @@
   }
   .course-row:active { transform: scale(0.98); }
   .cr-icon { font-size: 26px; flex-shrink: 0; }
-  .cr-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--tx-1); }
+  .cr-name { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 18px; color: var(--tx-1); }
   .cr-meta { font-size: 12px; color: var(--tx-2); margin-top: 2px; }
   .cr-arrow { margin-left: auto; color: var(--tx-3); font-size: 18px; }
 
@@ -227,7 +227,7 @@
   .cw-card:active { transform: scale(0.98); }
   .cw-icon { font-size: 28px; flex-shrink: 0; }
   .cw-info { flex: 1; min-width: 0; }
-  .cw-title { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--tx-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cw-title { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 17px; color: var(--tx-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cw-meta { font-size: 12px; color: var(--tx-2); margin-top: 1px; margin-bottom: 7px; }
   .cw-bar-wrap { height: 3px; background: var(--br-def); border-radius: 2px; overflow: hidden; }
   .cw-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
@@ -240,7 +240,7 @@
   .feed-name { font-size: 13px; font-weight: 500; color: var(--tx-1); }
   .feed-action { font-size: 13px; color: var(--tx-2); margin-top: 2px; line-height: 1.4; }
   .feed-time { font-size: 11px; color: var(--tx-3); margin-top: 4px; }
-  .like-btn { margin-left: auto; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; background: none; border: none; padding: 4px 6px; }
+  .like-btn { margin-left: auto; min-width: 44px; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; background: none; border: none; padding: 4px 6px; }
   .like-icon { font-size: 18px; transition: transform 0.15s; }
   .like-btn:active .like-icon { transform: scale(1.4); }
   .like-count { font-size: 11px; color: var(--tx-2); }
@@ -260,20 +260,20 @@
   }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .modal-handle { width: 40px; height: 4px; background: var(--br-def); border-radius: 2px; margin: 0 auto 22px; }
-  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; margin-bottom: 22px; color: var(--tx-1); }
+  .modal-title { font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 28px; font-weight: 400; margin-bottom: 22px; color: var(--tx-1); }
   .field-label { font-size: 11px; font-weight: 500; color: var(--tx-2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
   .chip {
     padding: 8px 14px; border-radius: var(--r-full); font-size: 13px;
     border: 1.5px solid var(--br-def); background: transparent; color: var(--tx-2);
-    cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
   }
   .chip.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
   .dur-row { display: flex; gap: 8px; margin-bottom: 20px; }
   .dur-btn {
     flex: 1; padding: 12px 6px; border-radius: var(--r-md); font-size: 13px;
     border: 1.5px solid var(--br-def); background: transparent; color: var(--tx-2);
-    cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; text-align: center;
+    cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; text-align: center;
   }
   .dur-btn.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
   .mood-row { display: flex; gap: 8px; margin-bottom: 24px; }
@@ -285,7 +285,7 @@
   .mood-btn.on { border-color: var(--success); background: rgba(123,158,135,0.12); }
   .save-btn {
     width: 100%; background: var(--accent); color: var(--bg); border: none;
-    border-radius: var(--r-lg); padding: 18px; font-family: 'DM Sans', sans-serif;
+    border-radius: var(--r-lg); padding: 18px; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
     font-size: 15px; font-weight: 500; cursor: pointer; transition: background 0.2s;
   }
   .save-btn:hover { background: var(--accent-hover); }
@@ -322,18 +322,18 @@
     margin-bottom: 10px;
   }
   .join-code-val {
-    font-family: 'Cormorant Garamond', serif; font-size: 28px;
+    font-family: 'Cormorant Garamond', 'Noto Serif TC', serif; font-size: 28px;
     font-weight: 400; color: var(--accent); letter-spacing: 0.2em; flex: 1;
   }
   .copy-btn {
     font-size: 11px; color: var(--accent); background: none; border: none;
-    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-weight: 500;
     padding: 6px 10px; border-radius: var(--r-sm); transition: background 0.15s;
   }
   .copy-btn:hover { background: var(--adim); }
   .join-input {
     width: 100%; background: var(--bg); border: 1.5px solid var(--br-def);
-    border-radius: var(--r-md); padding: 12px 14px; font-family: 'DM Sans', sans-serif;
+    border-radius: var(--r-md); padding: 12px 14px; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
     font-size: 15px; font-weight: 600; letter-spacing: 0.15em;
     text-transform: uppercase; color: var(--tx-1); outline: none;
     transition: border-color 0.2s; margin-bottom: 10px;
@@ -348,7 +348,7 @@
   .consent-text { font-size: 12px; color: var(--tx-2); line-height: 1.6; }
   .connect-btn {
     width: 100%; background: var(--accent); color: var(--bg); border: none;
-    border-radius: var(--r-md); padding: 13px; font-family: 'DM Sans', sans-serif;
+    border-radius: var(--r-md); padding: 13px; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
     font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;
   }
   .connect-btn:hover { background: var(--accent-hover); }
@@ -388,7 +388,7 @@
   .dlr-del  {
     font-size: 12px; color: var(--error); background: rgba(196,112,112,0.1);
     border: 1px solid rgba(196,112,112,0.3); border-radius: var(--r-sm);
-    padding: 6px 12px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    padding: 6px 12px; cursor: pointer; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
     transition: background 0.15s;
   }
   .dlr-del:hover { background: rgba(196,112,112,0.2); }
@@ -428,7 +428,7 @@
   <!-- Auth loading overlay (shown until session confirmed) -->
   <div id="auth-overlay" style="position:fixed;inset:0;background:#080807;z-index:9999;display:flex;align-items:center;justify-content:center;">
     <div style="text-align:center">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:28px;letter-spacing:0.2em;color:#E8E0D0;margin-bottom:8px">LUMEN</div>
+      <div style="font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:28px;letter-spacing:0.2em;color:#E8E0D0;margin-bottom:8px">LUMEN</div>
       <div style="font-size:12px;color:#9A9080;letter-spacing:0.1em">ILLUMINATE YOUR PRACTICE</div>
     </div>
   </div>
@@ -634,7 +634,7 @@ let currentUserRole = null;
       const greetEl = document.querySelector('.greeting');
       if (greetEl) {
         const hour = new Date().getHours();
-        const timeGreet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        const timeGreet = hour < 12 ? STRINGS.greetingMorning : hour < 18 ? STRINGS.greetingAfternoon : STRINGS.greetingEvening;
         greetEl.textContent = timeGreet + ', ' + profile.display_name;
       }
     }
@@ -694,13 +694,34 @@ const STATE = {
   dayLogsYoga: {},
   bodyRaw: [],
   perspective: localStorage.getItem('lumen_perspective') === 'yoga' ? 'yoga' : 'global',
-  likes: {1:12, 2:34, 3:8, 4:21},
+  likes: {}, // keyed by community_feeds.id — { liked, count }, local-only (P2)
   style: 'Hatha',
   duration: '30',
   mood: '😌',
 };
 
 // FEED_DATA removed — feed is now live from community_feeds table
+
+/* ─────────────────────────────────────────
+   STRINGS — user-facing JS-rendered text kept in one place so a
+   future language switch (Cantonese/Chinese, per the Noto TC fonts
+   already loaded) only has to swap this object, not hunt through
+   the DOM-building code. Static markup text is out of scope here —
+   translating that needs per-language page variants, a bigger call
+   this app's static-HTML/no-build-step architecture doesn't take
+   in this pass.
+───────────────────────────────────────── */
+const STRINGS = {
+  greetingMorning:      'Good morning',
+  greetingAfternoon:    'Good afternoon',
+  greetingEvening:      'Good evening',
+  feedEmptyNoActivity:  'No public activity yet. Log a practice and share it!',
+  bodyStatusEmpty:      'Log a practice with the body map to see your Body Status here.',
+  toastDeleteFailed:    'Delete failed — please try again',
+  toastSessionRemoved:  'Session removed',
+  toastSessionLogged:   '🧘 Session logged! Great work!',
+  toastAlreadyLogged:   '✓ Already logged today!',
+};
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_LABELS = ['S','M','T','W','T','F','S'];
@@ -991,7 +1012,7 @@ function renderBodyStatus() {
 
   var hasAnyFeelings = STATE.bodyRaw.some(function(log) { return (log.muscle_feelings || []).length; });
   if (!hasAnyFeelings) {
-    el.innerHTML = '<div class="feed-empty">Log a practice with the body map to see your Body Status here.</div>';
+    el.innerHTML = '<div class="feed-empty">' + STRINGS.bodyStatusEmpty + '</div>';
     return;
   }
 
@@ -1039,7 +1060,7 @@ function openDayLogs(day) {
 
 async function deleteLog(logId, day) {
   var result = await db.from('practice_logs').delete().eq('id', logId);
-  if (result.error) { showToast('Delete failed — please try again'); return; }
+  if (result.error) { showToast(STRINGS.toastDeleteFailed); return; }
 
   if (STATE.dayLogs && STATE.dayLogs[day]) {
     STATE.dayLogs[day] = STATE.dayLogs[day].filter(function(l) { return l.id !== logId; });
@@ -1057,7 +1078,7 @@ async function deleteLog(logId, day) {
   }
   buildCalendar();
   closeDayModal();
-  showToast('Session removed');
+  showToast(STRINGS.toastSessionRemoved);
   // Stats counters update via Realtime subscription when trigger fires
 }
 
@@ -1097,7 +1118,7 @@ async function loadFeed() {
   feedEl.innerHTML = '';
 
   if (!result.data || !result.data.length) {
-    feedEl.innerHTML = '<div class="feed-empty">No public activity yet. Log a practice and share it!</div>';
+    feedEl.innerHTML = '<div class="feed-empty">' + STRINGS.feedEmptyNoActivity + '</div>';
   } else {
     result.data.forEach(function(item) { appendFeedCard(feedEl, item, false); });
   }
@@ -1121,6 +1142,9 @@ async function loadFeed() {
 function appendFeedCard(container, item, prepend) {
   var initial  = (item.display_name || 'U').charAt(0).toUpperCase();
   var timeText = formatTimeAgo(item.created_at);
+  if (!STATE.likes[item.id]) STATE.likes[item.id] = { liked: false, count: 0 };
+  var likeState = STATE.likes[item.id];
+
   var div = document.createElement('div');
   div.className = 'feed-item';
   div.innerHTML =
@@ -1129,12 +1153,26 @@ function appendFeedCard(container, item, prepend) {
       '<div class="feed-name">'   + (item.display_name || 'Anonymous') + '</div>' +
       '<div class="feed-action">' + item.action_text + '</div>' +
       '<div class="feed-time">'   + timeText + '</div>' +
-    '</div>';
+    '</div>' +
+    '<button class="like-btn" onclick="toggleLike(\'' + item.id + '\', this)">' +
+      '<span class="like-icon">' + (likeState.liked ? '❤️' : '🤍') + '</span>' +
+      '<span class="like-count">' + likeState.count + '</span>' +
+    '</button>';
   if (prepend) {
     container.insertBefore(div, container.firstChild);
   } else {
     container.appendChild(div);
   }
+}
+
+// Local-only for now (P2) — likes are not persisted to Supabase yet.
+function toggleLike(id, btn) {
+  var state = STATE.likes[id] || { liked: false, count: 0 };
+  state.liked = !state.liked;
+  state.count += state.liked ? 1 : -1;
+  STATE.likes[id] = state;
+  btn.querySelector('.like-icon').textContent = state.liked ? '❤️' : '🤍';
+  btn.querySelector('.like-count').textContent = state.count;
 }
 
 function formatTimeAgo(iso) {
@@ -1238,7 +1276,7 @@ function saveSession() {
     updateStats();
   }
   closeModal();
-  showToast(isNew ? '🧘 Session logged! Great work!' : '✓ Already logged today!');
+  showToast(isNew ? STRINGS.toastSessionLogged : STRINGS.toastAlreadyLogged);
 }
 
 
