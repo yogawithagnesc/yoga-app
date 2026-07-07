@@ -136,6 +136,35 @@
   .log-btn:hover { background: var(--accent-hover); }
   .log-btn:active { background: var(--accent-pressed); transform: scale(0.98); }
 
+  /* Dual-perspective toggle */
+  .perspective-toggle {
+    display: flex; background: var(--card-bg); border: 1px solid var(--card-br);
+    border-radius: var(--r-full); padding: 3px; margin: 0 28px 22px;
+  }
+  .persp-btn {
+    flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center;
+    border: none; background: none; border-radius: var(--r-full);
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    color: var(--tx-2); cursor: pointer; transition: all 0.2s;
+  }
+  .persp-btn.active { background: var(--accent); color: var(--bg); }
+
+  /* Body Status */
+  .body-status-card {
+    background: var(--card-bg); border: 1px solid var(--card-br);
+    border-radius: var(--r-lg); padding: 4px 18px;
+  }
+  .body-status-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 0; border-bottom: 1px solid var(--br-sub);
+  }
+  .body-status-row:last-child { border-bottom: none; }
+  .bsr-label { font-size: 13px; color: var(--tx-1); font-weight: 500; }
+  .bsr-badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: var(--r-sm); padding: 4px 10px;
+  }
+
   /* Calendar */
   .section { margin: 0 28px 24px; }
   .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tx-2); margin-bottom: 14px; }
@@ -424,6 +453,11 @@
         <div class="title">Your <em>practice</em><br/>awaits</div>
       </div>
 
+      <div class="perspective-toggle" id="perspective-toggle">
+        <button class="persp-btn" id="persp-yoga" onclick="setPerspective('yoga')">Yoga Journey</button>
+        <button class="persp-btn" id="persp-global" onclick="setPerspective('global')">All-Round Fitness</button>
+      </div>
+
       <div class="quote-card">
         <div class="quote-text">Yoga is the journey of the self, through the self, to the self.</div>
         <div class="quote-author">— The Bhagavad Gita</div>
@@ -450,6 +484,13 @@
       <div class="section">
         <div class="section-label" id="cal-label">March 2026</div>
         <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Body Status <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 14 days</span></div>
+        <div class="body-status-card">
+          <div id="body-status-rows"></div>
+        </div>
       </div>
     </div>
 
@@ -577,9 +618,12 @@ let currentUserRole = null;
     currentUserRole = profile.role;
 
     // Populate live stats into STATE
-    STATE.streak   = profile.global_streak_count   || 0;
-    STATE.sessions = profile.global_total_sessions  || 0;
-    STATE.mins     = profile.global_total_minutes   || 0;
+    STATE.streak     = profile.global_streak_count   || 0;
+    STATE.sessions   = profile.global_total_sessions  || 0;
+    STATE.mins       = profile.global_total_minutes   || 0;
+    STATE.yogaStreak   = profile.yoga_streak_count    || 0;
+    STATE.yogaSessions = profile.yoga_total_sessions  || 0;
+    STATE.yogaMins     = profile.yoga_total_minutes   || 0;
     updateStats();
 
     // Personalised greeting
@@ -600,18 +644,27 @@ let currentUserRole = null;
         table:  'profiles',
         filter: `id=eq.${currentUser.id}`,
       }, (payload) => {
-        STATE.streak   = payload.new.global_streak_count;
-        STATE.sessions = payload.new.global_total_sessions;
-        STATE.mins     = payload.new.global_total_minutes;
+        STATE.streak       = payload.new.global_streak_count;
+        STATE.sessions     = payload.new.global_total_sessions;
+        STATE.mins         = payload.new.global_total_minutes;
+        STATE.yogaStreak   = payload.new.yoga_streak_count;
+        STATE.yogaSessions = payload.new.yoga_total_sessions;
+        STATE.yogaMins     = payload.new.yoga_total_minutes;
         updateStats();
       })
       .subscribe();
+
+    // Restore the dashboard perspective toggle and reflect it in the UI
+    setPerspectiveUI(STATE.perspective);
 
     // Load actual practice days for the calendar
     loadMonthLogs();
 
     // Load in-progress videos for the Continue Watching shelf
     loadContinueWatching();
+
+    // Load last-14-days muscle feelings for the Body Status widget
+    loadBodyStatus();
 
   } catch (err) {
     console.error('Auth check failed:', err);
@@ -629,7 +682,15 @@ const STATE = {
   streak: 0,
   sessions: 0,
   mins: 0,
+  yogaStreak: 0,
+  yogaSessions: 0,
+  yogaMins: 0,
   practiced: new Set(),
+  practicedYoga: new Set(),
+  dayLogs: {},
+  dayLogsYoga: {},
+  bodyRaw: [],
+  perspective: localStorage.getItem('lumen_perspective') === 'yoga' ? 'yoga' : 'global',
   likes: {1:12, 2:34, 3:8, 4:21},
   style: 'Hatha',
   duration: '30',
@@ -646,16 +707,37 @@ const DAY_LABELS = ['S','M','T','W','T','F','S'];
    3. INIT — Build UI on page load
 ───────────────────────────────────────── */
 window.addEventListener('DOMContentLoaded', function() {
+  setPerspectiveUI(STATE.perspective);
   buildCalendar();
   buildModal();
   updateStats();
 });
 
 function updateStats() {
-  document.getElementById('streak-count').textContent = STATE.streak;
-  document.getElementById('s-sessions').textContent = STATE.sessions;
-  document.getElementById('s-streak').textContent = STATE.streak;
-  document.getElementById('s-mins').textContent = STATE.mins;
+  var yoga    = STATE.perspective === 'yoga';
+  var streak  = yoga ? STATE.yogaStreak   : STATE.streak;
+  var sessions= yoga ? STATE.yogaSessions : STATE.sessions;
+  var mins    = yoga ? STATE.yogaMins     : STATE.mins;
+  document.getElementById('streak-count').textContent = streak;
+  document.getElementById('s-sessions').textContent = sessions;
+  document.getElementById('s-streak').textContent = streak;
+  document.getElementById('s-mins').textContent = mins;
+}
+
+/* ─────────────────────────────────────────
+   DUAL-PERSPECTIVE TOGGLE
+───────────────────────────────────────── */
+function setPerspectiveUI(mode) {
+  document.getElementById('persp-yoga').classList.toggle('active', mode === 'yoga');
+  document.getElementById('persp-global').classList.toggle('active', mode === 'global');
+}
+function setPerspective(mode) {
+  STATE.perspective = mode;
+  localStorage.setItem('lumen_perspective', mode);
+  setPerspectiveUI(mode);
+  updateStats();
+  buildCalendar();
+  renderBodyStatus();
 }
 
 
@@ -685,14 +767,16 @@ function buildCalendar() {
     grid.appendChild(el);
   }
 
+  var practicedSet = STATE.perspective === 'yoga' ? STATE.practicedYoga : STATE.practiced;
+
   for (var d = 1; d <= daysInMonth; d++) {
     var el = document.createElement('div');
     var classes = ['cal-cell'];
-    if (STATE.practiced.has(d)) classes.push('done');
+    if (practicedSet.has(d)) classes.push('done');
     if (d === today) classes.push('today');
     el.className = classes.join(' ');
     el.textContent = d;
-    if (STATE.practiced.has(d)) {
+    if (practicedSet.has(d)) {
       el.addEventListener('click', (function(day) {
         return function() { openDayLogs(day); };
       })(d));
@@ -712,20 +796,30 @@ async function loadMonthLogs() {
 
   var result = await db
     .from('practice_logs')
-    .select('id, practice_date, style_name, duration_minutes')
+    .select('id, practice_date, style_name, duration_minutes, practice_categories(category_type)')
     .eq('user_id', currentUser.id)
     .gte('practice_date', start)
     .lte('practice_date', end);
 
-  STATE.practiced = new Set();
-  STATE.dayLogs   = {};
+  STATE.practiced     = new Set();
+  STATE.practicedYoga = new Set();
+  STATE.dayLogs       = {};
+  STATE.dayLogsYoga   = {};
 
   if (result.data) {
     result.data.forEach(function(log) {
-      var day = new Date(log.practice_date + 'T00:00:00').getDate();
+      var day    = new Date(log.practice_date + 'T00:00:00').getDate();
+      var isYoga = !!(log.practice_categories && log.practice_categories.category_type === 'yoga');
+
       STATE.practiced.add(day);
       if (!STATE.dayLogs[day]) STATE.dayLogs[day] = [];
       STATE.dayLogs[day].push(log);
+
+      if (isYoga) {
+        STATE.practicedYoga.add(day);
+        if (!STATE.dayLogsYoga[day]) STATE.dayLogsYoga[day] = [];
+        STATE.dayLogsYoga[day].push(log);
+      }
     });
   }
   buildCalendar();
@@ -804,10 +898,119 @@ async function loadContinueWatching() {
 }
 
 /* ─────────────────────────────────────────
+   BODY STATUS — V1 fatigue analytics (§3.2.3)
+   Aggregates muscle_feelings from the last 14 days across the six
+   tracked zones. Score per entry: sore +3, tight +2, worked +1,
+   strong -1; weighted x1.0 for days 0-4, x0.6 for days 5-9, x0.3 for
+   days 10-13. The score->level cutoffs (>4 fatigued, >1 watch, else
+   ok) aren't specified in the PRD — calibrated so a single "sore"
+   today reads as Watch, and two sore/tight entries push to Fatigued.
+───────────────────────────────────────── */
+var BODY_CATEGORIES  = ['Shoulders', 'Lower Back', 'Hamstrings', 'Hips', 'Knees', 'Core'];
+var BODY_ZONE_MAP     = {
+  'Shoulder (Front)': 'Shoulders',
+  'Rear Deltoid':     'Shoulders',
+  'Lower Back':       'Lower Back',
+  'Hamstring':        'Hamstrings',
+  'Hip Flexor':       'Hips',
+  'Glute':            'Hips',
+  'Knee':             'Knees',
+  'Abs / Core':       'Core',
+  'Lower Abs':        'Core',
+  'Oblique':          'Core',
+};
+var BODY_FEELING_WEIGHT = { sore: 3, tight: 2, worked: 1, strong: -1 };
+var BODY_LEVELS = {
+  ok:       { label: 'Ok',       color: 'var(--success)', bg: 'rgba(123,158,135,0.12)' },
+  watch:    { label: 'Watch',    color: 'var(--warning)', bg: 'rgba(212,149,106,0.12)' },
+  fatigued: { label: 'Fatigued', color: 'var(--error)',   bg: 'rgba(196,112,112,0.12)' },
+};
+
+function zoneToBodyCategory(rawZone) {
+  var base = (rawZone || '').replace(/^[LR] /, '');
+  return BODY_ZONE_MAP[base] || null;
+}
+
+async function loadBodyStatus() {
+  if (!currentUser) return;
+  var now   = new Date();
+  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 13).toISOString().split('T')[0];
+  var end   = now.toISOString().split('T')[0];
+
+  var result = await db
+    .from('practice_logs')
+    .select('practice_date, muscle_feelings, practice_categories(category_type)')
+    .eq('user_id', currentUser.id)
+    .gte('practice_date', start)
+    .lte('practice_date', end);
+
+  STATE.bodyRaw = result.data || [];
+  renderBodyStatus();
+}
+
+function computeBodyStatus() {
+  var scores = {};
+  BODY_CATEGORIES.forEach(function(c) { scores[c] = 0; });
+
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var yogaOnly = STATE.perspective === 'yoga';
+
+  STATE.bodyRaw.forEach(function(log) {
+    if (yogaOnly && !(log.practice_categories && log.practice_categories.category_type === 'yoga')) return;
+
+    var logDate = new Date(log.practice_date + 'T00:00:00');
+    var daysAgo = Math.round((today - logDate) / 86400000);
+    if (daysAgo < 0 || daysAgo > 13) return;
+    var weight = daysAgo <= 4 ? 1.0 : daysAgo <= 9 ? 0.6 : 0.3;
+
+    (log.muscle_feelings || []).forEach(function(mf) {
+      var cat = zoneToBodyCategory(mf.zone);
+      if (!cat) return;
+      var fw = BODY_FEELING_WEIGHT[mf.feeling];
+      if (fw === undefined) return;
+      scores[cat] += fw * weight;
+    });
+  });
+
+  return scores;
+}
+
+function levelForScore(score) {
+  if (score > 4) return BODY_LEVELS.fatigued;
+  if (score > 1) return BODY_LEVELS.watch;
+  return BODY_LEVELS.ok;
+}
+
+function renderBodyStatus() {
+  var el = document.getElementById('body-status-rows');
+  if (!el) return;
+
+  var hasAnyFeelings = STATE.bodyRaw.some(function(log) { return (log.muscle_feelings || []).length; });
+  if (!hasAnyFeelings) {
+    el.innerHTML = '<div class="feed-empty">Log a practice with the body map to see your Body Status here.</div>';
+    return;
+  }
+
+  var scores = computeBodyStatus();
+  el.innerHTML = '';
+  BODY_CATEGORIES.forEach(function(cat) {
+    var lvl = levelForScore(scores[cat]);
+    var row = document.createElement('div');
+    row.className = 'body-status-row';
+    row.innerHTML =
+      '<span class="bsr-label">' + cat + '</span>' +
+      '<span class="bsr-badge" style="color:' + lvl.color + ';background:' + lvl.bg + '">' + lvl.label + '</span>';
+    el.appendChild(row);
+  });
+}
+
+/* ─────────────────────────────────────────
    DAY LOGS MODAL — tap a logged day to see / delete sessions
 ───────────────────────────────────────── */
 function openDayLogs(day) {
-  var logs = (STATE.dayLogs && STATE.dayLogs[day]) || [];
+  var source = STATE.perspective === 'yoga' ? STATE.dayLogsYoga : STATE.dayLogs;
+  var logs = (source && source[day]) || [];
   if (!logs.length) return;
 
   var now   = new Date();
@@ -840,6 +1043,13 @@ async function deleteLog(logId, day) {
     if (!STATE.dayLogs[day].length) {
       STATE.practiced.delete(day);
       delete STATE.dayLogs[day];
+    }
+  }
+  if (STATE.dayLogsYoga && STATE.dayLogsYoga[day]) {
+    STATE.dayLogsYoga[day] = STATE.dayLogsYoga[day].filter(function(l) { return l.id !== logId; });
+    if (!STATE.dayLogsYoga[day].length) {
+      STATE.practicedYoga.delete(day);
+      delete STATE.dayLogsYoga[day];
     }
   }
   buildCalendar();
