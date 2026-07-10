@@ -98,6 +98,16 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       </div>
     </div>
 
+    <div class="card">
+      <div class="section-label">Shared Focus Areas</div>
+      <div id="focus-list"></div>
+      <div class="cat-form">
+        <input type="text" id="focus-label" placeholder="Focus name (e.g. Wrists)" maxlength="30">
+        <button class="cat-add-btn" onclick="addFocus()">Add</button>
+      </div>
+      <div class="empty-hint" style="margin-top:4px">Shared focuses appear as "Recommended" badges on your linked students' log screen.</div>
+    </div>
+
     <div class="section-label">Linked Students</div>
     <div id="students-list"></div>
 
@@ -118,7 +128,7 @@ let currentUser = null
     return
   }
 
-  await Promise.all([loadCategories(), loadStudents()])
+  await Promise.all([loadCategories(), loadFocusAreas(), loadStudents()])
 })()
 
 // ── SHARED CATEGORIES ─────────────────────────────────────
@@ -167,6 +177,52 @@ async function deactivateCategory(id) {
     .eq('created_by', currentUser.id)
   if (error) { console.error('Deactivate category failed:', error); return }
   await loadCategories()
+}
+
+// ── SHARED FOCUS AREAS ────────────────────────────────────
+async function loadFocusAreas() {
+  const { data } = await db.from('focus_areas')
+    .select('id, label, is_active')
+    .eq('created_by', currentUser.id)
+    .eq('visibility', 'linked')
+    .order('created_at', { ascending: false })
+
+  const el = document.getElementById('focus-list')
+  el.innerHTML = ''
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-hint">No shared focuses yet. Add one below — it will appear as Recommended for your linked students.</div>'
+    return
+  }
+  data.forEach(f => {
+    const row = document.createElement('div')
+    row.className = 'cat-row' + (f.is_active ? '' : ' inactive')
+    row.innerHTML =
+      '<div><div class="cat-name">' + f.label + '</div></div>' +
+      (f.is_active ? '<button class="cat-del" onclick="deactivateFocus(\'' + f.id + '\')">Remove</button>' : '<span class="cat-type" style="margin-left:auto">Removed</span>')
+    el.appendChild(row)
+  })
+}
+
+async function addFocus() {
+  const input = document.getElementById('focus-label')
+  const label = input.value.trim()
+  if (!label) return
+
+  const { error } = await db.from('focus_areas').insert({
+    label, created_by: currentUser.id, visibility: 'linked', is_active: true,
+  })
+  if (error) { console.error('Add focus failed:', error); return }
+  input.value = ''
+  await loadFocusAreas()
+}
+
+async function deactivateFocus(id) {
+  const { error } = await db.from('focus_areas')
+    .update({ is_active: false })
+    .eq('id', id)
+    .eq('created_by', currentUser.id)
+  if (error) { console.error('Deactivate focus failed:', error); return }
+  await loadFocusAreas()
 }
 
 // ── LINKED STUDENTS ───────────────────────────────────────

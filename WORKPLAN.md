@@ -11,9 +11,9 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 
 | # | Milestone | PRD Sections | Status | Model |
 |---|-----------|--------------|--------|-------|
-| M0 | Feed-likes fix + housekeeping | §3.6 (feed) | ✅ This session | Haiku 4.5 |
-| M1 | Finish P1 verification | §3.1–3.4 | Pending | Haiku 4.5 |
-| M2 | Dynamic categorization engine | §3.2.1–3.2.2 | Not started | Sonnet 5 |
+| M0 | Feed-likes fix + housekeeping | §3.6 (feed) | ✅ Done | Haiku 4.5 |
+| M1 | Finish P1 verification | §3.1–3.4 | ✅ Done | Haiku 4.5 |
+| M2 | Dynamic categorization engine | §3.2.1–3.2.2 | ✅ Done (pending migration run + live test) | Sonnet 5 |
 | M3 | SVG Body Map + 14-day rest engine | §3.2.3 | Not started | Sonnet 5 |
 | M4 | Class scheduling & booking framework | §3.5, §8 | Not started | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
@@ -37,6 +37,10 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 
 ---
 
+## M0/M1 — Verified Live ✅
+
+Both closed out: password reset required correcting the Supabase **Site URL** (was `localhost:3000`, now the production Vercel URL) and switching **Email Provider** off Custom SMTP back to the Supabase default (Custom SMTP had no host configured, so the recovery link's own send silently 429'd during retries — resolved by waiting out the rate limit and testing with a fresh email). Studio dashboard, join-code redemption, custom categories, dual-perspective toggle and Body Status widget were confirmed already working from the P1 code.
+
 ## M1 — Finish P1 Verification
 
 Close out the remaining P1 checklist items. Mostly manual QA plus small fixes.
@@ -53,7 +57,11 @@ Close out the remaining P1 checklist items. Mostly manual QA plus small fixes.
 
 ---
 
-## M2 — Dynamic Categorization Engine (PRD §3.2.1–3.2.2)
+## M2 — Dynamic Categorization Engine (PRD §3.2.1–3.2.2) ✅ Implemented
+
+**Delivered:** `schema_phase9_categorization_engine.sql` (new `practice_groups` + `practice_group_items` tables, seed trigger + backfill for existing profiles, `focus_areas` extended with `created_by`/`visibility`) plus a rewrite of the category/focus section of `lumen-log-practice-3d.html` (dynamic group tabs replacing the hardcoded Yoga/Movement/Breathwork tabs, inline rename, `+ Category` add, pointer-events drag-and-drop of practice-type chips between groups, custom focus creation, "Recommended" badges for teacher/studio-promoted focuses) and a new "Shared Focus Areas" card in `teacher.html`.
+
+**Action required:** run `schema_phase9_categorization_engine.sql` in the Supabase SQL Editor, then live-test: new account shows Yoga + Fitness tabs; drag a type between tabs on both desktop and mobile and confirm it persists on reload; rename a category; add a custom category and a custom focus; confirm a teacher's shared focus shows "Recommended" on a linked student's log screen.
 
 **Scope:**
 - Seed exactly two default categories (Yoga, Fitness) per profile on account creation (extend `handle_new_user` trigger or a seeding function).

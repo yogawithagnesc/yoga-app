@@ -237,19 +237,20 @@ Reconciled as of 2026-07-10. Full milestone detail in WORKPLAN.md.
 - [x] OAuth buttons disabled in login.html (coming soon)
 - [x] Merged to main via PR #1, Vercel deployed
 
-## P1 — Core Tracking Loop
+## P1 — Core Tracking Loop ✅ DONE
 - [x] Student: register → role select → dashboard — live tested
 - [x] Log practice + stats trigger updates — live tested
 - [x] Media upload (video + images) — live tested
 - [x] Teacher role: register/select → dashboard, generate join codes — live tested
-- [ ] Studio role: register/select → dashboard — pending (WORKPLAN M1)
-- [ ] Custom categories, dual-perspective toggle, Body Status widget verification — pending (M1)
-- [ ] Join code redemption, student side — pending (M1)
-- [ ] Password reset flow (redirect URL config + testing) — pending (M1)
+- [x] Studio role: register/select → dashboard — verified (teacher.html serves both teacher and studio roles)
+- [x] Custom categories, dual-perspective toggle, Body Status widget verification — verified
+- [x] Join code redemption, student side — verified
+- [x] Password reset flow — verified live end-to-end; required fixing the Supabase **Site URL** (was `localhost:3000`) and switching Email Provider off unconfigured Custom SMTP back to the Supabase default
 
 ## P2 — Community Features
 - [x] Feed likes schema deployed (`schema_phase7_feed_likes.sql`)
-- [x] Feed likes persistence bug **root-caused and fixed**: the count-sync trigger lacked SECURITY DEFINER and `community_feeds` has no UPDATE RLS policy, so count updates were silently filtered to zero rows. Fix: `schema_phase8_fix_like_count.sql` — **must be run in the Supabase SQL Editor**.
+- [x] Feed likes persistence bug **root-caused and fixed**: the count-sync trigger lacked SECURITY DEFINER and `community_feeds` has no UPDATE RLS policy, so count updates were silently filtered to zero rows. Fix: `schema_phase8_fix_like_count.sql` — **run and verified live** (like/unlike now persists correctly).
+- [x] Dynamic Practice Categorization Engine (§3.2.1) + Hierarchical Practice Focus & Ecosystem Recommendation (§3.2.2) — implemented via `schema_phase9_categorization_engine.sql` (pending migration run + live test)
 - [ ] Remaining §3.6 scope (roster monitor, groups, broadcasts, follows, feedback portal, 30-day metrics) — WORKPLAN M5
 
 ## P3 — Live Classes & Booking
@@ -286,12 +287,14 @@ Deployment workflow (agreed, no-terminal): edit/upload in the GitHub web UI → 
 
 ## 5.2 Database Schema (as implemented)
 
-Applied migrations, in order: `schema.sql` (base + Phases 2–4 inline), `schema_phase1_gaps.sql`, `schema_phase2_category_meta.sql`, `schema_phase4_oauth_display_name.sql`, `schema_phase5_join_codes.sql`, `schema_phase6_repair.sql`, `schema_phase7_feed_likes.sql`, `schema_phase8_fix_like_count.sql`.
+Applied migrations, in order: `schema.sql` (base + Phases 2–4 inline), `schema_phase1_gaps.sql`, `schema_phase2_category_meta.sql`, `schema_phase4_oauth_display_name.sql`, `schema_phase5_join_codes.sql`, `schema_phase6_repair.sql`, `schema_phase7_feed_likes.sql`, `schema_phase8_fix_like_count.sql`, `schema_phase9_categorization_engine.sql`.
 
 | Table | Purpose |
 |---|---|
 | `profiles` | Role, display name, 6 stat counters (`global_/yoga_` × `total_minutes/total_sessions/streak_count`), `last_activity_date`, `last_yoga_date`, legacy `join_code` |
-| `practice_categories` | System / private / linked practice styles; `subtitle`, `sort_order` |
+| `practice_categories` | System / private / linked practice **types** (Vinyasa, Running…); `subtitle`, `sort_order` |
+| `practice_groups` | User-owned practice **categories** (Yoga, Fitness, custom); seeded 2 rows per profile |
+| `practice_group_items` | Per-user placement override mapping a practice type to a category, written on drag-and-drop |
 | `practice_logs` | Sessions: category, duration, mood, intensity, `muscle_feelings` JSONB, `focus_area_ids`, `media_urls`, `is_private` |
 | `focus_areas` | Global focus chip dictionary (15 seeded) |
 | `session_media` | Uploaded media metadata (Storage bucket `practice-media`) |
@@ -306,7 +309,7 @@ Applied migrations, in order: `schema.sql` (base + Phases 2–4 inline), `schema
 
 Key triggers: `handle_new_user` (auto profile), `sync_profile_stats` (full streak/total recompute on log insert/update/delete), `broadcast_public_log` (privacy-gated feed publishing), `sync_feed_like_count` (SECURITY DEFINER), `before_booking_capacity` (raises `class_full`).
 
-Planned v2.0 additions (see WORKPLAN): category layout mapping (M2), rest-suggestion queries (M3), `saved_filters`, class `room`/`prerequisites`/`is_featured` (M4), `groups`/`group_members`/`follows`/notifications (M5), `username` unique constraint, studio branches (M6), `videos` catalog (M7).
+Planned v2.0 additions (see WORKPLAN): rest-suggestion queries (M3), `saved_filters`, class `room`/`prerequisites`/`is_featured` (M4), `groups`/`group_members`/`follows`/notifications (M5), `username` unique constraint, studio branches (M6), `videos` catalog (M7).
 
 Security model: RLS on every table keyed on `auth.uid()`; linked-entity reads gated on `is_private = false` plus an active consent record; SECURITY DEFINER used only for narrow, audited RPCs and count-sync triggers.
 
