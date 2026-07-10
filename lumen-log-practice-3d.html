@@ -1176,6 +1176,12 @@ function buildTypeGrid() {
 
     const typeNameEl = nameDiv.querySelector('.type-name');
 
+    // Prevent clicks on type name from selecting the card
+    typeNameEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+    });
+
     // Double-click / double-tap to rename
     let lastTap = 0;
     typeNameEl.addEventListener('dblclick', (e) => {
