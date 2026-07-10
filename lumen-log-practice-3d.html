@@ -1155,9 +1155,48 @@ function buildTypeGrid() {
   list.forEach(t=>{
     const card=document.createElement('div'); card.className='type-card'+(selType===t.id?' sel':'');
     card.dataset.categoryId = t.id;
+    card.dataset.editing = 'false';
     const sub = t.subtitle || (t.is_system ? '' : 'Custom');
-    card.innerHTML=`<div class="type-icon">${t.icon||'✦'}</div><div style="flex:1;min-width:0"><div class="type-name">${t.name}</div><div class="type-sub">${sub}</div></div><div class="type-chk">${selType===t.id?'✓':''}</div>`;
-    card.onclick=()=>{ if (card.dataset.dragged) { delete card.dataset.dragged; return; } selType=t.id; buildTypeGrid(); };
+    const nameDiv = document.createElement('div');
+    nameDiv.style.flex = '1';
+    nameDiv.style.minWidth = '0';
+    nameDiv.innerHTML = `<div class="type-name">${t.name}</div><div class="type-sub">${sub}</div>`;
+
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'type-icon';
+    iconDiv.textContent = t.icon || '✦';
+
+    const chkDiv = document.createElement('div');
+    chkDiv.className = 'type-chk';
+    chkDiv.textContent = selType===t.id?'✓':'';
+
+    card.appendChild(iconDiv);
+    card.appendChild(nameDiv);
+    card.appendChild(chkDiv);
+
+    const typeNameEl = nameDiv.querySelector('.type-name');
+
+    // Double-click / double-tap to rename
+    let lastTap = 0;
+    typeNameEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      startRenameType(typeNameEl, t, card);
+    });
+    typeNameEl.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 350) {
+        e.stopPropagation();
+        e.preventDefault();
+        startRenameType(typeNameEl, t, card);
+      }
+      lastTap = now;
+    });
+
+    card.onclick=()=>{
+      if (card.dataset.dragged || card.dataset.editing === 'true') { delete card.dataset.dragged; return; }
+      selType=t.id; buildTypeGrid();
+    };
     attachTypeDragHandlers(card, t);
     grid.appendChild(card);
   });
@@ -1168,6 +1207,81 @@ function buildTypeGrid() {
   addCard.innerHTML=`<div class="type-icon" style="color:var(--accent)">＋</div><div class="type-name" style="color:var(--accent)">Add Custom</div>`;
   addCard.onclick=()=>toggleCustomCatForm(true);
   grid.appendChild(addCard);
+}
+
+function startRenameType(typeNameEl, category, card) {
+  const originalName = typeNameEl.textContent;
+  card.dataset.editing = 'true';
+
+  typeNameEl.contentEditable = 'true';
+  typeNameEl.style.outline = '2px solid var(--accent)';
+  typeNameEl.style.padding = '2px 4px';
+  typeNameEl.style.borderRadius = 'var(--r-sm)';
+  typeNameEl.style.backgroundColor = 'var(--bg-ov)';
+
+  typeNameEl.focus();
+  setTimeout(() => {
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(typeNameEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) { /* ignore */ }
+  }, 0);
+
+  const cleanup = () => {
+    card.dataset.editing = 'false';
+    typeNameEl.contentEditable = 'false';
+    typeNameEl.style.outline = '';
+    typeNameEl.style.padding = '';
+    typeNameEl.style.borderRadius = '';
+    typeNameEl.style.backgroundColor = '';
+  };
+
+  const commit = async () => {
+    cleanup();
+    const newName = typeNameEl.textContent.trim().slice(0, 60) || originalName;
+    typeNameEl.textContent = newName;
+
+    if (newName === originalName) return; // no change
+
+    const { error } = await db.from('practice_categories')
+      .update({ name: newName })
+      .eq('id', category.id);
+
+    if (error) {
+      console.error('Rename practice type failed:', error);
+      showToast(STRINGS.renameFailed || 'Could not rename — please try again');
+      typeNameEl.textContent = originalName;
+      return;
+    }
+
+    category.name = newName;
+    showToast(`Renamed to ${newName} ✓`);
+  };
+
+  const onKeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commit();
+      typeNameEl.removeEventListener('keydown', onKeydown);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+      typeNameEl.textContent = originalName;
+      typeNameEl.removeEventListener('keydown', onKeydown);
+    }
+  };
+
+  const onBlur = () => {
+    commit();
+    typeNameEl.removeEventListener('blur', onBlur);
+    typeNameEl.removeEventListener('keydown', onKeydown);
+  };
+
+  typeNameEl.addEventListener('keydown', onKeydown);
+  typeNameEl.addEventListener('blur', onBlur, { once: true });
 }
 
 // ─── DRAG-AND-DROP: move a practice type between category tabs ───
