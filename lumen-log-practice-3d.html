@@ -1047,21 +1047,61 @@ function buildTypes() {
 }
 
 function startRenameGroup(nameEl, group) {
+  const originalName = nameEl.textContent;
   nameEl.contentEditable = 'true';
+  nameEl.style.outline = '2px solid var(--accent)';
+  nameEl.style.padding = '2px 4px';
+  nameEl.style.borderRadius = 'var(--r-sm)';
   nameEl.focus();
-  document.execCommand && document.execCommand('selectAll', false, null);
+
+  // Use selectAll with a timeout to ensure focus is set first
+  setTimeout(() => {
+    if (document.execCommand) {
+      try { document.execCommand('selectAll', false, null); }
+      catch (e) { /* ignore */ }
+    }
+  }, 0);
 
   const commit = async () => {
     nameEl.contentEditable = 'false';
-    const newName = nameEl.textContent.trim().slice(0, 40) || group.name;
+    nameEl.style.outline = '';
+    nameEl.style.padding = '';
+    nameEl.style.borderRadius = '';
+
+    const newName = nameEl.textContent.trim().slice(0, 40) || originalName;
     nameEl.textContent = newName;
-    if (newName === group.name) return;
-    const { error } = await db.from('practice_groups').update({ name: newName }).eq('id', group.id).eq('user_id', currentUser.id);
-    if (error) { console.error('Rename group failed:', error); showToast(STRINGS.groupRenameFailed); nameEl.textContent = group.name; return; }
+
+    if (newName === originalName) return; // no change
+
+    const { error } = await db.from('practice_groups')
+      .update({ name: newName })
+      .eq('id', group.id)
+      .eq('user_id', currentUser.id);
+
+    if (error) {
+      console.error('Rename group failed:', error);
+      showToast(STRINGS.groupRenameFailed);
+      nameEl.textContent = originalName;
+      return;
+    }
+
     group.name = newName;
   };
-  nameEl.addEventListener('blur', commit, { once: true });
-  nameEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); nameEl.blur(); } }, { once: true });
+
+  const onBlur = () => { commit(); };
+  const onKeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      nameEl.blur();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      nameEl.textContent = originalName;
+      nameEl.blur();
+    }
+  };
+
+  nameEl.addEventListener('blur', onBlur, { once: true });
+  nameEl.addEventListener('keydown', onKeydown, { once: true });
 }
 
 async function addGroup() {
