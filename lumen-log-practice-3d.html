@@ -1015,10 +1015,12 @@ function buildTypes() {
     const nameEl = document.createElement('span');
     nameEl.className='cat-tab-name';
     nameEl.textContent = g.name;
+    nameEl.dataset.groupId = g.id;
     btn.appendChild(nameEl);
 
     btn.onclick=(e)=>{
-      if (nameEl.isContentEditable) return; // mid-rename, don't switch tabs
+      if (btn.dataset.editing === 'true') return; // mid-rename, don't switch tabs
+      if (e.target === nameEl) return; // ignore clicks on the name itself during normal interaction
       activeGroupId=g.id; buildTypeGrid();
       tabs.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
@@ -1026,10 +1028,18 @@ function buildTypes() {
 
     // Double-click / double-tap the label to rename in place.
     let lastTap = 0;
-    nameEl.addEventListener('dblclick', (e) => { e.stopPropagation(); startRenameGroup(nameEl, g); });
+    nameEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      startRenameGroup(nameEl, g, btn);
+    });
     nameEl.addEventListener('touchend', (e) => {
       const now = Date.now();
-      if (now - lastTap < 350) { e.stopPropagation(); e.preventDefault(); startRenameGroup(nameEl, g); }
+      if (now - lastTap < 350) {
+        e.stopPropagation();
+        e.preventDefault();
+        startRenameGroup(nameEl, g, btn);
+      }
       lastTap = now;
     });
 
@@ -1046,28 +1056,39 @@ function buildTypes() {
   buildTypeGrid();
 }
 
-function startRenameGroup(nameEl, group) {
+function startRenameGroup(nameEl, group, btn) {
   const originalName = nameEl.textContent;
+  btn.dataset.editing = 'true';
+
   nameEl.contentEditable = 'true';
   nameEl.style.outline = '2px solid var(--accent)';
   nameEl.style.padding = '2px 4px';
   nameEl.style.borderRadius = 'var(--r-sm)';
-  nameEl.focus();
+  nameEl.style.backgroundColor = 'var(--bg-ov)';
 
-  // Use selectAll with a timeout to ensure focus is set first
+  // Force focus and select all text
+  nameEl.focus();
   setTimeout(() => {
-    if (document.execCommand) {
-      try { document.execCommand('selectAll', false, null); }
-      catch (e) { /* ignore */ }
-    }
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(nameEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) { /* ignore */ }
   }, 0);
 
-  const commit = async () => {
+  const cleanup = () => {
+    btn.dataset.editing = 'false';
     nameEl.contentEditable = 'false';
     nameEl.style.outline = '';
     nameEl.style.padding = '';
     nameEl.style.borderRadius = '';
+    nameEl.style.backgroundColor = '';
+  };
 
+  const commit = async () => {
+    cleanup();
     const newName = nameEl.textContent.trim().slice(0, 40) || originalName;
     nameEl.textContent = newName;
 
@@ -1088,20 +1109,27 @@ function startRenameGroup(nameEl, group) {
     group.name = newName;
   };
 
-  const onBlur = () => { commit(); };
   const onKeydown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      nameEl.blur();
+      commit();
+      nameEl.removeEventListener('keydown', onKeydown);
     } else if (e.key === 'Escape') {
       e.preventDefault();
+      cleanup();
       nameEl.textContent = originalName;
-      nameEl.blur();
+      nameEl.removeEventListener('keydown', onKeydown);
     }
   };
 
+  const onBlur = () => {
+    commit();
+    nameEl.removeEventListener('blur', onBlur);
+    nameEl.removeEventListener('keydown', onKeydown);
+  };
+
+  nameEl.addEventListener('keydown', onKeydown);
   nameEl.addEventListener('blur', onBlur, { once: true });
-  nameEl.addEventListener('keydown', onKeydown, { once: true });
 }
 
 async function addGroup() {
