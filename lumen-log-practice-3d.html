@@ -1153,47 +1153,51 @@ function buildTypeGrid() {
     .sort((a,b) => a.is_system === b.is_system ? a.sort_order - b.sort_order : (a.is_system ? -1 : 1));
 
   list.forEach(t=>{
-    const card=document.createElement('div'); card.className='type-card'+(selType===t.id?' sel':'');
+    const card=document.createElement('div');
+    card.className='type-card'+(selType===t.id?' sel':'');
     card.dataset.categoryId = t.id;
     card.dataset.editing = 'false';
-    const sub = t.subtitle || (t.is_system ? '' : 'Custom');
-    const nameDiv = document.createElement('div');
-    nameDiv.style.flex = '1';
-    nameDiv.style.minWidth = '0';
-    nameDiv.innerHTML = `<div class="type-name">${t.name}</div><div class="type-sub">${sub}</div>`;
 
-    const iconDiv = document.createElement('div');
-    iconDiv.className = 'type-icon';
-    iconDiv.textContent = t.icon || '✦';
-
-    const chkDiv = document.createElement('div');
-    chkDiv.className = 'type-chk';
-    chkDiv.textContent = selType===t.id?'✓':'';
-
+    const iconDiv=document.createElement('div');
+    iconDiv.className='type-icon';
+    iconDiv.textContent = t.icon||'✦';
     card.appendChild(iconDiv);
-    card.appendChild(nameDiv);
+
+    const textDiv=document.createElement('div');
+    textDiv.style.flex='1';
+    textDiv.style.minWidth='0';
+
+    const typeNameEl=document.createElement('div');
+    typeNameEl.className='type-name';
+    typeNameEl.textContent = t.name;
+    textDiv.appendChild(typeNameEl);
+
+    const sub = t.subtitle || (t.is_system ? '' : 'Custom');
+    const subDiv=document.createElement('div');
+    subDiv.className='type-sub';
+    subDiv.textContent = sub;
+    textDiv.appendChild(subDiv);
+
+    card.appendChild(textDiv);
+
+    const chkDiv=document.createElement('div');
+    chkDiv.className='type-chk';
+    chkDiv.textContent = selType===t.id?'✓':'';
     card.appendChild(chkDiv);
 
-    const typeNameEl = nameDiv.querySelector('.type-name');
-
-    // Prevent clicks on type name from selecting the card
-    typeNameEl.addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-    });
+    // Prevent click on type-name from triggering card selection
+    typeNameEl.addEventListener('click', (e) => { e.stopPropagation(); });
 
     // Double-click / double-tap to rename
     let lastTap = 0;
     typeNameEl.addEventListener('dblclick', (e) => {
       e.stopPropagation();
-      e.preventDefault();
       startRenameType(typeNameEl, t, card);
     });
     typeNameEl.addEventListener('touchend', (e) => {
       const now = Date.now();
       if (now - lastTap < 350) {
         e.stopPropagation();
-        e.preventDefault();
         startRenameType(typeNameEl, t, card);
       }
       lastTap = now;
