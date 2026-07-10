@@ -380,12 +380,21 @@ async function handleContinue() {
   btn.innerHTML = '<div class="spinner"></div> Saving…'
 
   try {
-    const { error } = await db
+    // Upsert (not update): accounts created before the DB trigger existed
+    // have no profiles row, and an UPDATE on a missing row "succeeds" with
+    // zero rows — causing an endless role-select ↔ dashboard redirect loop.
+    const { data, error } = await db
       .from('profiles')
-      .update({ role: selectedRole, updated_at: new Date().toISOString() })
-      .eq('id', currentUser.id)
+      .upsert({
+        id: currentUser.id,
+        email: currentUser.email,
+        role: selectedRole,
+        updated_at: new Date().toISOString(),
+      })
+      .select('id')
 
     if (error) throw error
+    if (!data || data.length === 0) throw new Error('Role save affected 0 rows')
 
     btn.innerHTML = '✓ Role saved!'
     btn.style.background = '#7B9E87'
