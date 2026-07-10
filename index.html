@@ -694,7 +694,7 @@ const STATE = {
   dayLogsYoga: {},
   bodyRaw: [],
   perspective: localStorage.getItem('lumen_perspective') === 'yoga' ? 'yoga' : 'global',
-  likes: {}, // keyed by community_feeds.id — { liked, count }, local-only (P2)
+  likes: {}, // keyed by community_feeds.id — { liked, count }, persisted via feed_likes table
   style: 'Hatha',
   duration: '30',
   mood: '😌',
@@ -1115,12 +1115,27 @@ async function loadFeed() {
     .order('created_at', { ascending: false })
     .limit(20);
 
+  // Which of these did the current user already like?
+  var likedIds = new Set();
+  if (result.data && result.data.length && currentUser) {
+    var feedIds = result.data.map(function(item) { return item.id; });
+    var likesResult = await db
+      .from('feed_likes')
+      .select('feed_id')
+      .eq('user_id', currentUser.id)
+      .in('feed_id', feedIds);
+    (likesResult.data || []).forEach(function(row) { likedIds.add(row.feed_id); });
+  }
+
   feedEl.innerHTML = '';
 
   if (!result.data || !result.data.length) {
     feedEl.innerHTML = '<div class="feed-empty">' + STRINGS.feedEmptyNoActivity + '</div>';
   } else {
-    result.data.forEach(function(item) { appendFeedCard(feedEl, item, false); });
+    result.data.forEach(function(item) {
+      STATE.likes[item.id] = { liked: likedIds.has(item.id), count: item.like_count || 0 };
+      appendFeedCard(feedEl, item, false);
+    });
   }
 
   // Realtime: prepend new public logs as they arrive
@@ -1142,7 +1157,7 @@ async function loadFeed() {
 function appendFeedCard(container, item, prepend) {
   var initial  = (item.display_name || 'U').charAt(0).toUpperCase();
   var timeText = formatTimeAgo(item.created_at);
-  if (!STATE.likes[item.id]) STATE.likes[item.id] = { liked: false, count: 0 };
+  if (!STATE.likes[item.id]) STATE.likes[item.id] = { liked: false, count: item.like_count || 0 };
   var likeState = STATE.likes[item.id];
 
   var div = document.createElement('div');
@@ -1165,14 +1180,33 @@ function appendFeedCard(container, item, prepend) {
   }
 }
 
-// Local-only for now (P2) — likes are not persisted to Supabase yet.
-function toggleLike(id, btn) {
+async function toggleLike(id, btn) {
   var state = STATE.likes[id] || { liked: false, count: 0 };
-  state.liked = !state.liked;
+  var wasLiked = state.liked;
+
+  // Optimistic update
+  state.liked = !wasLiked;
   state.count += state.liked ? 1 : -1;
   STATE.likes[id] = state;
   btn.querySelector('.like-icon').textContent = state.liked ? '❤️' : '🤍';
   btn.querySelector('.like-count').textContent = state.count;
+
+  var error;
+  if (state.liked) {
+    ({ error } = await db.from('feed_likes').insert({ feed_id: id, user_id: currentUser.id }));
+  } else {
+    ({ error } = await db.from('feed_likes').delete().eq('feed_id', id).eq('user_id', currentUser.id));
+  }
+
+  if (error) {
+    // Roll back on failure (e.g. offline, RLS rejection)
+    state.liked = wasLiked;
+    state.count += state.liked ? 1 : -1;
+    STATE.likes[id] = state;
+    btn.querySelector('.like-icon').textContent = state.liked ? '❤️' : '🤍';
+    btn.querySelector('.like-count').textContent = state.count;
+    console.error('Like toggle failed:', error);
+  }
 }
 
 function formatTimeAgo(iso) {
