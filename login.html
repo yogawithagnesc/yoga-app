@@ -363,16 +363,18 @@ html, body {
 
       <div class="divider">
         <div class="divider-line"></div>
-        <span class="divider-text">or continue with</span>
+        <span class="divider-text">or continue with (coming soon)</span>
         <div class="divider-line"></div>
       </div>
 
-      <div class="oauth-row">
-        <button class="btn-oauth" onclick="signInWithProvider('google')">
+      <!-- OAuth deferred to final phase: buttons disabled until Google/Apple
+           providers are configured in Supabase Auth settings -->
+      <div class="oauth-row" style="opacity:0.45; pointer-events:none;" aria-disabled="true">
+        <button class="btn-oauth" disabled onclick="signInWithProvider('google')">
           <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29A11.95 11.95 0 000 12c0 1.92.46 3.74 1.29 5.38l3.98-3.09z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.94 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z"/></svg>
           Google
         </button>
-        <button class="btn-oauth" onclick="signInWithProvider('apple')">
+        <button class="btn-oauth" disabled onclick="signInWithProvider('apple')">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.462 2.15-1.217 2.9-.845.86-2.007 1.51-3.076 1.42-.14-1.1.446-2.24 1.18-2.96C13.99.65 15.24.02 16.24 0c.03.13.06.28.06.43zM20.4 17.06c-.5 1.15-.73 1.66-1.36 2.68-.88 1.42-2.12 3.19-3.66 3.2-1.37.02-1.72-.9-3.58-.89-1.85.01-2.24.9-3.6.88-1.54-.02-2.72-1.62-3.6-3.04-2.47-3.98-2.72-8.65-1.2-11.14 1.08-1.77 2.79-2.81 4.4-2.81 1.63 0 2.66.9 4 .9 1.3 0 2.1-.9 3.98-.9 1.44 0 2.96.79 4.05 2.14-3.56 1.95-2.98 6.99-.44 8.98z"/></svg>
           Apple
         </button>
