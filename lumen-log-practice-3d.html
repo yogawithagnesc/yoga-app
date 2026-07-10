@@ -92,24 +92,33 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 
 /* ── PRACTICE TYPE ── */
 .cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.cat-tab{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
+.cat-tab{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif;position:relative}
 .cat-tab:hover{border-color:var(--br-str);color:var(--tx-1)}
 .cat-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:500}
+.cat-tab.drop-target{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.cat-tab.add-tab{border-style:dashed;color:var(--accent)}
+.cat-tab-name{outline:none}
+.cat-tab-name[contenteditable="true"]{border-bottom:1px dashed var(--accent);cursor:text}
 .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.type-card{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:10px}
+.type-card{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:10px;touch-action:none;user-select:none}
 .type-card:hover{border-color:var(--br-str)}
 .type-card.sel{background:var(--accent-dim);border-color:var(--accent)}
+.type-card.dragging{opacity:0.35}
 .type-icon{font-size:20px;flex-shrink:0}
 .type-name{font-size:13px;color:var(--tx-1);font-weight:500}
 .type-sub{font-size:10px;color:var(--tx-3);margin-top:1px}
 .type-chk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--br-def);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
 .type-card.sel .type-chk{background:var(--accent);border-color:var(--accent);color:var(--tx-inv)}
+.drag-ghost{position:fixed;z-index:500;pointer-events:none;opacity:0.92;transform:scale(1.03);box-shadow:0 8px 24px rgba(0,0,0,.4);border-radius:var(--r-md)}
 
 /* ── FOCUS CHIPS ── */
 .chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{padding:7px 13px;border-radius:var(--r-full);font-size:12px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
+.chip{padding:7px 13px;border-radius:var(--r-full);font-size:12px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif;display:inline-flex;align-items:center;gap:5px}
 .chip:hover{border-color:var(--br-str);color:var(--tx-1)}
 .chip.sel{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.chip-badge{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border-radius:var(--r-sm);padding:1px 5px}
+.custom-focus-form{display:flex;gap:8px;margin-top:10px}
+.custom-focus-form input{flex:1}
 
 /* ══ 3D BODY MAP ══ */
 .body3d-wrap{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--bg-el);border:1px solid var(--br-def);margin-bottom:12px}
@@ -318,7 +327,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="sec-hdr"><div class="sec-num">3</div><div class="sec-title">Practice Focus</div></div>
     <div style="font-size:12px;color:var(--tx-2);margin-bottom:12px">Select all that apply · Multi-select</div>
     <div class="chips" id="focus-chips"></div>
-    <div class="info-note">✦ Managed from Teacher admin panel</div>
+    <div class="custom-focus-form">
+      <input class="finput" id="custom-focus-name" placeholder="Add a focus (e.g. Wrists)" maxlength="30">
+      <button class="cta-btn" style="width:auto;padding:0 16px;font-size:13px" onclick="submitCustomFocus()">Add</button>
+    </div>
+    <div class="info-note">✦ Recommended focuses are shared by your linked teacher or studio</div>
   </div>
 
   <div class="divider"></div>
@@ -845,8 +858,10 @@ function renderAreaTags() {
 // ─── AUTH + DATA INIT ───
 let currentUser = null;
 let currentUserRole = 'student';
-let CATEGORIES = [];   // practice_categories rows visible to this user (system + own + linked)
-let FOCUS_AREAS = [];  // focus_areas rows
+let CATEGORIES = [];    // practice_categories rows visible to this user (system + own + linked)
+let FOCUS_AREAS = [];   // focus_areas rows (system + own + linked/recommended)
+let GROUPS = [];        // practice_groups rows (this user's Yoga/Fitness/custom containers)
+let GROUP_ITEMS = {};   // practice_category_id -> group_id (explicit per-user placement overrides)
 
 // User-facing JS-rendered text, kept in one place for a future language
 // switch (Cantonese/Chinese, per the Noto TC fonts already loaded).
@@ -854,6 +869,12 @@ const STRINGS = {
   selectTypeFirst:     'Please select a practice type first',
   addCategoryFailed:   'Could not add category — please try again',
   categoryAdded:       (name) => `${name} added ✓`,
+  addGroupFailed:      'Could not add category group — please try again',
+  groupAdded:          (name) => `${name} category added ✓`,
+  groupRenameFailed:   'Could not rename — please try again',
+  addFocusFailed:      'Could not add focus — please try again',
+  focusAdded:          (name) => `${name} added ✓`,
+  moveFailed:          'Could not move — please try again',
   zoneMarked:          (zone) => `${zone} marked`,
   mediaLimitReached:   () => `Max ${MAX_MEDIA_FILES} files per session`,
   mediaTooLarge:       (fileName) => `${fileName} is over 50MB — skipped`,
@@ -867,28 +888,42 @@ async function initPage() {
   if (!session) { window.location.href = 'login.html'; return; }
   currentUser = session.user;
 
-  const [{ data: profile }, { data: cats }, { data: focusAreas }] = await Promise.all([
+  const [{ data: profile }, { data: cats }, { data: focusAreas }, { data: groups }, { data: groupItems }] = await Promise.all([
     db.from('profiles').select('role').eq('id', currentUser.id).single(),
     db.from('practice_categories')
       .select('id,name,category_type,icon,subtitle,sort_order,is_system,visibility,created_by')
       .eq('is_active', true),
-    db.from('focus_areas').select('id,label,sort_order').eq('is_active', true).order('sort_order'),
+    db.from('focus_areas')
+      .select('id,label,sort_order,visibility,created_by')
+      .eq('is_active', true).order('sort_order'),
+    db.from('practice_groups').select('id,name,sort_order,default_key').eq('user_id', currentUser.id).order('sort_order'),
+    db.from('practice_group_items').select('practice_category_id,group_id').eq('user_id', currentUser.id),
   ]);
 
   currentUserRole = profile?.role || 'student';
   CATEGORIES = cats || [];
   FOCUS_AREAS = focusAreas || [];
+  GROUPS = groups || [];
+  GROUP_ITEMS = {};
+  (groupItems || []).forEach(row => { GROUP_ITEMS[row.practice_category_id] = row.group_id; });
+
+  if (GROUPS.length) activeGroupId = (GROUPS.find(g => g.default_key === 'yoga') || GROUPS[0]).id;
 
   buildTypes();
   buildFocus();
 }
 
+// Which group a practice type currently belongs to for this user: an
+// explicit drag-and-drop override if one exists, else a fallback derived
+// from its legacy category_type (yoga/breathwork → Yoga, movement → Fitness).
+function effectiveGroupId(cat) {
+  if (GROUP_ITEMS[cat.id]) return GROUP_ITEMS[cat.id];
+  const key = cat.category_type === 'movement' ? 'fitness' : 'yoga';
+  const fallback = GROUPS.find(g => g.default_key === key);
+  return fallback ? fallback.id : (GROUPS[0] && GROUPS[0].id);
+}
+
 // ─── STATIC UI DATA (not user data — fixed taxonomy / labels) ───
-const CATS = [
-  {id:'yoga',label:'Yoga'},
-  {id:'movement',label:'Movement'},
-  {id:'breathwork',label:'Breathwork'},
-];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DOWS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const INT_LBLS=['','Gentle (1/5)','Light (2/5)','Moderate (3/5)','Challenging (4/5)','Intense (5/5)'];
@@ -899,7 +934,7 @@ let selDate = new Date();
 let calDate = new Date();
 let selType = null;       // practice_categories.id
 let selFocus = new Set(); // focus_areas.id values
-let activeCat = 'yoga';
+let activeGroupId = null; // practice_groups.id currently shown in the type grid
 let mediaItems = [];      // { file, url, type: 'image'|'video' }
 
 // ─── DATE ───
@@ -967,29 +1002,95 @@ function stepDur(delta) {
   document.getElementById('dur-unit').textContent=v+' minutes';
 }
 
-// ─── TYPES ───
+// ─── CATEGORY GROUPS (Yoga / Fitness / custom) + TYPES ───
 function buildTypes() {
   const tabs=document.getElementById('cat-tabs');
   tabs.innerHTML = '';
-  CATS.forEach(c => {
-    const btn=document.createElement('div'); btn.className='cat-tab'+(c.id===activeCat?' active':'');
-    btn.textContent=c.label;
-    btn.onclick=()=>{ activeCat=c.id; buildTypeGrid(); tabs.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); };
+
+  GROUPS.forEach(g => {
+    const btn=document.createElement('div');
+    btn.className='cat-tab'+(g.id===activeGroupId?' active':'');
+    btn.dataset.groupId = g.id;
+
+    const nameEl = document.createElement('span');
+    nameEl.className='cat-tab-name';
+    nameEl.textContent = g.name;
+    btn.appendChild(nameEl);
+
+    btn.onclick=(e)=>{
+      if (nameEl.isContentEditable) return; // mid-rename, don't switch tabs
+      activeGroupId=g.id; buildTypeGrid();
+      tabs.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+
+    // Double-click / double-tap the label to rename in place.
+    let lastTap = 0;
+    nameEl.addEventListener('dblclick', (e) => { e.stopPropagation(); startRenameGroup(nameEl, g); });
+    nameEl.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 350) { e.stopPropagation(); e.preventDefault(); startRenameGroup(nameEl, g); }
+      lastTap = now;
+    });
+
+    attachGroupDropTarget(btn, g.id);
     tabs.appendChild(btn);
   });
+
+  const addTab=document.createElement('div');
+  addTab.className='cat-tab add-tab';
+  addTab.textContent='＋ Category';
+  addTab.onclick=()=>addGroup();
+  tabs.appendChild(addTab);
+
   buildTypeGrid();
 }
+
+function startRenameGroup(nameEl, group) {
+  nameEl.contentEditable = 'true';
+  nameEl.focus();
+  document.execCommand && document.execCommand('selectAll', false, null);
+
+  const commit = async () => {
+    nameEl.contentEditable = 'false';
+    const newName = nameEl.textContent.trim().slice(0, 40) || group.name;
+    nameEl.textContent = newName;
+    if (newName === group.name) return;
+    const { error } = await db.from('practice_groups').update({ name: newName }).eq('id', group.id).eq('user_id', currentUser.id);
+    if (error) { console.error('Rename group failed:', error); showToast(STRINGS.groupRenameFailed); nameEl.textContent = group.name; return; }
+    group.name = newName;
+  };
+  nameEl.addEventListener('blur', commit, { once: true });
+  nameEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); nameEl.blur(); } }, { once: true });
+}
+
+async function addGroup() {
+  const name = (prompt('New category name (e.g. Recovery)') || '').trim().slice(0, 40);
+  if (!name) return;
+  const sortOrder = GROUPS.length ? Math.max(...GROUPS.map(g => g.sort_order)) + 1 : 0;
+  const { data, error } = await db.from('practice_groups')
+    .insert({ user_id: currentUser.id, name, sort_order: sortOrder })
+    .select().single();
+  if (error) { console.error('Add group failed:', error); showToast(STRINGS.addGroupFailed); return; }
+  GROUPS.push(data);
+  activeGroupId = data.id;
+  buildTypes();
+  showToast(STRINGS.groupAdded(name));
+}
+
 function buildTypeGrid() {
   const grid=document.getElementById('type-grid'); grid.innerHTML='';
   const list = CATEGORIES
-    .filter(t => t.category_type === activeCat)
+    .filter(t => effectiveGroupId(t) === activeGroupId)
     .sort((a,b) => a.is_system === b.is_system ? a.sort_order - b.sort_order : (a.is_system ? -1 : 1));
 
   list.forEach(t=>{
     const card=document.createElement('div'); card.className='type-card'+(selType===t.id?' sel':'');
+    card.dataset.categoryId = t.id;
     const sub = t.subtitle || (t.is_system ? '' : 'Custom');
     card.innerHTML=`<div class="type-icon">${t.icon||'✦'}</div><div style="flex:1;min-width:0"><div class="type-name">${t.name}</div><div class="type-sub">${sub}</div></div><div class="type-chk">${selType===t.id?'✓':''}</div>`;
-    card.onclick=()=>{ selType=t.id; buildTypeGrid(); };
+    card.onclick=()=>{ if (card.dataset.dragged) { delete card.dataset.dragged; return; } selType=t.id; buildTypeGrid(); };
+    attachTypeDragHandlers(card, t);
     grid.appendChild(card);
   });
 
@@ -999,6 +1100,90 @@ function buildTypeGrid() {
   addCard.innerHTML=`<div class="type-icon" style="color:var(--accent)">＋</div><div class="type-name" style="color:var(--accent)">Add Custom</div>`;
   addCard.onclick=()=>toggleCustomCatForm(true);
   grid.appendChild(addCard);
+}
+
+// ─── DRAG-AND-DROP: move a practice type between category tabs ───
+// Pointer Events (not native HTML5 DnD, which mobile Safari/Chrome touch
+// doesn't reliably fire without extra polyfills). A short hold-and-move
+// starts the drag; a plain tap still falls through to selection.
+const DRAG_THRESHOLD_PX = 10;
+
+function attachGroupDropTarget(tabEl, groupId) {
+  tabEl.addEventListener('lumen-drag-over', () => tabEl.classList.add('drop-target'));
+  tabEl.addEventListener('lumen-drag-out',  () => tabEl.classList.remove('drop-target'));
+}
+
+function attachTypeDragHandlers(card, category) {
+  let startX, startY, dragging = false, ghost = null, currentTarget = null;
+
+  card.addEventListener('pointerdown', (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    startX = e.clientX; startY = e.clientY; dragging = false;
+    card.setPointerCapture(e.pointerId);
+
+    const onMove = (mv) => {
+      const dx = mv.clientX - startX, dy = mv.clientY - startY;
+      if (!dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
+        dragging = true;
+        card.classList.add('dragging');
+        ghost = card.cloneNode(true);
+        ghost.classList.add('drag-ghost');
+        ghost.style.width = card.offsetWidth + 'px';
+        document.body.appendChild(ghost);
+      }
+      if (!dragging) return;
+      mv.preventDefault();
+      ghost.style.left = (mv.clientX - ghost.offsetWidth / 2) + 'px';
+      ghost.style.top  = (mv.clientY - ghost.offsetHeight / 2) + 'px';
+
+      ghost.style.display = 'none';
+      const under = document.elementFromPoint(mv.clientX, mv.clientY);
+      ghost.style.display = '';
+      const tab = under && under.closest('.cat-tab:not(.add-tab)');
+      if (tab !== currentTarget) {
+        if (currentTarget) currentTarget.dispatchEvent(new Event('lumen-drag-out'));
+        currentTarget = tab || null;
+        if (currentTarget) currentTarget.dispatchEvent(new Event('lumen-drag-over'));
+      }
+    };
+
+    const onUp = async (up) => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      card.classList.remove('dragging');
+      if (ghost) { ghost.remove(); ghost = null; }
+      if (currentTarget) currentTarget.classList.remove('drop-target');
+
+      if (dragging) {
+        card.dataset.dragged = '1'; // suppress the trailing click-to-select
+        if (currentTarget) {
+          const targetGroupId = currentTarget.dataset.groupId;
+          await moveTypeToGroup(category, targetGroupId);
+        }
+      }
+      currentTarget = null;
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+async function moveTypeToGroup(category, groupId) {
+  if (!groupId || effectiveGroupId(category) === groupId) return;
+  const prevGroupId = GROUP_ITEMS[category.id];
+  GROUP_ITEMS[category.id] = groupId; // optimistic
+  buildTypeGrid();
+
+  const { error } = await db.from('practice_group_items')
+    .upsert({ user_id: currentUser.id, practice_category_id: category.id, group_id: groupId, updated_at: new Date().toISOString() });
+
+  if (error) {
+    console.error('Move type failed:', error);
+    showToast(STRINGS.moveFailed);
+    if (prevGroupId) GROUP_ITEMS[category.id] = prevGroupId; else delete GROUP_ITEMS[category.id];
+    buildTypeGrid();
+  }
 }
 
 // ─── CUSTOM CATEGORY ───
@@ -1012,9 +1197,11 @@ async function submitCustomCategory() {
   const name = input.value.trim();
   if (!name) return;
 
+  const activeGroup = GROUPS.find(g => g.id === activeGroupId);
+  const categoryType = (activeGroup && activeGroup.default_key === 'fitness') ? 'movement' : 'yoga';
   const visibility = (currentUserRole === 'teacher' || currentUserRole === 'studio') ? 'linked' : 'private';
   const { data, error } = await db.from('practice_categories').insert({
-    name, category_type: activeCat, icon: '✦', is_system: false,
+    name, category_type: categoryType, icon: '✦', is_system: false,
     created_by: currentUser.id, visibility, is_active: true,
   }).select().single();
 
@@ -1022,6 +1209,15 @@ async function submitCustomCategory() {
 
   CATEGORIES.push(data);
   selType = data.id;
+
+  // Place it explicitly in the group the user was viewing when they added it
+  // (relevant when a custom group other than the two defaults is active).
+  if (activeGroupId) {
+    GROUP_ITEMS[data.id] = activeGroupId;
+    await db.from('practice_group_items')
+      .upsert({ user_id: currentUser.id, practice_category_id: data.id, group_id: activeGroupId });
+  }
+
   input.value = '';
   toggleCustomCatForm(false);
   buildTypeGrid();
@@ -1034,10 +1230,31 @@ function buildFocus() {
   c.innerHTML = '';
   FOCUS_AREAS.forEach(f=>{
     const chip=document.createElement('div'); chip.className='chip'+(selFocus.has(f.id)?' sel':'');
-    chip.textContent=f.label;
+    const isRecommended = f.visibility === 'linked' && f.created_by && f.created_by !== currentUser.id;
+    chip.innerHTML = f.label + (isRecommended ? '<span class="chip-badge">Recommended</span>' : '');
     chip.onclick=()=>{ selFocus.has(f.id)?selFocus.delete(f.id):selFocus.add(f.id); chip.classList.toggle('sel'); };
     c.appendChild(chip);
   });
+}
+
+async function submitCustomFocus() {
+  const input = document.getElementById('custom-focus-name');
+  const label = input.value.trim();
+  if (!label) return;
+
+  const visibility = (currentUserRole === 'teacher' || currentUserRole === 'studio') ? 'linked' : 'private';
+  const sortOrder = FOCUS_AREAS.length ? Math.max(...FOCUS_AREAS.map(f => f.sort_order || 0)) + 1 : 0;
+  const { data, error } = await db.from('focus_areas').insert({
+    label, sort_order: sortOrder, created_by: currentUser.id, visibility, is_active: true,
+  }).select().single();
+
+  if (error) { console.error('Add focus failed:', error); showToast(STRINGS.addFocusFailed); return; }
+
+  FOCUS_AREAS.push(data);
+  selFocus.add(data.id);
+  input.value = '';
+  buildFocus();
+  showToast(STRINGS.focusAdded(label));
 }
 
 // ─── MEDIA ───
