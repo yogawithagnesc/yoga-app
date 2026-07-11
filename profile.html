@@ -127,16 +127,22 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       <a class="teacher-link" href="teacher.html">View My Students →</a>
     </div>
 
-    <!-- Student: Link to a Teacher/Studio -->
+    <!-- Student: Link to a Teacher/Studio · Teacher: Bind to a Studio -->
     <div class="card" id="link-card" style="display:none">
-      <div class="card-title">Link to a Teacher or Studio</div>
+      <div class="card-title" id="link-card-title">Link to a Teacher or Studio</div>
       <input class="finput" id="join-code-input" type="text" maxlength="6" placeholder="Enter 6-character code" autocapitalize="characters"/>
       <label class="consent-row">
         <input type="checkbox" id="join-consent"/>
-        <span class="consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the Data Sharing Agreement.</span>
+        <span class="consent-text" id="join-consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the Data Sharing Agreement.</span>
       </label>
       <button class="btn-primary" id="connect-btn" onclick="submitJoinCode()">Connect</button>
       <div class="form-err" id="connect-err"></div>
+    </div>
+
+    <!-- Teacher: My Studios (facilities they teach at) -->
+    <div class="card" id="studios-card" style="display:none">
+      <div class="card-title">My Studios</div>
+      <div id="studios-list"></div>
     </div>
 
     <!-- Current links (both roles use this, framed differently) -->
@@ -181,6 +187,16 @@ let currentUserRole = null
     document.getElementById('links-title').textContent = 'Linked Students'
     await loadCodes()
     await loadEntityLinks()
+
+    // Teachers can additionally bind to Studios (facilities they teach at).
+    if (currentUserRole === 'teacher') {
+      document.getElementById('link-card').style.display = 'block'
+      document.getElementById('link-card-title').textContent = 'Bind to a Studio'
+      document.getElementById('join-consent-text').textContent =
+        'I confirm I teach at this Studio and agree to appear on its schedule.'
+      document.getElementById('studios-card').style.display = 'block'
+      await loadTeacherStudios()
+    }
   } else {
     document.getElementById('link-card').style.display = 'block'
     document.getElementById('links-card').style.display = 'block'
@@ -310,7 +326,7 @@ async function unlink(entityId) {
     .eq('entity_id', entityId)
   if (error) { showToast('Could not unlink — please try again'); return }
   showToast('Unlinked')
-  await loadStudentLinks()
+  if (currentUserRole === 'teacher') { await loadTeacherStudios() } else { await loadStudentLinks() }
 }
 
 async function submitJoinCode() {
@@ -345,7 +361,8 @@ async function submitJoinCode() {
     let msg = 'Could not complete the connection. Please try again.'
     if (error.message.includes('invalid_or_expired_code')) msg = 'Invalid or expired join code. Please check with your teacher or studio.'
     if (error.message.includes('cannot_link_to_self')) msg = 'You cannot link to your own code.'
-    if (error.message.includes('only_students_can_redeem')) msg = 'Only student accounts can link to a teacher or studio.'
+    if (error.message.includes('teachers_can_only_bind_to_studios')) msg = 'Teachers can only bind to a Studio code.'
+    if (error.message.includes('only_students_or_teachers_can_redeem') || error.message.includes('only_students_can_redeem')) msg = 'This account type cannot redeem a join code.'
     errEl.textContent = msg
     errEl.classList.add('show')
     return
@@ -353,8 +370,40 @@ async function submitJoinCode() {
 
   document.getElementById('join-code-input').value = ''
   document.getElementById('join-consent').checked = false
-  showToast('Connected to ' + (data?.display_name || 'your teacher') + '! ✦')
-  await loadStudentLinks()
+
+  if (currentUserRole === 'teacher') {
+    showToast('Bound to ' + (data?.display_name || 'the studio') + '! ✦')
+    await loadTeacherStudios()
+  } else {
+    showToast('Connected to ' + (data?.display_name || 'your teacher') + '! ✦')
+    await loadStudentLinks()
+  }
+}
+
+// ── TEACHER VIEW: my studios (facilities I teach at) ──────
+async function loadTeacherStudios() {
+  const { data } = await db.from('studio_linkages')
+    .select('entity_id, entity_type, profiles!studio_linkages_entity_id_fkey(display_name)')
+    .eq('student_id', currentUser.id)
+    .eq('entity_type', 'studio')
+    .eq('status', 'active')
+
+  const el = document.getElementById('studios-list')
+  el.innerHTML = ''
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-hint">Not bound to any studio yet. Enter a studio code above to appear on its schedule.</div>'
+    return
+  }
+  data.forEach(link => {
+    const name = link.profiles ? link.profiles.display_name : 'Studio'
+    const row = document.createElement('div')
+    row.className = 'link-row'
+    row.innerHTML =
+      '<div class="link-avatar">' + (name || 'S').charAt(0).toUpperCase() + '</div>' +
+      '<div><div class="link-name">' + name + '</div><div class="link-role">Studio</div></div>' +
+      '<button class="unlink-btn" onclick="unlink(\'' + link.entity_id + '\')">Unbind</button>'
+    el.appendChild(row)
+  })
 }
 
 // ── LOGOUT ────────────────────────────────────────────────

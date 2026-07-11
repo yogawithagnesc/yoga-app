@@ -376,6 +376,48 @@
   .feed-empty { padding: 20px 0; color: var(--tx-2); font-size: 13px; }
   .feed-spinner { padding: 20px 0; color: var(--tx-2); font-size: 13px; }
 
+  /* ── M5: Peer follows ── */
+  .follow-search { display: flex; gap: 8px; margin-bottom: 12px; }
+  .follow-search input { flex: 1; background: var(--bg); border: 1.5px solid var(--br-def); border-radius: var(--r-md); padding: 11px 12px; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--tx-1); outline: none; }
+  .follow-search input:focus { border-color: var(--accent); }
+  .follow-search button { background: var(--accent); border: none; border-radius: var(--r-md); padding: 0 16px; color: var(--bg); font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .follow-msg { font-size: 12px; margin-top: 6px; color: var(--tx-3); }
+  .follow-msg.err { color: var(--error); }
+  .follow-msg.ok { color: var(--success); }
+  .follow-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--br-sub); }
+  .follow-row:last-child { border-bottom: none; }
+  .follow-name { font-size: 13px; font-weight: 500; color: var(--tx-1); }
+  .follow-sub { font-size: 11px; color: var(--tx-3); }
+  .follow-actions { margin-left: auto; display: flex; gap: 6px; }
+  .follow-btn { font-size: 11px; font-weight: 600; border-radius: var(--r-sm); padding: 7px 12px; cursor: pointer; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; border: 1px solid var(--br-def); background: var(--bg); color: var(--tx-2); }
+  .follow-btn.accept { background: var(--success); border-color: var(--success); color: var(--bg); }
+  .follow-btn.decline { background: rgba(196,112,112,0.1); border-color: rgba(196,112,112,0.3); color: var(--error); }
+
+  /* ── M5: Groups & bulletins ── */
+  .group-card { background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg); padding: 16px; margin-bottom: 14px; }
+  .group-card-name { font-size: 15px; font-weight: 600; color: var(--tx-1); }
+  .group-card-desc { font-size: 12px; color: var(--tx-3); margin-top: 2px; }
+  .bulletin-item { padding: 10px 0; border-top: 1px solid var(--br-sub); }
+  .bulletin-item:first-of-type { border-top: 1px solid var(--br-sub); margin-top: 10px; }
+  .bulletin-item-body { font-size: 13px; color: var(--tx-1); line-height: 1.5; }
+  .bulletin-item-time { font-size: 10px; color: var(--tx-3); margin-top: 4px; }
+  .bulletin-item.new { animation: bulletinFlash 1.5s ease; }
+  @keyframes bulletinFlash { from { background: rgba(200,169,110,0.15); } to { background: transparent; } }
+
+  /* ── M5: Feedback portal ── */
+  .feedback-portal-btn { width: 100%; background: transparent; border: 1px dashed var(--accent); border-radius: var(--r-lg); padding: 14px; color: var(--accent); font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 14px; }
+  .feedback-portal-btn:hover { background: var(--adim); }
+  .feedback-char-count { font-size: 11px; color: var(--tx-3); text-align: right; margin-top: 4px; margin-bottom: 16px; }
+  .feedback-char-count.limit { color: var(--error); }
+  .feedback-tone-hint { font-size: 11px; color: var(--tx-3); line-height: 1.5; background: var(--bg-el); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 16px; }
+
+  /* ── M5: 30-day fatigue dashboard ── */
+  .fatigue-card { background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg); padding: 18px; }
+  .fatigue-chart { display: flex; align-items: flex-end; gap: 2px; height: 60px; margin-top: 12px; }
+  .fatigue-bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; opacity: 0.75; }
+  .fatigue-bar.high { background: var(--error); opacity: 0.85; }
+  .fatigue-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--tx-3); margin-top: 6px; }
+
   /* Day-log modal rows */
   .day-log-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -414,6 +456,86 @@
     75% { opacity:1; }
     100% { opacity:0; transform: translateX(-50%) translateY(-6px); }
   }
+
+  /* ── M4: Federated Classes tab ── */
+  .cls-cta { margin: 0 28px 20px; display:flex; align-items:center; justify-content:center; gap:8px;
+    background: var(--accent-dim); border:1px solid var(--accent); color: var(--accent);
+    border-radius: var(--r-lg); padding: 13px; font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans','Noto Sans TC',sans-serif; }
+  .cls-cta:hover { background: rgba(200,169,110,0.2); }
+  /* Adaptive header strip — today's schedule, horizontal scroll */
+  .today-strip { display:flex; gap:10px; overflow-x:auto; padding:0 28px 4px; margin-bottom:22px; scrollbar-width:none; }
+  .today-strip::-webkit-scrollbar { display:none; }
+  .today-chip { flex:0 0 auto; background: var(--bg-el); border:1px solid var(--br-def);
+    border-radius: var(--r-md); padding:10px 14px; min-width:120px; }
+  .today-chip .tc-time { font-size:12px; color: var(--accent); font-weight:600; }
+  .today-chip .tc-title { font-size:13px; color: var(--tx-1); margin-top:3px; }
+  .today-chip .tc-sub { font-size:11px; color: var(--tx-3); margin-top:2px; }
+  /* Featured hero banner */
+  .featured-hero { margin:0 28px 24px; border-radius: var(--r-lg); overflow:hidden;
+    border:1px solid var(--accent); background: linear-gradient(135deg, rgba(200,169,110,0.16), rgba(200,169,110,0.04)); }
+  .fh-inner { padding:18px 20px; cursor:pointer; }
+  .fh-tag { font-size:9px; letter-spacing:.14em; text-transform:uppercase; color: var(--accent); font-weight:600; }
+  .fh-title { font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; color: var(--tx-1); margin-top:6px; }
+  .fh-meta { font-size:12px; color: var(--tx-2); margin-top:6px; }
+  /* Day-grouped federated list */
+  .cls-daygroup { padding:0 28px; margin-bottom:20px; }
+  .cls-dayhdr { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color: var(--tx-2); margin-bottom:10px; }
+  .cls-card { display:flex; gap:12px; background: var(--bg-el); border:1px solid var(--br-def);
+    border-left-width:3px; border-radius: var(--r-md); padding:13px 15px; margin-bottom:10px; cursor:pointer; transition: border-color .15s; }
+  .cls-card:hover { border-color: var(--br-str); }
+  .cls-card .cc-time { flex:0 0 54px; font-size:12px; color: var(--accent); font-weight:600; line-height:1.4; }
+  .cls-card .cc-title { font-size:14px; color: var(--tx-1); font-weight:500; }
+  .cls-card .cc-studio { font-size:11px; margin-top:3px; }
+  .cls-card .cc-meta { font-size:11px; color: var(--tx-3); margin-top:4px; }
+  .cls-empty { text-align:center; color: var(--tx-3); font-size:13px; padding:30px 28px; line-height:1.6; }
+  .cls-empty a { color: var(--accent); text-decoration:none; }
+  /* Booking modal specifics */
+  .bm-meta-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--br-sub); font-size:13px; }
+  .bm-meta-row .bm-k { color: var(--tx-3); }
+  .bm-meta-row .bm-v { color: var(--tx-1); text-align:right; max-width:60%; }
+  .book-btn-disabled { width:100%; margin-top:20px; background: var(--bg-ov); color: var(--tx-3);
+    border:1px dashed var(--br-str); border-radius: var(--r-lg); padding:16px 12px; font-size:13px;
+    font-family:'DM Sans','Noto Sans TC',sans-serif; cursor:not-allowed; text-align:center; }
+  .book-btn-disabled .bb-tag { display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--tx-3); margin-top:4px; }
+
+  /* ── M4 Phase B: Filters + reschedule ── */
+  .cls-filter-bar { display:none; align-items:center; gap:10px; padding:0 28px; margin-bottom:16px; overflow-x:auto; scrollbar-width:none; }
+  .cls-filter-bar::-webkit-scrollbar { display:none; }
+  .cls-filter-btn { flex:0 0 auto; display:flex; align-items:center; gap:6px; background: var(--bg-el);
+    border:1px solid var(--br-def); border-radius: var(--r-full); padding:8px 14px; font-size:12px;
+    color: var(--tx-1); cursor:pointer; font-family:'DM Sans','Noto Sans TC',sans-serif; }
+  .cls-filter-btn.active { border-color: var(--accent); color: var(--accent); }
+  .cls-filter-badge { background: var(--accent); color: var(--bg); border-radius:50%; width:16px; height:16px;
+    font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .cls-filter-chips { display:flex; gap:8px; }
+  .cls-fchip { flex:0 0 auto; display:flex; align-items:center; gap:6px; background: rgba(200,169,110,0.1);
+    border:1px solid rgba(200,169,110,0.35); border-radius: var(--r-full); padding:7px 10px 7px 13px; font-size:12px;
+    color: var(--accent); cursor:pointer; white-space:nowrap; }
+  .cls-fchip .fchip-x { opacity:.7; padding:2px; font-size:11px; }
+  .cls-fchip .fchip-x:hover { opacity:1; }
+
+  .filter-field { margin-bottom:14px; }
+  .filter-field label { display:block; font-size:11px; color: var(--tx-3); margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em; }
+  .filter-field input, .filter-field select { width:100%; background: var(--bg-el); border:1px solid var(--br-def);
+    border-radius: var(--r-md); padding:11px 13px; font-size:14px; color: var(--tx-1); font-family:'DM Sans','Noto Sans TC',sans-serif; }
+  .filter-actions { display:flex; gap:10px; margin-top:6px; margin-bottom:14px; }
+  .filter-actions .save-btn { flex:1; margin-top:0; }
+  .cls-star-btn { width:100%; background: transparent; border:1px dashed rgba(200,169,110,0.4); color: var(--accent);
+    border-radius: var(--r-md); padding:12px; font-size:13px; cursor:pointer; font-family:'DM Sans','Noto Sans TC',sans-serif; }
+
+  /* Reschedule: drag handle + edit affordance on owned cards */
+  .cls-card.owned { position:relative; padding-right:56px; }
+  .cc-drag-handle { position:absolute; right:34px; top:50%; transform:translateY(-50%); width:22px; height:36px;
+    display:flex; align-items:center; justify-content:center; color: var(--tx-3); cursor:grab; touch-action:none; font-size:14px; }
+  .cc-drag-handle:active { cursor:grabbing; }
+  .cc-edit-btn { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:26px; height:26px;
+    display:flex; align-items:center; justify-content:center; color: var(--tx-3); cursor:pointer; font-size:13px;
+    border-radius:50%; }
+  .cc-edit-btn:hover { color: var(--accent); background: rgba(200,169,110,0.1); }
+  .cls-card.drag-ghost { position:fixed; z-index:400; opacity:.92; box-shadow:0 8px 24px rgba(0,0,0,.4); pointer-events:none; }
+  .cls-dayhdr.drop-target { color: var(--accent); }
+  .cls-dayhdr.drop-target::after { content:' · drop to reschedule'; font-size:10px; text-transform:none; letter-spacing:normal; opacity:.8; }
 </style>
 
 <!-- ═══════════════════════════════════════
@@ -500,29 +622,45 @@
           <div id="body-status-rows"></div>
         </div>
       </div>
+
+      <div class="section" id="fatigue-section" style="display:none">
+        <div class="section-label">Progress Trend <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 30 days</span></div>
+        <div class="fatigue-card">
+          <div class="fatigue-chart" id="fatigue-chart"></div>
+          <div class="fatigue-legend"><span>30 days ago</span><span>Today</span></div>
+        </div>
+      </div>
     </div>
 
     <!-- ─── COURSES PAGE ─── -->
     <div class="page" id="page-courses">
       <div class="header">
-        <div class="greeting">Explore</div>
-        <div class="title">Find your <em>flow</em></div>
+        <div class="greeting" id="cls-greeting">Schedule</div>
+        <div class="title" id="cls-title">Your <em>classes</em></div>
       </div>
-      <div class="section-label" style="padding:0 28px;margin-bottom:14px">Featured Classes</div>
-      <div class="courses-scroll">
-        <div class="course-card c1"><div class="course-icon">🌅</div><div class="course-name">Morning Flow</div><div class="course-meta">20 min · Beginner</div><div class="course-play">▶</div></div>
-        <div class="course-card c2"><div class="course-icon">🌿</div><div class="course-name">Yin &amp; Restore</div><div class="course-meta">45 min · All levels</div><div class="course-play">▶</div></div>
-        <div class="course-card c3"><div class="course-icon">⚡</div><div class="course-name">Power Vinyasa</div><div class="course-meta">30 min · Intermediate</div><div class="course-play">▶</div></div>
-        <div class="course-card c4"><div class="course-icon">🌙</div><div class="course-name">Evening Wind Down</div><div class="course-meta">25 min · Beginner</div><div class="course-play">▶</div></div>
+
+      <!-- Teacher/Studio provisioning entry (shown only for those roles) -->
+      <div class="cls-cta" id="cls-cta" style="display:none" onclick="window.location.href='classes.html'">＋ Schedule a Class</div>
+
+      <!-- Role-adaptive header strip: today's schedule -->
+      <div class="section-label" id="today-label" style="padding:0 28px;margin-bottom:12px;display:none">Today</div>
+      <div class="today-strip" id="today-strip" style="display:none"></div>
+
+      <!-- Featured hero banner (linked studios' featured classes) -->
+      <div id="featured-hero-wrap"></div>
+
+      <!-- Filter bar: Filters button + saved-filter chips -->
+      <div class="cls-filter-bar" id="cls-filter-bar">
+        <button class="cls-filter-btn" id="cls-filter-btn" onclick="openFilterPopover()">
+          ⚙ Filters<span class="cls-filter-badge" id="cls-filter-badge" style="display:none">0</span>
+        </button>
+        <div class="cls-filter-chips" id="cls-filter-chips"></div>
       </div>
-      <div class="section-label" style="padding:0 28px;margin-bottom:14px">All Classes</div>
-      <div class="all-courses">
-        <div class="course-row"><div class="cr-icon">🌅</div><div><div class="cr-name">Morning Flow</div><div class="cr-meta">20 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🌿</div><div><div class="cr-name">Yin &amp; Restore</div><div class="cr-meta">45 min · All levels</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">⚡</div><div><div class="cr-name">Power Vinyasa</div><div class="cr-meta">30 min · Intermediate</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🌙</div><div><div class="cr-name">Evening Wind Down</div><div class="cr-meta">25 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🧘</div><div><div class="cr-name">Deep Stretch</div><div class="cr-meta">40 min · All levels</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🌬️</div><div><div class="cr-name">Breathwork &amp; Meditation</div><div class="cr-meta">15 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
+
+      <!-- 14-day federated list -->
+      <div class="section-label" id="upcoming-label" style="padding:0 28px;margin-bottom:14px">Next 14 Days</div>
+      <div id="cls-list">
+        <div class="cls-empty">Tap Classes to load your schedule.</div>
       </div>
     </div>
 
@@ -535,6 +673,21 @@
 
       <!-- Connections section (content injected by loadConnections()) -->
       <div id="connections-section" style="padding:0 28px 22px"></div>
+
+      <!-- Feedback portal entry (student role only) -->
+      <div id="feedback-portal-wrap" style="padding:0 28px 4px;display:none">
+        <button class="feedback-portal-btn" onclick="openFeedbackModal()">💬 Send Feedback to Teacher/Studio</button>
+      </div>
+
+      <!-- Peer follows: requests + search -->
+      <div class="section-label" style="padding:0 28px;margin-bottom:14px">Peer Connections</div>
+      <div id="follow-section" style="padding:0 28px 22px"></div>
+
+      <!-- My Groups (sub-community bulletins) -->
+      <div id="groups-section-wrap" style="display:none">
+        <div class="section-label" style="padding:0 28px;margin-bottom:14px">My Groups</div>
+        <div id="groups-section" style="padding:0 28px 22px"></div>
+      </div>
 
       <div class="section-label" style="padding:0 28px;margin-bottom:14px">Recent Activity</div>
       <div class="feed" id="feed">
@@ -571,6 +724,62 @@
   </div>
 </div>
 
+<!-- Class Booking Modal (M4 — booking engine gated to a later phase) -->
+<div class="overlay" id="booking-modal" style="display:none" onclick="if(event.target===this)closeBooking()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="bm-title"></div>
+    <div id="bm-meta"></div>
+    <div class="book-btn-disabled" aria-disabled="true">
+      Book Class
+      <span class="bb-tag">Next Stage Development — Gated Booking Engine</span>
+    </div>
+    <button class="save-btn" style="margin-top:12px;background:var(--br-def);color:var(--tx-1)" onclick="closeBooking()">Close</button>
+  </div>
+</div>
+
+<!-- Filter Popover (M4 Phase B) -->
+<div class="overlay" id="filter-modal" style="display:none" onclick="if(event.target===this)closeFilterPopover()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Filter Classes</div>
+    <div class="filter-field"><label>From</label><input type="date" id="flt-date-min"></div>
+    <div class="filter-field"><label>To</label><input type="date" id="flt-date-max"></div>
+    <div class="filter-field"><label>Teacher</label><select id="flt-teacher"><option value="">Any</option></select></div>
+    <div class="filter-field"><label>Style</label><input type="text" id="flt-style" placeholder="e.g. Vinyasa"></div>
+    <div class="filter-actions">
+      <button class="save-btn" onclick="applyFilterForm()">Apply</button>
+      <button class="save-btn" style="background:var(--br-def);color:var(--tx-1)" onclick="resetFilters()">Reset</button>
+    </div>
+    <div class="filter-field">
+      <label>Save as</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="flt-name" placeholder="Filter name" style="flex:1">
+        <button class="cls-star-btn" style="width:auto;padding:11px 16px" onclick="saveCurrentFilter()">⭐</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit / Reschedule Class Modal (M4 Phase B, owner-only) -->
+<div class="overlay" id="edit-class-modal" style="display:none" onclick="if(event.target===this)closeEditClass()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="ec-title">Reschedule</div>
+    <div class="filter-field"><label>Date</label><input type="date" id="ec-date"></div>
+    <div class="filter-field"><label>Time</label><input type="time" id="ec-time"></div>
+    <div class="filter-field"><label>Duration (min)</label>
+      <select id="ec-duration">
+        <option value="30">30</option><option value="45">45</option>
+        <option value="60" selected>60</option><option value="75">75</option><option value="90">90</option>
+      </select>
+    </div>
+    <div class="filter-field"><label>Room</label><input type="text" id="ec-room" placeholder="Optional"></div>
+    <div id="ec-error" style="color:var(--error);font-size:12px;margin-bottom:10px;display:none"></div>
+    <button class="save-btn" onclick="saveClassReschedule()">Save Changes</button>
+  </div>
+</div>
+
 <!-- Log Practice Modal (legacy, kept for fallback) -->
 <div class="overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -583,6 +792,21 @@
     <div class="field-label">How do you feel?</div>
     <div class="mood-row" id="mood-btns"></div>
     <button class="save-btn" onclick="saveSession()">Save Session ✓</button>
+  </div>
+</div>
+
+<!-- Feedback Portal Modal (M5 — student → teacher/studio) -->
+<div class="overlay" id="feedback-modal" style="display:none" onclick="if(event.target===this)closeFeedbackModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Send Feedback</div>
+    <div class="field-label">To</div>
+    <div class="chips" id="feedback-target-chips"></div>
+    <div class="field-label">Your Message</div>
+    <textarea id="feedback-body" maxlength="2000" placeholder="Share your thoughts, questions, or a review…" style="width:100%;min-height:120px;background:var(--bg-el);border:1.5px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;color:var(--tx-1);outline:none;resize:none" oninput="updateFeedbackCharCount()"></textarea>
+    <div class="feedback-char-count" id="feedback-char-count">0 / 2000</div>
+    <div class="feedback-tone-hint">Please keep feedback constructive and respectful — this message goes directly to your teacher or studio.</div>
+    <button class="save-btn" onclick="submitFeedback()">Send Feedback</button>
   </div>
 </div>
 
@@ -615,7 +839,7 @@ let currentUserRole = null;
     // Fetch profile — includes all 8 stat columns
     const { data: profile } = await db
       .from('profiles')
-      .select('display_name, role, global_streak_count, global_total_sessions, global_total_minutes, yoga_streak_count, yoga_total_sessions, yoga_total_minutes')
+      .select('display_name, role, global_streak_count, global_total_sessions, global_total_minutes, yoga_streak_count, yoga_total_sessions, yoga_total_minutes, saved_filters')
       .eq('id', currentUser.id)
       .single();
 
@@ -627,6 +851,7 @@ let currentUserRole = null;
 
     // Cache role for UI branching
     currentUserRole = profile.role;
+    FILTER_STATE.saved = Array.isArray(profile.saved_filters) ? profile.saved_filters : [];
 
     // Populate live stats into STATE
     STATE.streak     = profile.global_streak_count   || 0;
@@ -676,6 +901,9 @@ let currentUserRole = null;
 
     // Load last-14-days muscle feelings for the Body Status widget
     loadBodyStatus();
+
+    // Load 30-day fatigue trend (M5 progress dashboard)
+    loadFatigueTrend();
 
   } catch (err) {
     console.error('Auth check failed:', err);
@@ -1071,6 +1299,41 @@ async function loadBodyStatus() {
   renderBodyStatus();
 }
 
+// ── M5: 30-DAY FATIGUE TREND ──────────────────────────────
+// Client-side aggregation of the student's own logs (no privacy
+// concerns — a user always sees their own full history regardless
+// of is_private). Uses the body_fatigue_30day() SQL helper.
+async function loadFatigueTrend() {
+  if (!currentUser) return;
+  var { data, error } = await db.rpc('body_fatigue_30day', { p_user_id: currentUser.id });
+  if (error) { console.error('loadFatigueTrend failed:', error); return; }
+
+  var section = document.getElementById('fatigue-section');
+  var chartEl = document.getElementById('fatigue-chart');
+  if (!data || !data.length) { section.style.display = 'none'; return; }
+
+  section.style.display = 'block';
+  chartEl.innerHTML = '';
+
+  // Build a dense 30-day series (fill gaps with 0) so bar spacing is even
+  var byDate = {};
+  data.forEach(function(row) { byDate[row.date] = row.serious_count; });
+  var maxCount = Math.max.apply(null, data.map(function(r) { return r.serious_count; }).concat([1]));
+
+  for (var i = 29; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var key = d.toISOString().split('T')[0];
+    var count = byDate[key] || 0;
+    var heightPct = Math.max(4, Math.round((count / maxCount) * 100));
+    var bar = document.createElement('div');
+    bar.className = 'fatigue-bar' + (count >= 3 ? ' high' : '');
+    bar.style.height = heightPct + '%';
+    bar.title = key + ': ' + count + ' fatigue marker' + (count === 1 ? '' : 's');
+    chartEl.appendChild(bar);
+  }
+}
+
 function computeBodyStatus() {
   var scores = {};
   BODY_CATEGORIES.forEach(function(c) { scores[c] = 0; });
@@ -1284,7 +1547,7 @@ var communityLoaded  = false;
 async function loadCommunity() {
   if (communityLoaded) return;
   communityLoaded = true;
-  await Promise.all([loadConnections(), loadFeed()]);
+  await Promise.all([loadConnections(), loadFeed(), loadFollows(), loadGroups(), setupFeedbackPortal()]);
 }
 
 // ── FEED ────────────────────────────────────────────────────
@@ -1426,6 +1689,273 @@ async function loadConnections() {
     '</a>';
 }
 
+// ── M5: PEER FOLLOWS ──────────────────────────────────────
+// Bidirectional follow model: requester creates a 'pending' row,
+// target accepts to flip it to 'accepted'. Peer activity in the
+// feed is gated by RLS on accepted follows — no client-side
+// filtering needed once accepted.
+async function loadFollows() {
+  var el = document.getElementById('follow-section');
+  if (!el || !currentUser) return;
+  el.innerHTML = '<div class="feed-spinner">Loading…</div>';
+
+  var [incomingRes, outgoingRes] = await Promise.all([
+    db.from('follows')
+      .select('id, follower_id, status, profiles!follows_follower_id_fkey(display_name)')
+      .eq('followee_id', currentUser.id)
+      .order('created_at', { ascending: false }),
+    db.from('follows')
+      .select('id, followee_id, status, profiles!follows_followee_id_fkey(display_name)')
+      .eq('follower_id', currentUser.id)
+      .order('created_at', { ascending: false }),
+  ]);
+
+  var incoming = incomingRes.data || [];
+  var outgoing = outgoingRes.data || [];
+  var pendingIncoming = incoming.filter(function(f) { return f.status === 'pending'; });
+  var accepted = outgoing.filter(function(f) { return f.status === 'accepted'; })
+    .concat(incoming.filter(function(f) { return f.status === 'accepted'; }));
+
+  var html = '';
+
+  html += '<div class="follow-search">' +
+    '<input type="email" id="follow-email-input" placeholder="Peer email address" />' +
+    '<button onclick="sendFollowRequest()">Follow</button>' +
+    '</div>' +
+    '<div class="follow-msg" id="follow-search-msg"></div>';
+
+  if (pendingIncoming.length) {
+    html += '<div class="section-label" style="margin-top:14px;margin-bottom:8px">Requests</div>';
+    pendingIncoming.forEach(function(f) {
+      var name = f.profiles ? f.profiles.display_name : 'Someone';
+      html += '<div class="follow-row">' +
+        '<div class="avatar" style="background:var(--accent);color:var(--bg);font-weight:600;width:34px;height:34px;font-size:13px">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+        '<div><div class="follow-name">' + name + '</div><div class="follow-sub">wants to follow you</div></div>' +
+        '<div class="follow-actions">' +
+          '<button class="follow-btn accept" onclick="respondFollow(\'' + f.id + '\',\'accepted\')">Accept</button>' +
+          '<button class="follow-btn decline" onclick="respondFollow(\'' + f.id + '\',\'revoked\')">Decline</button>' +
+        '</div></div>';
+    });
+  }
+
+  if (accepted.length) {
+    html += '<div class="section-label" style="margin-top:14px;margin-bottom:8px">Following</div>';
+    accepted.forEach(function(f) {
+      var name = f.profiles ? f.profiles.display_name : 'Someone';
+      html += '<div class="follow-row">' +
+        '<div class="avatar" style="background:var(--accent);color:var(--bg);font-weight:600;width:34px;height:34px;font-size:13px">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+        '<div><div class="follow-name">' + name + '</div><div class="follow-sub">connected</div></div>' +
+        '</div>';
+    });
+  }
+
+  if (!pendingIncoming.length && !accepted.length) {
+    html += '<div class="empty-hint" style="padding:6px 0">Follow a peer by email to see their activity in your feed.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+async function sendFollowRequest() {
+  var input = document.getElementById('follow-email-input');
+  var msgEl = document.getElementById('follow-search-msg');
+  var email = input.value.trim().toLowerCase();
+  msgEl.className = 'follow-msg';
+  msgEl.textContent = '';
+  if (!email) return;
+
+  var { data: targets, error: lookupErr } = await db.rpc('lookup_profile_by_email', { p_email: email });
+  var target = targets && targets.length ? targets[0] : null;
+
+  if (lookupErr || !target) {
+    msgEl.className = 'follow-msg err';
+    msgEl.textContent = 'No user found with that email.';
+    return;
+  }
+  if (target.id === currentUser.id) {
+    msgEl.className = 'follow-msg err';
+    msgEl.textContent = "You can't follow yourself.";
+    return;
+  }
+
+  var { error } = await db.from('follows').insert({
+    follower_id: currentUser.id,
+    followee_id: target.id,
+    status: 'pending',
+  });
+
+  if (error) {
+    msgEl.className = 'follow-msg err';
+    msgEl.textContent = error.code === '23505' ? 'Follow request already sent.' : 'Could not send request.';
+    console.error('Follow request failed:', error);
+    return;
+  }
+
+  input.value = '';
+  await loadFollows();
+  // loadFollows() rebuilds the whole section (including this message
+  // element), so the success message is set after the re-render.
+  var newMsgEl = document.getElementById('follow-search-msg');
+  if (newMsgEl) {
+    newMsgEl.className = 'follow-msg ok';
+    newMsgEl.textContent = 'Follow request sent!';
+  }
+}
+
+async function respondFollow(followId, newStatus) {
+  var { error } = await db.from('follows')
+    .update({ status: newStatus, responded_at: new Date().toISOString() })
+    .eq('id', followId);
+  if (error) { console.error('Respond follow failed:', error); return; }
+  await loadFollows();
+  // Accepting a follow may reveal new feed rows the current user can now see
+  if (newStatus === 'accepted') { feedLoaded = false; await loadFeed(); }
+}
+
+// ── M5: GROUPS (sub-communities) ──────────────────────────
+var GROUP_CHANNELS = [];
+async function loadGroups() {
+  var wrap = document.getElementById('groups-section-wrap');
+  var el = document.getElementById('groups-section');
+  if (!el || !currentUser) return;
+
+  var { data: memberships, error } = await db.from('group_members')
+    .select('group_id, groups(id, name, description)')
+    .eq('student_id', currentUser.id);
+
+  if (error) { console.error('Load groups failed:', error); return; }
+
+  if (!memberships || !memberships.length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  el.innerHTML = '';
+
+  // Tear down any previous realtime subscriptions before re-rendering
+  GROUP_CHANNELS.forEach(function(ch) { db.removeChannel(ch); });
+  GROUP_CHANNELS = [];
+
+  for (var i = 0; i < memberships.length; i++) {
+    var g = memberships[i].groups;
+    if (!g) continue;
+
+    var { data: bulletins } = await db.from('group_bulletins')
+      .select('id, body, created_at')
+      .eq('group_id', g.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    var card = document.createElement('div');
+    card.className = 'group-card';
+    card.id = 'group-card-' + g.id;
+    card.innerHTML =
+      '<div class="group-card-name">' + g.name + '</div>' +
+      (g.description ? '<div class="group-card-desc">' + g.description + '</div>' : '') +
+      '<div id="bulletins-' + g.id + '">' +
+        (bulletins && bulletins.length
+          ? bulletins.map(function(b) { return bulletinItemHtml(b); }).join('')
+          : '<div class="empty-hint" style="margin-top:10px">No bulletins yet.</div>') +
+      '</div>';
+    el.appendChild(card);
+
+    // Realtime: new bulletins push into this group's card instantly
+    var ch = db.channel('group-bulletins-' + g.id)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'group_bulletins',
+        filter: 'group_id=eq.' + g.id,
+      }, function(payload) {
+        var listEl = document.getElementById('bulletins-' + payload.new.group_id);
+        if (!listEl) return;
+        var empty = listEl.querySelector('.empty-hint');
+        if (empty) empty.remove();
+        listEl.insertAdjacentHTML('afterbegin', bulletinItemHtml(payload.new, true));
+      })
+      .subscribe();
+    GROUP_CHANNELS.push(ch);
+  }
+}
+
+function bulletinItemHtml(b, isNew) {
+  return '<div class="bulletin-item' + (isNew ? ' new' : '') + '">' +
+    '<div class="bulletin-item-body">' + b.body + '</div>' +
+    '<div class="bulletin-item-time">' + new Date(b.created_at).toLocaleString() + '</div>' +
+    '</div>';
+}
+
+// ── M5: FEEDBACK PORTAL (student → teacher/studio) ────────
+var FEEDBACK_TARGETS = [];
+var FEEDBACK_SELECTED_TARGET = null;
+
+async function setupFeedbackPortal() {
+  var wrap = document.getElementById('feedback-portal-wrap');
+  if (!wrap || !currentUser || currentUserRole !== 'student') return;
+
+  var { data: links } = await db.from('studio_linkages')
+    .select('entity_id, profiles!studio_linkages_entity_id_fkey(display_name)')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'active');
+
+  FEEDBACK_TARGETS = (links || []).map(function(l) {
+    return { id: l.entity_id, name: l.profiles ? l.profiles.display_name : 'Unknown' };
+  });
+
+  wrap.style.display = FEEDBACK_TARGETS.length ? 'block' : 'none';
+}
+
+function openFeedbackModal() {
+  if (!FEEDBACK_TARGETS.length) return;
+  var chipsEl = document.getElementById('feedback-target-chips');
+  chipsEl.innerHTML = '';
+  FEEDBACK_SELECTED_TARGET = FEEDBACK_TARGETS[0].id;
+  FEEDBACK_TARGETS.forEach(function(t, idx) {
+    var chip = document.createElement('button');
+    chip.className = 'chip' + (idx === 0 ? ' on' : '');
+    chip.textContent = t.name;
+    chip.onclick = function() {
+      FEEDBACK_SELECTED_TARGET = t.id;
+      chipsEl.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+      chip.classList.add('on');
+    };
+    chipsEl.appendChild(chip);
+  });
+  document.getElementById('feedback-body').value = '';
+  updateFeedbackCharCount();
+  document.getElementById('feedback-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFeedbackModal() {
+  document.getElementById('feedback-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function updateFeedbackCharCount() {
+  var body = document.getElementById('feedback-body').value;
+  var countEl = document.getElementById('feedback-char-count');
+  countEl.textContent = body.length + ' / 2000';
+  countEl.classList.toggle('limit', body.length > 2000);
+}
+
+async function submitFeedback() {
+  var body = document.getElementById('feedback-body').value.trim();
+  if (!body || !FEEDBACK_SELECTED_TARGET || body.length > 2000) return;
+
+  var { error } = await db.from('feedback').insert({
+    author_id: currentUser.id,
+    target_entity_id: FEEDBACK_SELECTED_TARGET,
+    direction: 'student_to_teacher',
+    session_id: null,
+    body: body,
+  });
+
+  if (error) { console.error('Submit feedback failed:', error); return; }
+  closeFeedbackModal();
+  showToast('Feedback sent!');
+}
+
 
 /* ─────────────────────────────────────────
    6. LOG PRACTICE MODAL (legacy)
@@ -1520,6 +2050,651 @@ function switchTab(tab) {
 
   // Lazy-load community content on first visit
   if (tab === 'community') loadCommunity();
+  if (tab === 'courses') loadClassesTab();
+}
+
+
+/* ─────────────────────────────────────────
+   7b. M4 — FEDERATED CLASSES TAB
+───────────────────────────────────────── */
+let CLS_LOADED = false;
+let CLS_ROLE = null;          // 'student' | 'teacher'
+let CLS_RAW = [];             // full fetched class list (before filters)
+let CLS_LINKED_IDS = [];      // student's linked studio/teacher ids (for realtime relevance)
+let CLS_CHANNEL = null;
+const FILTER_STATE = { active: { dateMin: null, dateMax: null, teacherId: null, style: '' }, saved: [] };
+
+// Deterministic studio-branding colour derived from the owner id, so
+// each studio's cards read consistently without a stored brand colour
+// (a real brand colour can arrive in M6). Palette stays within the
+// warm/sage/amber family of the design tokens.
+const STUDIO_PALETTE = ['#C8A96E','#7B9E87','#D4956A','#A88848','#9A9080','#C47070','#B08D57','#8FA98E'];
+function studioColor(id) {
+  var h = 0, s = String(id || '');
+  for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+  return STUDIO_PALETTE[h % STUDIO_PALETTE.length];
+}
+
+async function loadClassesTab() {
+  // Role-adaptive chrome
+  var isTeacher = currentUserRole === 'teacher' || currentUserRole === 'studio';
+  document.getElementById('cls-cta').style.display = isTeacher ? 'flex' : 'none';
+  document.getElementById('cls-greeting').textContent = isTeacher ? 'Schedule' : 'Explore';
+  document.getElementById('cls-title').innerHTML = isTeacher ? 'Your <em>classes</em>' : 'Find your <em>flow</em>';
+
+  if (CLS_LOADED) return;   // one-time network load; realtime not needed for Phase A
+  CLS_LOADED = true;
+
+  try {
+    if (isTeacher) {
+      await renderTeacherSchedule();
+    } else {
+      await renderStudentFederated();
+    }
+    subscribeClassesRealtime();
+  } catch (err) {
+    console.error('Classes tab load failed:', err);
+    document.getElementById('cls-list').innerHTML =
+      '<div class="cls-empty">Could not load classes. Pull to refresh.</div>';
+  }
+}
+
+// Student: merge published classes from every linked studio/teacher,
+// 14-day forward horizon, grouped by day, studio-branded.
+async function renderStudentFederated() {
+  var listEl = document.getElementById('cls-list');
+  CLS_ROLE = 'student';
+
+  var links = await db.from('studio_linkages')
+    .select('entity_id')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'active');
+  var entityIds = (links.data || []).map(function(l) { return l.entity_id; });
+  CLS_LINKED_IDS = entityIds;
+
+  if (!entityIds.length) {
+    document.getElementById('upcoming-label').style.display = 'none';
+    document.getElementById('cls-filter-bar').style.display = 'none';
+    CLS_RAW = [];
+    listEl.innerHTML =
+      '<div class="cls-empty">You\'re not linked to a studio yet.<br>' +
+      '<a href="profile.html">Connect with a join code →</a></div>';
+    return;
+  }
+
+  var now = new Date();
+  var horizon = new Date(now.getTime() + 14 * 86400000);
+  var res = await db.from('classes')
+    .select('id, title, style_name, description, start_time, end_time, capacity, room, location, is_online, meeting_url, prerequisites, is_featured, teacher_id, assigned_teacher_id')
+    .in('teacher_id', entityIds)
+    .eq('status', 'published')
+    .gte('start_time', now.toISOString())
+    .lte('start_time', horizon.toISOString())
+    .order('start_time', { ascending: true });
+  var classes = res.data || [];
+
+  // Resolve display names (studios/teachers + assigned teachers) in one pass
+  var nameIds = {};
+  classes.forEach(function(c) { nameIds[c.teacher_id] = 1; if (c.assigned_teacher_id) nameIds[c.assigned_teacher_id] = 1; });
+  var names = await fetchNames(Object.keys(nameIds));
+
+  // Featured hero (soonest featured class)
+  renderFeaturedHero(classes.filter(function(c){ return c.is_featured; }), names);
+
+  // Today strip = student's booked classes today
+  await renderStudentTodayStrip(names);
+
+  document.getElementById('upcoming-label').style.display = 'block';
+  CLS_RAW = classes;
+  CLS_NAMES = names;
+  CLS_CACHE = {}; classes.forEach(function(c){ CLS_CACHE[c.id] = c; });
+  refreshFilteredView();
+}
+
+// Teacher/Studio: their own teaching schedule (owned or assigned).
+async function renderTeacherSchedule() {
+  var listEl = document.getElementById('cls-list');
+  CLS_ROLE = 'teacher';
+  var now = new Date();
+  var horizon = new Date(now.getTime() + 14 * 86400000);
+
+  var res = await db.from('classes')
+    .select('id, title, style_name, description, start_time, end_time, capacity, room, location, is_online, meeting_url, prerequisites, is_featured, teacher_id, assigned_teacher_id, status')
+    .or('teacher_id.eq.' + currentUser.id + ',assigned_teacher_id.eq.' + currentUser.id)
+    .neq('status', 'cancelled')
+    .gte('start_time', now.toISOString())
+    .lte('start_time', horizon.toISOString())
+    .order('start_time', { ascending: true });
+  var classes = res.data || [];
+
+  var nameIds = {};
+  classes.forEach(function(c) { nameIds[c.teacher_id] = 1; if (c.assigned_teacher_id) nameIds[c.assigned_teacher_id] = 1; });
+  var names = await fetchNames(Object.keys(nameIds));
+
+  // Today strip = classes I teach today
+  var todayKey = dayKey(now);
+  var todays = classes.filter(function(c){ return dayKey(new Date(c.start_time)) === todayKey; });
+  renderTodayStrip(todays, names, 'You\'re teaching');
+
+  document.getElementById('featured-hero-wrap').innerHTML = '';
+  document.getElementById('upcoming-label').style.display = 'block';
+  CLS_RAW = classes;
+  CLS_NAMES = names;
+  CLS_CACHE = {}; classes.forEach(function(c){ CLS_CACHE[c.id] = c; });
+  refreshFilteredView();
+}
+
+var CLS_CACHE = {};
+var CLS_NAMES = {};
+
+async function fetchNames(ids) {
+  var map = {};
+  if (!ids.length) return map;
+  var res = await db.from('profiles').select('id, display_name').in('id', ids);
+  (res.data || []).forEach(function(p) { map[p.id] = p.display_name || 'Studio'; });
+  return map;
+}
+
+function renderDayGroups(classes, names) {
+  var groups = {};
+  var order = [];
+  classes.forEach(function(c) {
+    var k = dayKey(new Date(c.start_time));
+    if (!groups[k]) { groups[k] = []; order.push(k); }
+    groups[k].push(c);
+  });
+  return order.map(function(k) {
+    var d = new Date(k + 'T00:00:00');
+    var label = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    var cards = groups[k].map(function(c) { return classCard(c, names); }).join('');
+    return '<div class="cls-daygroup" data-day-key="' + k + '"><div class="cls-dayhdr">' + label + '</div>' + cards + '</div>';
+  }).join('');
+}
+
+function classCard(c, names) {
+  var color = studioColor(c.teacher_id);
+  var studio = names[c.teacher_id] || 'Studio';
+  var instructor = c.assigned_teacher_id && names[c.assigned_teacher_id] ? names[c.assigned_teacher_id] : null;
+  var where = c.is_online ? 'Online' : (c.room || c.location || '');
+  var metaBits = [esc(c.style_name)];
+  if (instructor && c.assigned_teacher_id !== c.teacher_id) metaBits.push('w/ ' + esc(instructor));
+  if (where) metaBits.push(esc(where));
+  // Only the owning teacher/studio (never an assigned-only teacher) may
+  // drag/edit — matches the classes_teacher_update RLS policy (teacher_id
+  // = auth.uid() only), so a rejected UPDATE never surprises the user.
+  var owned = !!(currentUser && c.teacher_id === currentUser.id);
+  return '<div class="cls-card' + (owned ? ' owned' : '') + '" data-class-id="' + c.id + '" style="border-left-color:' + color + '" onclick="openBooking(\'' + c.id + '\')">' +
+    '<div class="cc-time">' + fmtTime(c.start_time) + '</div>' +
+    '<div style="flex:1">' +
+      '<div class="cc-title">' + esc(c.title) + '</div>' +
+      '<div class="cc-studio" style="color:' + color + '">' + esc(studio) + '</div>' +
+      '<div class="cc-meta">' + metaBits.join(' · ') + '</div>' +
+    '</div>' +
+    (owned ?
+      '<div class="cc-drag-handle" data-drag-handle="' + c.id + '">⠿</div>' +
+      '<div class="cc-edit-btn" onclick="event.stopPropagation();openEditClass(\'' + c.id + '\')">✎</div>'
+      : '') +
+  '</div>';
+}
+
+function renderFeaturedHero(featured, names) {
+  var wrap = document.getElementById('featured-hero-wrap');
+  if (!featured || !featured.length) { wrap.innerHTML = ''; return; }
+  var c = featured[0];
+  var studio = names[c.teacher_id] || 'Studio';
+  wrap.innerHTML =
+    '<div class="featured-hero"><div class="fh-inner" onclick="openBooking(\'' + c.id + '\')">' +
+      '<div class="fh-tag">✦ Featured · ' + esc(studio) + '</div>' +
+      '<div class="fh-title">' + esc(c.title) + '</div>' +
+      '<div class="fh-meta">' + fmtWhenShort(c.start_time) + ' · ' + esc(c.style_name) + '</div>' +
+    '</div></div>';
+}
+
+async function renderStudentTodayStrip(names) {
+  var now = new Date();
+  var bookings = await db.from('bookings')
+    .select('class_id, classes(id, title, start_time, end_time, teacher_id, room, location, is_online)')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'confirmed');
+  var todayKey = dayKey(now);
+  var rows = (bookings.data || [])
+    .map(function(b) { return b.classes; })
+    .filter(function(c) { return c && dayKey(new Date(c.start_time)) === todayKey; })
+    .sort(function(a, b) { return new Date(a.start_time) - new Date(b.start_time); });
+  renderTodayStrip(rows, names, 'Today\'s bookings');
+}
+
+function renderTodayStrip(rows, names, label) {
+  var stripEl = document.getElementById('today-strip');
+  var labelEl = document.getElementById('today-label');
+  if (!rows || !rows.length) { stripEl.style.display = 'none'; labelEl.style.display = 'none'; return; }
+  labelEl.textContent = label;
+  labelEl.style.display = 'block';
+  stripEl.style.display = 'flex';
+  stripEl.innerHTML = rows.map(function(c) {
+    var where = c.is_online ? 'Online' : (c.room || c.location || '');
+    return '<div class="today-chip">' +
+      '<div class="tc-time">' + fmtTime(c.start_time) + '</div>' +
+      '<div class="tc-title">' + esc(c.title) + '</div>' +
+      (where ? '<div class="tc-sub">' + esc(where) + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function openBooking(id) {
+  var c = CLS_CACHE[id];
+  if (!c) return;
+  var studio = CLS_NAMES[c.teacher_id] || 'Studio';
+  var instructor = c.assigned_teacher_id && CLS_NAMES[c.assigned_teacher_id] ? CLS_NAMES[c.assigned_teacher_id] : studio;
+  var where = c.is_online ? 'Online' : (c.room || c.location || '—');
+  document.getElementById('bm-title').textContent = c.title;
+  var rows = [
+    ['When', fmtWhenShort(c.start_time) + '–' + fmtTime(c.end_time)],
+    ['Studio', studio],
+    ['Instructor', instructor],
+    ['Style', c.style_name],
+    ['Where', where],
+    ['Capacity', c.capacity ? (c.capacity + ' spots') : 'Unlimited'],
+  ];
+  if (c.prerequisites) rows.push(['Prerequisites', c.prerequisites]);
+  if (c.description) rows.push(['About', c.description]);
+  document.getElementById('bm-meta').innerHTML = rows.map(function(r) {
+    return '<div class="bm-meta-row"><span class="bm-k">' + r[0] + '</span><span class="bm-v">' + esc(r[1]) + '</span></div>';
+  }).join('');
+  document.getElementById('booking-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBooking() {
+  document.getElementById('booking-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/* ─────────────────────────────────────────
+   7c. M4 Phase B — Filters
+───────────────────────────────────────── */
+function applyFilters(classes) {
+  var f = FILTER_STATE.active;
+  return classes.filter(function(c) {
+    var k = dayKey(new Date(c.start_time));
+    if (f.dateMin && k < f.dateMin) return false;
+    if (f.dateMax && k > f.dateMax) return false;
+    if (f.teacherId && c.teacher_id !== f.teacherId && c.assigned_teacher_id !== f.teacherId) return false;
+    if (f.style && (!c.style_name || c.style_name.toLowerCase().indexOf(f.style.toLowerCase()) === -1)) return false;
+    return true;
+  });
+}
+
+function refreshFilteredView() {
+  var listEl = document.getElementById('cls-list');
+  var filtered = applyFilters(CLS_RAW);
+  document.getElementById('cls-filter-bar').style.display = CLS_RAW.length ? 'flex' : 'none';
+  updateFilterBadge();
+  renderSavedFilterChips();
+
+  if (!filtered.length) {
+    listEl.innerHTML = CLS_RAW.length
+      ? '<div class="cls-empty">No classes match your filters.</div>'
+      : (CLS_ROLE === 'teacher'
+          ? '<div class="cls-empty">No upcoming classes. Tap “Schedule a Class” to add one.</div>'
+          : '<div class="cls-empty">No classes scheduled in the next 14 days.</div>');
+    return;
+  }
+
+  listEl.innerHTML = renderDayGroups(filtered, CLS_NAMES);
+  attachDayGroupDropTargets();
+  attachCardDragHandlers();
+}
+
+function countActiveFilters() {
+  var f = FILTER_STATE.active;
+  var n = 0;
+  if (f.dateMin) n++;
+  if (f.dateMax) n++;
+  if (f.teacherId) n++;
+  if (f.style) n++;
+  return n;
+}
+
+function updateFilterBadge() {
+  var n = countActiveFilters();
+  var badge = document.getElementById('cls-filter-badge');
+  var btn = document.getElementById('cls-filter-btn');
+  if (n > 0) { badge.style.display = 'flex'; badge.textContent = String(n); btn.classList.add('active'); }
+  else { badge.style.display = 'none'; btn.classList.remove('active'); }
+}
+
+function populateTeacherFilterOptions() {
+  var sel = document.getElementById('flt-teacher');
+  var ids = {};
+  CLS_RAW.forEach(function(c) { ids[c.teacher_id] = 1; if (c.assigned_teacher_id) ids[c.assigned_teacher_id] = 1; });
+  var opts = Object.keys(ids).map(function(id) {
+    return '<option value="' + id + '">' + esc(CLS_NAMES[id] || 'Unknown') + '</option>';
+  });
+  sel.innerHTML = '<option value="">Any</option>' + opts.join('');
+  sel.value = FILTER_STATE.active.teacherId || '';
+}
+
+function openFilterPopover() {
+  populateTeacherFilterOptions();
+  document.getElementById('flt-date-min').value = FILTER_STATE.active.dateMin || '';
+  document.getElementById('flt-date-max').value = FILTER_STATE.active.dateMax || '';
+  document.getElementById('flt-style').value = FILTER_STATE.active.style || '';
+  document.getElementById('flt-name').value = '';
+  document.getElementById('filter-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFilterPopover() {
+  document.getElementById('filter-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function readFilterForm() {
+  return {
+    dateMin: document.getElementById('flt-date-min').value || null,
+    dateMax: document.getElementById('flt-date-max').value || null,
+    teacherId: document.getElementById('flt-teacher').value || null,
+    style: document.getElementById('flt-style').value.trim() || '',
+  };
+}
+
+function applyFilterForm() {
+  FILTER_STATE.active = readFilterForm();
+  closeFilterPopover();
+  refreshFilteredView();
+}
+
+function resetFilters() {
+  FILTER_STATE.active = { dateMin: null, dateMax: null, teacherId: null, style: '' };
+  closeFilterPopover();
+  refreshFilteredView();
+}
+
+async function saveCurrentFilter() {
+  var name = document.getElementById('flt-name').value.trim();
+  if (!name) { showToast('Name your filter first.'); return; }
+
+  FILTER_STATE.active = readFilterForm();
+  var f = FILTER_STATE.active;
+  var entry = {
+    id: 'f_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name.slice(0, 40),
+    dateMin: f.dateMin, dateMax: f.dateMax, teacherId: f.teacherId, style: f.style,
+    createdAt: new Date().toISOString(),
+  };
+  var next = FILTER_STATE.saved.filter(function(sf) { return sf.name !== entry.name; });
+  next.push(entry);
+
+  var upd = await db.from('profiles').update({ saved_filters: next }).eq('id', currentUser.id);
+  if (upd.error) {
+    console.error('Save filter failed:', upd.error);
+    showToast('Could not save filter.');
+    return;
+  }
+  FILTER_STATE.saved = next;
+  closeFilterPopover();
+  refreshFilteredView();
+  showToast('Filter saved: ' + entry.name);
+}
+
+function applySavedFilter(id) {
+  var f = FILTER_STATE.saved.find(function(sf) { return sf.id === id; });
+  if (!f) return;
+  FILTER_STATE.active = { dateMin: f.dateMin, dateMax: f.dateMax, teacherId: f.teacherId, style: f.style };
+  refreshFilteredView();
+}
+
+async function deleteSavedFilter(id, ev) {
+  if (ev) ev.stopPropagation();
+  var next = FILTER_STATE.saved.filter(function(sf) { return sf.id !== id; });
+  FILTER_STATE.saved = next;
+  renderSavedFilterChips();
+  var upd = await db.from('profiles').update({ saved_filters: next }).eq('id', currentUser.id);
+  if (upd.error) console.error('Delete filter failed:', upd.error);
+}
+
+function renderSavedFilterChips() {
+  var wrap = document.getElementById('cls-filter-chips');
+  if (!wrap) return;
+  wrap.innerHTML = FILTER_STATE.saved.map(function(f) {
+    return '<div class="cls-fchip" onclick="applySavedFilter(\'' + f.id + '\')">' +
+      esc(f.name) +
+      '<span class="fchip-x" onclick="deleteSavedFilter(\'' + f.id + '\', event)">✕</span>' +
+    '</div>';
+  }).join('');
+}
+
+/* ─────────────────────────────────────────
+   7d. M4 Phase B — Drag-to-reschedule + edit modal
+   Owner-only (teacher_id = auth.uid()), matching the classes_teacher_update
+   RLS policy. Reuses the M2 pointer-events drag pattern (attachTypeDragHandlers
+   in lumen-log-practice-3d.html): pointer capture is deferred until real
+   movement is confirmed, so a plain tap still falls through to openBooking().
+───────────────────────────────────────── */
+var RESCHEDULE_DRAG_THRESHOLD_PX = 10;
+
+function attachDayGroupDropTargets() {
+  document.querySelectorAll('.cls-dayhdr').forEach(function(hdr) {
+    hdr.addEventListener('lumen-drag-over', function() { hdr.classList.add('drop-target'); });
+    hdr.addEventListener('lumen-drag-out', function() { hdr.classList.remove('drop-target'); });
+  });
+}
+
+function attachCardDragHandlers() {
+  document.querySelectorAll('.cc-drag-handle').forEach(function(handle) {
+    attachClassDragHandler(handle, handle.getAttribute('data-drag-handle'));
+  });
+}
+
+function attachClassDragHandler(handle, classId) {
+  handle.addEventListener('pointerdown', function(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    var startX = e.clientX, startY = e.clientY, dragging = false, ghost = null, currentTarget = null;
+    var pointerId = e.pointerId;
+    var card = handle.closest('.cls-card');
+
+    var onMove = function(mv) {
+      var dx = mv.clientX - startX, dy = mv.clientY - startY;
+      if (!dragging && Math.hypot(dx, dy) > RESCHEDULE_DRAG_THRESHOLD_PX) {
+        dragging = true;
+        handle.setPointerCapture(pointerId);
+        ghost = card.cloneNode(true);
+        ghost.classList.add('drag-ghost');
+        ghost.style.width = card.offsetWidth + 'px';
+        document.body.appendChild(ghost);
+      }
+      if (!dragging) return;
+      mv.preventDefault();
+      ghost.style.left = (mv.clientX - ghost.offsetWidth / 2) + 'px';
+      ghost.style.top = (mv.clientY - ghost.offsetHeight / 2) + 'px';
+
+      ghost.style.display = 'none';
+      var under = document.elementFromPoint(mv.clientX, mv.clientY);
+      ghost.style.display = '';
+      var hdr = under && under.closest('.cls-dayhdr');
+      if (hdr !== currentTarget) {
+        if (currentTarget) currentTarget.dispatchEvent(new Event('lumen-drag-out'));
+        currentTarget = hdr || null;
+        if (currentTarget) currentTarget.dispatchEvent(new Event('lumen-drag-over'));
+      }
+    };
+
+    var onUp = function() {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      if (ghost) { ghost.remove(); ghost = null; }
+      if (currentTarget) currentTarget.classList.remove('drop-target');
+
+      if (dragging && currentTarget) {
+        var targetGroup = currentTarget.closest('.cls-daygroup');
+        var newDateKey = targetGroup ? targetGroup.getAttribute('data-day-key') : null;
+        if (newDateKey) rescheduleToDay(classId, newDateKey);
+      }
+      currentTarget = null;
+    };
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+// Conflict = same room, or same (assigned) teacher, with an overlapping time window.
+function findConflict(classId, newStart, newEnd, candidate) {
+  var room = candidate.room;
+  var teacherA = candidate.assigned_teacher_id || candidate.teacher_id;
+  for (var id in CLS_CACHE) {
+    if (id === classId) continue;
+    var other = CLS_CACHE[id];
+    var oStart = new Date(other.start_time), oEnd = new Date(other.end_time);
+    if (newStart < oEnd && newEnd > oStart) {
+      if (room && other.room && room === other.room) return other;
+      var teacherB = other.assigned_teacher_id || other.teacher_id;
+      if (teacherA && teacherB && teacherA === teacherB) return other;
+    }
+  }
+  return null;
+}
+
+async function rescheduleToDay(classId, newDateKey) {
+  var c = CLS_CACHE[classId];
+  if (!c) return;
+  if (newDateKey === dayKey(new Date(c.start_time))) return; // dropped on its own day group
+
+  var oldStart = new Date(c.start_time);
+  var durationMs = new Date(c.end_time) - oldStart;
+  var newStart = new Date(newDateKey + 'T00:00:00');
+  newStart.setHours(oldStart.getHours(), oldStart.getMinutes(), 0, 0);
+  var newEnd = new Date(newStart.getTime() + durationMs);
+
+  var conflict = findConflict(classId, newStart, newEnd, c);
+  if (conflict) { showToast('Conflicts with "' + conflict.title + '" — pick another day.'); return; }
+
+  var prevStart = c.start_time, prevEnd = c.end_time;
+  c.start_time = newStart.toISOString(); c.end_time = newEnd.toISOString(); // optimistic
+  refreshFilteredView();
+
+  var upd = await db.from('classes')
+    .update({ start_time: c.start_time, end_time: c.end_time })
+    .eq('id', classId);
+
+  if (upd.error) {
+    console.error('Reschedule failed:', upd.error);
+    c.start_time = prevStart; c.end_time = prevEnd;
+    refreshFilteredView();
+    showToast('Reschedule failed. Try again.');
+  } else {
+    showToast('Rescheduled to ' + newStart.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }));
+  }
+}
+
+var EDIT_CLASS_ID = null;
+
+function openEditClass(id) {
+  var c = CLS_CACHE[id];
+  if (!c) return;
+  EDIT_CLASS_ID = id;
+  var start = new Date(c.start_time);
+  var durationMin = Math.round((new Date(c.end_time) - start) / 60000);
+  document.getElementById('ec-title').textContent = 'Reschedule · ' + c.title;
+  document.getElementById('ec-date').value = dayKey(start);
+  document.getElementById('ec-time').value = String(start.getHours()).padStart(2, '0') + ':' + String(start.getMinutes()).padStart(2, '0');
+  document.getElementById('ec-duration').value = [30, 45, 60, 75, 90].indexOf(durationMin) !== -1 ? String(durationMin) : '60';
+  document.getElementById('ec-room').value = c.room || '';
+  document.getElementById('ec-error').style.display = 'none';
+  document.getElementById('edit-class-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEditClass() {
+  document.getElementById('edit-class-modal').style.display = 'none';
+  document.body.style.overflow = '';
+  EDIT_CLASS_ID = null;
+}
+
+async function saveClassReschedule() {
+  var c = CLS_CACHE[EDIT_CLASS_ID];
+  if (!c) return;
+  var errEl = document.getElementById('ec-error');
+  errEl.style.display = 'none';
+
+  var dateVal = document.getElementById('ec-date').value;
+  var timeVal = document.getElementById('ec-time').value;
+  var durationMin = parseInt(document.getElementById('ec-duration').value, 10);
+  var room = document.getElementById('ec-room').value.trim();
+
+  if (!dateVal || !timeVal) {
+    errEl.textContent = 'Date and time are required.'; errEl.style.display = 'block'; return;
+  }
+
+  var newStart = new Date(dateVal + 'T' + timeVal);
+  var newEnd = new Date(newStart.getTime() + durationMin * 60000);
+
+  var conflict = findConflict(EDIT_CLASS_ID, newStart, newEnd, Object.assign({}, c, { room: room || null }));
+  if (conflict) {
+    errEl.textContent = 'Conflicts with "' + conflict.title + '" — choose another time.'; errEl.style.display = 'block'; return;
+  }
+
+  var prev = { start_time: c.start_time, end_time: c.end_time, room: c.room };
+  var classId = EDIT_CLASS_ID;
+  c.start_time = newStart.toISOString(); c.end_time = newEnd.toISOString(); c.room = room || null; // optimistic
+  closeEditClass();
+  refreshFilteredView();
+
+  var upd = await db.from('classes')
+    .update({ start_time: c.start_time, end_time: c.end_time, room: c.room })
+    .eq('id', classId);
+
+  if (upd.error) {
+    console.error('Save reschedule failed:', upd.error);
+    c.start_time = prev.start_time; c.end_time = prev.end_time; c.room = prev.room;
+    refreshFilteredView();
+    showToast('Could not save changes.');
+  } else {
+    showToast('Class rescheduled.');
+  }
+}
+
+/* ─────────────────────────────────────────
+   7e. M4 Phase B — Realtime sync
+   No column-level "in" filter is assumed reliable across environments, so
+   we subscribe unfiltered and check relevance client-side, then re-run the
+   same loader used on first render (dataset sizes here are small).
+───────────────────────────────────────── */
+function isClassRelevant(row) {
+  if (!currentUser || !row) return false;
+  if (CLS_ROLE === 'teacher') return row.teacher_id === currentUser.id || row.assigned_teacher_id === currentUser.id;
+  if (CLS_ROLE === 'student') return CLS_LINKED_IDS.indexOf(row.teacher_id) !== -1;
+  return false;
+}
+
+function subscribeClassesRealtime() {
+  if (CLS_CHANNEL) return; // one subscription per page load
+  CLS_CHANNEL = db.channel('classes-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, function(payload) {
+      var row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
+      if (!isClassRelevant(row)) return;
+      if (CLS_ROLE === 'teacher') renderTeacherSchedule();
+      else if (CLS_ROLE === 'student') renderStudentFederated();
+    })
+    .subscribe();
+}
+
+// Date/time helpers
+function dayKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+function fmtWhenShort(iso) {
+  var d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + fmtTime(iso);
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(ch) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+  });
 }
 
 

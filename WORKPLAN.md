@@ -16,8 +16,8 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M2 | Dynamic categorization engine | §3.2.1–3.2.2 | ✅ Done (pending migration run + live test) | Sonnet 5 |
 | M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done (verified live) | Sonnet 5 |
 | M3a | Advanced anatomical illustration redesign | §3.2.3 | ✅ Done | Sonnet 5 |
-| M4 | Class scheduling & booking framework | §3.5, §8 | Not started | Sonnet 5 (+ Opus 4.8 design pass) |
-| M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
+| M4 | Class scheduling & booking framework | §3.5, §8 | ✅ Phase A + Phase B done | Sonnet 5 (+ Opus 4.8 design pass) |
+| M5 | Cross-role community architecture | §3.6 | ✅ Done (schema pending migration run) | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | Not started | Haiku 4.5 / Sonnet 5 |
 | M8 | Polish: theme, localization, OAuth | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
@@ -170,9 +170,64 @@ The largest milestone. The `classes` and `bookings` tables plus capacity trigger
 
 **Acceptance:** studio creates a class; linked student sees it within the 14-day window with studio branding; dragging the class to a new slot updates every viewer without reload.
 
+### M4 Phase A — ✅ Done (Opus 4.8 planning pass 2026-07-11)
+
+Session A shipped. Two architecture decisions were confirmed with the user before implementation: (1) add `assigned_teacher_id` so a Studio can schedule a class and assign it to one of its linked Teachers; (2) extend `redeem_join_code` to allow Teacher→Studio binding rather than a separate flow.
+
+**Delivered:**
+- `schema_phase11_classes_meta.sql` (idempotent) — adds `room`, `prerequisites`, `is_featured`, `assigned_teacher_id` to `classes`; a partial `classes_featured_idx`; SELECT-only RLS so an assigned teacher can read the class + roster a Studio owns; and a relaxed `redeem_join_code` (student→teacher/studio unchanged; **teacher→studio new**; studio→nothing; no self-link). **Action required: run in Supabase SQL Editor after phases 1–10.**
+- `classes.html` (new) — teacher/studio-only provisioning form (title, style, date/time + duration→end, capacity, assigned teacher, room, online/location toggle, description, prerequisites, featured flag) + upcoming-class list (owned or assigned) with cancel. Studios get a dropdown of their bound teachers; teachers default to self.
+- `index.html` — hardcoded `#page-courses` replaced with the federated Classes tab: role-adaptive header strip (student = today's bookings; teacher/studio = today's teaching), Featured hero banner (soonest featured class from linked studios), 14-day forward list grouped by day with **studio-branded left borders** (deterministic colour from the owner id — a real brand colour can arrive in M6), and a **gated booking modal** (Book button disabled + `[Next Stage Development — Gated Booking Engine]` tag). Empty state links to `profile.html` when the student has no linkages. Loaded lazily on first `switchTab('courses')`.
+- `profile.html` — teachers now get a "Bind to a Studio" card (reusing the join-code UI, role-adjusted copy) + a "My Studios" list with unbind. `submitJoinCode`/`unlink` are role-aware.
+
+**Federation is a query concern, not RLS:** RLS already exposes every published class to all authenticated users, so the student view fetches its active `studio_linkages.entity_id` set and filters `classes.teacher_id IN (…)` client-side over the 14-day horizon. No new read-broadening policy was needed.
+
+**Verified:** `tools/classes/verify_m4.js` (Playwright, stubbed Supabase) — 23/23 checks: student view shows only linked-studio classes, excludes a non-linked studio and a >14-day class, hides the provisioning CTA, renders the featured hero + booked-today strip, opens the booking modal with the gated tag and correct studio name, no JS errors; teacher view shows the CTA + owned/assigned classes + today's teaching strip; the provisioning form inserts a correct `classes` row (title/style/capacity/featured/owner/assigned/end=start+duration/status). Visual screenshot confirms the day-grouped, two-studio-branded layout.
+
+**Deferred to Phase B:** filter overlay + saved-filter chips and the §8.2 drag-and-drop schedule mutator (the piece most warranting its own Opus pass).
+
+### M4 Phase B — ✅ Done
+
+An Opus 4.8 planning pass proposed a 7×15 weekly DnD grid per §8.2's literal spec. That was adapted to this app's actual constraints before implementing: the whole codebase is single-file/mobile-first (every other view, including Phase A's own list layout, is validated at a 430px viewport) and there is no desktop-only layout anywhere to fall back to. A dense weekly grid would not have been legible at that width, so the reschedule interaction became **drag-a-card-onto-a-day-group-header** (moves the date, keeps time-of-day) plus a **tap-to-edit modal** (precise date/time/duration/room) — same outcome as the grid (drag reschedules a class, propagates live) without the legibility risk, reusing the exact M2 Pointer-Events drag pattern (deferred `setPointerCapture` until movement clears a threshold, so a plain tap still opens the booking modal).
+
+**Delivered:**
+- `schema_phase12_saved_filters.sql` (idempotent) — adds `profiles.saved_filters jsonb default '[]'`. No new RLS needed (existing self-row UPDATE policy covers it). **Action required: run in Supabase SQL Editor after phase 11.**
+- **Filter overlay** — a `⚙ Filters` bar above the day-grouped list (both student and teacher/studio views) opens a popover (date range, teacher, style-text) reusing the `.overlay`/`.modal` shell. Filtering runs client-side over the already-fetched 14-day window; a badge on the Filters button shows the active-filter count.
+- **Saved-filter chips** — `⭐ Save this filter` names the current filter set and persists it into `profiles.saved_filters`; chips render in a horizontal-scroll row, tap-to-apply, ✕-to-delete (each mutation is a full-array `profiles` UPDATE, matching the JSONB-array design chosen for the expected low per-user cardinality).
+- **Drag-to-reschedule** — a drag handle (⠿) appears only on cards the current user owns (`teacher_id = auth.uid()`, matching the `classes_teacher_update` RLS policy exactly, so a rejected UPDATE can never surprise the user). Dragging a card onto another day-group header updates its date via an optimistic-then-confirmed `classes` UPDATE (same-day drops are a no-op); a conflict check blocks the move (and reverts) if the new time window collides with another class in the same room or under the same (assigned) teacher.
+- **Edit modal** — the ✎ button on owned cards opens a date/time/duration/room form with the same conflict check, for precise reschedules that a day-level drag can't express.
+- **Realtime sync** — a single unfiltered `postgres_changes` subscription on `classes` per page load; each event is relevance-gated client-side (teacher: owned or assigned; student: `teacher_id` in the linked-studio set) before triggering a full re-fetch of the current view, so a reschedule by one party lands in every other linked viewer's Classes tab without a manual reload.
+
+**Verified:** `tools/classes/verify_m4b.js` (Playwright, extended stub with a capturing `postgres_changes` channel + an `update()` payload capture) — 25/25 checks across 4 scenarios: filters narrow/reset/save/reapply/delete correctly with the badge tracking count; a real mouse-driven drag from a card's handle onto a different day header fires the correct `classes` UPDATE and the card re-renders under the new day group optimistically; the edit modal opens pre-filled, rejects a room-conflicting save with the conflicting class named in the error while staying open, and accepts + persists + closes on a valid save; a relevant realtime event triggers a clean re-fetch while an irrelevant one (unlinked studio) is ignored without error. Re-ran `verify_m4.js` (Phase A, 23 checks) afterward with no regressions. Visual screenshots confirm the filter bar/chips/drag-handle/edit-icon all read cleanly at the 430px viewport used throughout the rest of the app.
+
+**Not built:** the literal §8.2 weekly/monthly grid — the day-group drag + edit-modal combination was judged the mobile-safe equivalent per the reasoning above; a true grid remains available as a future desktop-specific enhancement if the studio-manager persona ever gets one.
+
 ---
 
-## M5 — Cross-Role Community Architecture (PRD §3.6)
+## M5 — Cross-Role Community Architecture (PRD §3.6) — ✅ Done
+
+An Opus 4.8 planning pass designed the full RLS/privacy model before any code was written, since this milestone crosses more trust boundaries than any prior one. Six privacy decisions were resolved and implemented exactly as designed:
+1. **Sub-community visibility** — group name/existence visible only to owner + accepted members. Members can see co-member rosters (`is_group_member()` SECURITY DEFINER helper avoids RLS self-recursion between `group_members` and `group_bulletins`).
+2. **Group broadcasts** — teacher-only posts (member-authored posts deferred to a future phase). Realtime `group_bulletins` INSERT events push into each member's dashboard instantly via a per-group `postgres_changes` channel.
+3. **Follows** — bidirectional/asymmetric-request: follower creates a `pending` row, followee accepts/declines. Accepting immediately re-triggers a feed reload so newly-visible peer activity appears without a manual refresh.
+4. **Red flags** — `compute_red_flags()` (SECURITY DEFINER) scans only `is_private = false` logs for Pain/Injured feelings in the last 14 days, or a student-set `practice_logs.route_feedback_to` flag. Never reads private data, matching the §3.1 promise that private logs are structurally invisible to teachers.
+5. **Feedback** — `feedback` table extended with a `direction` field: `teacher_to_student` (requires `session_id`, DB-enforced to a non-private log the teacher can already read) and `student_to_teacher` (requires `target_entity_id`, a general portal not tied to one session). Both directions carry a 1–2000 char DB constraint.
+6. **30-day dashboard** — `body_fatigue_30day()` aggregates the student's own logs only (no privacy concerns since a user always sees their full own history); rendered as a 30-bar client-side chart on the home page.
+
+**Critical design decision — CONFIRMED (breaking change, by design):** the old `feed_authenticated_select` policy (every authenticated user reads the entire public feed) was dropped and replaced with `feed_accepted_follow_select` (peer activity, gated on an accepted follow) + `feed_linked_teacher_select` (roster activity, gated on active linkage). Peer activity is now completely hidden until a follow request is accepted, per PRD §3.6.2's literal acceptance criterion. No feed-related JS changed — RLS does the gating transparently.
+
+**Schema migration:** `schema_phase13_community_architecture.sql` (idempotent) — adds `follows`, `groups`, `group_members`, `group_bulletins`; extends `feedback` (`direction`, `target_entity_id`, relaxed `session_id` nullability, char-length + direction-shape CHECK constraints) and `practice_logs` (`route_feedback_to`); rewrites `community_feeds` RLS; adds `is_group_member()`, `compute_red_flags()`, `body_fatigue_30day()`, and `lookup_profile_by_email()` (a narrow-disclosure SECURITY DEFINER function resolving email → id/display_name/role for the "follow by email" flow — needed because base `profiles` RLS doesn't expose arbitrary peer profiles, so a lookup *before* any follows relationship exists can't go through the normal table policy). Also adds a `profiles_follow_related_select` policy so a pending/accepted follow's counterpart display_name is readable in the UI. **Action required: run in Supabase SQL Editor after phase 12.**
+
+**Delivered (frontend):**
+- `teacher.html` — tabbed into Roster / Groups / Feedback. Roster rows show a 🚩 (severe pain) or 💬 (routed feedback) badge sourced from `compute_red_flags()`. Groups tab: create group, add/remove linked students as members, compose + send bulletins (each render shows the last 5). Feedback tab lists all `student_to_teacher` feedback received.
+- `index.html` Community tab — new **Peer Connections** section: follow-by-email search (via `lookup_profile_by_email` RPC), incoming request accept/decline, a Following list. New **My Groups** section: renders each group the user belongs to with its 5 most recent bulletins, live-updated via a per-group realtime subscription (bulletins flash on arrival). New **feedback portal** entry (student role only, visible when linked to ≥1 teacher/studio) opening a modal with a target-teacher chip picker, a 2000-char-limited textarea with live counter, and a respectful-tone hint.
+- `index.html` home page — new **Progress Trend** card (30-day fatigue bar chart, hidden when no data), fed by `body_fatigue_30day()`.
+
+**Verified:** `tools/community/verify_m5.js` (Playwright, stubbed Supabase with a real mutating in-memory dataset so multi-step CRUD — create group → add member → post bulletin — reflects correctly across reloads within a scenario) — 25/25 checks across 5 scenarios: peer follows (pending request shown, accept moves to Following, send-by-email success message); My Groups (section visibility, bulletin rendering, realtime bulletin arrival without reload); feedback portal (portal visibility gated on linkage, modal target chips, correct insert payload, closes on submit); 30-day fatigue widget (visibility, 30 bars rendered, high-fatigue day flagged); teacher roster/groups/feedback (red flag badge only on the flagged student, group creation, member add, bulletin send, feedback-received list). Re-ran `verify_m4.js` (23/23) and `verify_m4b.js` (25/25) afterward with no regressions from the shared `index.html` changes.
+
+**Bugs caught and fixed during verification:** (1) `sendFollowRequest()`'s success message was being wiped immediately because `loadFollows()` rebuilds the whole section DOM including the message element — fixed by setting the message after the reload completes, not before. (2) `teacher.html`'s group card `<div>` never received its `id` attribute, so per-group DOM lookups (`#add-member-<id>`, `#bulletin-input-<id>`) worked by accident only because there was exactly one group in early manual testing — fixed by setting `card.id` explicitly.
+
+**Deferred:** member-authored bulletins (and their approval workflow), a notification/receipt queue with unread counts, teacher-facing aggregate fatigue trends (would risk exposing private-log-derived data — correctly scoped to M6's studio aggregate tier instead), peer invitation by unique username (M6, shares the `follows` schema built here per the WORKPLAN dependency note).
 
 **Scope:**
 - Linked Students Portfolio for teachers: roster table querying shared practice logs of joined students (respecting `is_private`).
@@ -181,8 +236,6 @@ The largest milestone. The `classes` and `bookings` tables plus capacity trigger
 - Bidirectional follow approval: peer feed visibility requires accepted follow invitations (`follows` table with pending/accepted states).
 - Feedback portal: students send reviews to linked teachers/studios (the `feedback` table from `schema_phase1_gaps.sql` exists but needs an INSERT policy and UI); character check + respectful-tone placeholder.
 - 30-day holistic progress dashboard: body-map fatigue trend vs mood scores over a rolling 30 days.
-
-**Model note:** have Opus 4.8 review the RLS/privacy model before shipping — this milestone crosses the most trust boundaries.
 
 **Acceptance:** teacher sees red flag when a linked student logs severe pain; group broadcast arrives on member dashboards in realtime; peer activity hidden until follow accepted.
 
