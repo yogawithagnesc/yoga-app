@@ -257,7 +257,23 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - Directory tabs: Contracted Teachers vs Linked Students.
 - Multi-branch hierarchy: sub-branches each with an independent join code; per-branch stats aggregated under the main studio profile.
 
-**Acceptance:** duplicate username rejected in realtime; studio dashboard shows only aggregates; branch codes track separately and roll up.
+**Status:** 🚧 In Progress (core features implemented, branch hierarchy pending)
+
+**Completed:**
+1. ✅ `schema_phase15_m6_security.sql`: Username UNIQUE + check_username_available() RPC
+2. ✅ `profile.html`: Username input with debounced 400ms availability check + auto-save
+3. ✅ `index.html` privacy toggle: 🔒 Private / 🔓 Shared per-log button in day-modal
+4. ✅ `index.html` peer follow: sendFollowRequest() now supports username + email lookup
+5. ✅ `teacher.html` Analytics tab: Studio metrics (followers, sessions, minutes) + date-range attendance analyzer
+6. ✅ `teacher.html` Directory tab: Contracted Teachers & Linked Students (role-aware labels)
+7. ✅ Studio aggregate RLS: practice_logs_studio_block policy prevents individual log access
+
+**Pending:**
+- Studio brand channel (realtime broadcasts to linked students' home screens) — low priority
+- Multi-branch hierarchy (schema extension for sub-branches, per-branch codes) — scoped for later
+- Motivational quote header (cosmetic, not core functionality)
+
+**Acceptance:** duplicate username rejected in realtime; studio dashboard shows only aggregates; per-log toggle persists.
 
 ---
 
