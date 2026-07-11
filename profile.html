@@ -84,6 +84,16 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .teacher-link{display:block;text-align:center;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 0;font-weight:500}
 .teacher-link:hover{text-decoration:underline}
 
+/* Username edit */
+.username-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--br-sub)}
+.username-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx-2);width:60px;flex-shrink:0}
+.username-input{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-sm);padding:8px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-1);outline:none;transition:border-color .2s}
+.username-input:focus{border-color:var(--accent)}
+.username-check{font-size:11px;color:var(--tx-3);margin-top:4px;display:none;min-height:16px}
+.username-check.show{display:block}
+.username-check.available{color:var(--success)}
+.username-check.unavailable{color:var(--error)}
+
 .logout-row{margin-top:8px}
 .logout-btn{width:100%;padding:13px;background:none;border:1px solid var(--br-def);border-radius:var(--r-lg);color:var(--tx-2);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px}
 .logout-btn:hover{border-color:var(--error);color:var(--error)}
@@ -111,12 +121,17 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
     <div class="card">
       <div class="id-row">
         <div class="id-avatar" id="id-avatar">—</div>
-        <div>
+        <div style="flex:1">
           <div class="id-name" id="id-name">—</div>
           <div class="id-email" id="id-email">—</div>
           <span class="role-badge" id="id-role">—</span>
         </div>
       </div>
+      <div class="username-row">
+        <label class="username-label">Username</label>
+        <input class="username-input" id="username-input" type="text" placeholder="Set your unique username" maxlength="32"/>
+      </div>
+      <div class="username-check" id="username-check"></div>
     </div>
 
     <!-- Teacher/Studio: Generate Join Code -->
@@ -168,7 +183,7 @@ let currentUserRole = null
   currentUser = session.user
 
   const { data: profile } = await db.from('profiles')
-    .select('display_name, email, role')
+    .select('display_name, email, role, username')
     .eq('id', currentUser.id)
     .single()
 
@@ -180,6 +195,12 @@ let currentUserRole = null
   document.getElementById('id-name').textContent = name
   document.getElementById('id-email').textContent = profile.email || currentUser.email || ''
   document.getElementById('id-role').textContent = currentUserRole
+
+  // Load username
+  if (profile.username) {
+    document.getElementById('username-input').value = profile.username
+  }
+  document.getElementById('username-input').addEventListener('input', debounceUsernameCheck)
 
   if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
     document.getElementById('codes-card').style.display = 'block'
@@ -204,6 +225,59 @@ let currentUserRole = null
     await loadStudentLinks()
   }
 })()
+
+// ── USERNAME AVAILABILITY CHECK & SAVE ──────────────────
+let usernameCheckTimeout
+async function debounceUsernameCheck(e) {
+  clearTimeout(usernameCheckTimeout)
+  const username = (e.target.value || '').trim()
+  const checkEl = document.getElementById('username-check')
+
+  if (!username || username.length < 3) {
+    checkEl.classList.remove('show', 'available', 'unavailable')
+    return
+  }
+
+  usernameCheckTimeout = setTimeout(async () => {
+    const { data, error } = await db.rpc('check_username_available', { p_username: username })
+
+    if (error) {
+      checkEl.textContent = 'Error checking availability'
+      checkEl.className = 'username-check show'
+      return
+    }
+
+    const isAvailable = data && data.length > 0 && data[0].available
+    const isDifferent = username !== (document.getElementById('username-input').dataset.original || '')
+
+    if (isAvailable && isDifferent) {
+      checkEl.textContent = '✓ Available'
+      checkEl.className = 'username-check show available'
+      // Save on confirmation
+      await saveUsername(username)
+    } else if (!isAvailable) {
+      checkEl.textContent = '✗ Already taken'
+      checkEl.className = 'username-check show unavailable'
+    } else if (!isDifferent) {
+      checkEl.classList.remove('show')
+    }
+  }, 400)
+}
+
+async function saveUsername(username) {
+  const { error } = await db.from('profiles')
+    .update({ username })
+    .eq('id', currentUser.id)
+
+  if (error) {
+    const checkEl = document.getElementById('username-check')
+    checkEl.textContent = 'Could not save username'
+    checkEl.className = 'username-check show unavailable'
+    return
+  }
+
+  document.getElementById('username-input').dataset.original = username
+}
 
 // ── JOIN CODES (teacher/studio) ──────────────────────────
 async function loadCodes() {

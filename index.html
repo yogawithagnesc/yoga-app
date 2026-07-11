@@ -427,7 +427,16 @@
   .dlr-info { display: flex; flex-direction: column; gap: 2px; }
   .dlr-name { font-size: 14px; font-weight: 500; color: var(--tx-1); }
   .dlr-dur  { font-size: 12px; color: var(--tx-2); }
-  .dlr-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .dlr-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+  .dlr-privacy {
+    font-size: 12px; color: var(--tx-2); background: var(--bg-ov);
+    border: 1px solid var(--br-def); border-radius: var(--r-sm);
+    padding: 6px 10px; cursor: pointer; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+    transition: all 0.15s;
+  }
+  .dlr-privacy:hover { border-color: var(--accent); color: var(--accent); }
+  .dlr-privacy.private::before { content: '🔒 '; }
+  .dlr-privacy.shared::before { content: '🔓 '; }
   .dlr-edit {
     font-size: 12px; color: var(--accent); background: var(--adim);
     border: 1px solid rgba(200,169,110,0.3); border-radius: var(--r-sm);
@@ -1488,23 +1497,49 @@ function openDayLogs(day) {
   document.getElementById('day-modal-title').textContent = label;
 
   var list = document.getElementById('day-log-list');
+  var dayModal = document.getElementById('day-modal');
+  dayModal.dataset.day = day; // Store day for privacy toggle refresh
   list.innerHTML = '';
   logs.forEach(function(log) {
     var row = document.createElement('div');
     row.className = 'day-log-row';
+    var privacyClass = log.is_private ? 'private' : 'shared';
+    var privacyText = log.is_private ? 'Private' : 'Shared';
     row.innerHTML =
       '<div class="dlr-info">' +
         '<span class="dlr-name">' + log.style_name + '</span>' +
         '<span class="dlr-dur">' + log.duration_minutes + ' min</span>' +
       '</div>' +
       '<div class="dlr-actions">' +
+        '<button class="dlr-privacy ' + privacyClass + '" title="' + privacyText + '" onclick="toggleLogPrivacy(\'' + log.id + '\', ' + log.is_private + ')">' + privacyText + '</button>' +
         '<a class="dlr-edit" href="lumen-log-practice-3d.html?edit=' + log.id + '">Edit</a>' +
         '<button class="dlr-del" onclick="deleteLog(\'' + log.id + '\',' + day + ')">Delete</button>' +
       '</div>';
     list.appendChild(row);
   });
 
-  document.getElementById('day-modal').style.display = 'flex';
+  dayModal.style.display = 'flex';
+}
+
+async function toggleLogPrivacy(logId, currentlyPrivate) {
+  var newPrivate = !currentlyPrivate;
+  var result = await db.from('practice_logs')
+    .update({ is_private: newPrivate })
+    .eq('id', logId);
+
+  if (result.error) {
+    showToast('Could not update privacy setting');
+    return;
+  }
+
+  // Refresh the modal to show updated privacy status
+  var currentDay = document.getElementById('day-modal-title').textContent;
+  // Extract day from title if needed, or reload the logs
+  var dayValue = document.getElementById('day-modal').dataset.day;
+  if (dayValue) {
+    await renderDayModal(dayValue);
+  }
+  showToast(newPrivate ? 'Set to private' : 'Shared with your connections');
 }
 
 async function deleteLog(logId, day) {
