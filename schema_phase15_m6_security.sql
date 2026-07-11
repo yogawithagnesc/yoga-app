@@ -23,10 +23,8 @@ RETURNS table(available boolean, id uuid) AS $$
 BEGIN
   RETURN QUERY
   SELECT
-    (COUNT(*) = 0) as available,
-    profiles.id
-  FROM public.profiles
-  WHERE username = p_username;
+    NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = p_username) as available,
+    (SELECT id FROM public.profiles WHERE username = p_username LIMIT 1) as id;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
