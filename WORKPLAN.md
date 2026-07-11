@@ -17,7 +17,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done (verified live) | Sonnet 5 |
 | M3a | Advanced anatomical illustration redesign | §3.2.3 | ✅ Done | Sonnet 5 |
 | M4 | Class scheduling & booking framework | §3.5, §8 | ✅ Phase A + Phase B done | Sonnet 5 (+ Opus 4.8 design pass) |
-| M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
+| M5 | Cross-role community architecture | §3.6 | 🚧 Schema designed, awaiting feed-gating decision | Sonnet 5 (+ Opus 4.8 RLS review done) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | Not started | Haiku 4.5 / Sonnet 5 |
 | M8 | Polish: theme, localization, OAuth | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
@@ -204,7 +204,28 @@ An Opus 4.8 planning pass proposed a 7×15 weekly DnD grid per §8.2's literal s
 
 ---
 
-## M5 — Cross-Role Community Architecture (PRD §3.6)
+## M5 — Cross-Role Community Architecture (PRD §3.6) — 🚧 In Progress
+
+**Delivered (schema phase 13):** Opus 4.8 planning pass completed. Full RLS/privacy model designed with 6 key privacy decisions:
+1. **Sub-community visibility** — group name/existence visible only to owner + accepted members. Members can see co-member rosters.
+2. **Group broadcasts** — teacher-only posts in M5; member-authored posts deferred. Realtime `group_bulletins` push notifications to member dashboards.
+3. **Follows** — bidirectional/asymmetric-request: A requests (pending), B accepts → A sees B's peer activity.
+4. **Red flags** — computed only over `is_private = false` logs + Pain/Injured feelings (reuses 14-day window). Students can set `route_feedback_to` flag.
+5. **Feedback INSERT** — teacher→student only on non-private logs (enforced at DB level); student→teacher portal direction. Both directions 1–2000 char limit.
+6. **30-day dashboard** — client-side aggregation of student's own logs (no privacy concerns).
+
+**Critical decision point (requires user confirmation):**
+- Current `community_feeds` policy grants all authenticated users read of the entire public feed. M5's peer-gating intent requires *dropping* this global visibility and gating all feeds behind: accepted follows (peer) + linked teacher (roster). This is a **breaking change** to the current experience. Alternative: keep public feed and treat follows as an *additional* curated tier (conflicts with PRD §3.6.2 wording: "peer activity hidden until follow accepted").
+- **Recommendation:** implement option (b) — full gating behind follows/teachers, per PRD intent. Flagging for user confirmation before migration run.
+
+**Schema migration ready:** `schema_phase13_community_architecture.sql` created with:
+- `follows` table (pending/accepted/revoked states, bidirectional request model)
+- `groups` + `group_members` + `group_bulletins` (teacher-owned cohorts, realtime broadcasts)
+- `feedback` extensions (direction field, INSERT policies for teacher→student and student→teacher)
+- `practice_logs.route_feedback_to` flag extension
+- SECURITY DEFINER helpers: `is_group_member()` (RLS recursion prevention), `compute_red_flags()` (teacher roster red-flag scanning), `body_fatigue_30day()` (30-day dashboard aggregation)
+
+**Next steps:** (1) confirm feed-gating design decision with user; (2) run schema migration in Supabase SQL Editor; (3) implement teacher.html roster + groups UI; (4) implement index.html peer feed + follows + group section; (5) feedback portal; (6) 30-day dashboard.
 
 **Scope:**
 - Linked Students Portfolio for teachers: roster table querying shared practice logs of joined students (respecting `is_private`).
@@ -213,8 +234,6 @@ An Opus 4.8 planning pass proposed a 7×15 weekly DnD grid per §8.2's literal s
 - Bidirectional follow approval: peer feed visibility requires accepted follow invitations (`follows` table with pending/accepted states).
 - Feedback portal: students send reviews to linked teachers/studios (the `feedback` table from `schema_phase1_gaps.sql` exists but needs an INSERT policy and UI); character check + respectful-tone placeholder.
 - 30-day holistic progress dashboard: body-map fatigue trend vs mood scores over a rolling 30 days.
-
-**Model note:** have Opus 4.8 review the RLS/privacy model before shipping — this milestone crosses the most trust boundaries.
 
 **Acceptance:** teacher sees red flag when a linked student logs severe pain; group broadcast arrives on member dashboards in realtime; peer activity hidden until follow accepted.
 
