@@ -214,6 +214,54 @@ CREATE POLICY "group_bulletins_teacher_insert" ON public.group_bulletins
 
 
 -- ────────────────────────────────────────────────────────────
+-- CRITICAL: Tighten community_feeds visibility (breaking change)
+--
+-- DECISION (confirmed by user): peer activity hidden until follow accepted.
+-- This drops the global "feed_authenticated_select" policy that granted
+-- every authenticated user read of the entire feed. Going forward:
+--   - Accepted follows: can see peer activity
+--   - Linked teachers/studios: can see roster activity (existing policy)
+--   - No global visibility
+--
+-- Run this AFTER the current schema.sql and phases 1–12 are applied,
+-- but substitute the community_feeds RLS policies below for the existing ones.
+-- ────────────────────────────────────────────────────────────
+
+-- Drop the old global visibility policy
+DROP POLICY IF EXISTS "feed_authenticated_select" ON public.community_feeds;
+
+-- Accepted follows: follower can see followee's activity
+CREATE POLICY "feed_accepted_follow_select" ON public.community_feeds
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.follows f
+      WHERE f.follower_id = auth.uid()
+        AND f.followee_id = community_feeds.user_id
+        AND f.status = 'accepted'
+    )
+  );
+
+-- Linked teachers/studios: can read non-private logs of linked students
+-- (this already exists as "logs_linked_select" on practice_logs;
+--  community_feeds is a denormalized copy, so grant the same visibility)
+CREATE POLICY "feed_linked_teacher_select" ON public.community_feeds
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.studio_linkages sl
+      WHERE sl.student_id = community_feeds.user_id
+        AND sl.entity_id = auth.uid()
+        AND sl.status = 'active'
+        AND sl.consent_given = true
+    )
+  );
+
+-- Keep existing delete policy (users can delete their own feed entries)
+-- If it doesn't exist, recreate it:
+CREATE POLICY IF NOT EXISTS "feed_own_delete" ON public.community_feeds
+  FOR DELETE USING (user_id = auth.uid());
+
+
+-- ────────────────────────────────────────────────────────────
 -- 5. FEEDBACK EXTENSIONS
 --    The feedback table exists from Phase 1 (schema_phase1_gaps.sql).
 --    This migration extends it with direction and target fields,

@@ -214,9 +214,10 @@ An Opus 4.8 planning pass proposed a 7×15 weekly DnD grid per §8.2's literal s
 5. **Feedback INSERT** — teacher→student only on non-private logs (enforced at DB level); student→teacher portal direction. Both directions 1–2000 char limit.
 6. **30-day dashboard** — client-side aggregation of student's own logs (no privacy concerns).
 
-**Critical decision point (requires user confirmation):**
-- Current `community_feeds` policy grants all authenticated users read of the entire public feed. M5's peer-gating intent requires *dropping* this global visibility and gating all feeds behind: accepted follows (peer) + linked teacher (roster). This is a **breaking change** to the current experience. Alternative: keep public feed and treat follows as an *additional* curated tier (conflicts with PRD §3.6.2 wording: "peer activity hidden until follow accepted").
-- **Recommendation:** implement option (b) — full gating behind follows/teachers, per PRD intent. Flagging for user confirmation before migration run.
+**Critical design decision — CONFIRMED:**
+- Current `community_feeds` policy grants all authenticated users read of the entire public feed. M5's peer-gating intent (PRD §3.6.2: "peer activity hidden until follow accepted") requires **dropping** this global visibility and gating all feeds behind: accepted follows (peer) + linked teacher (roster). Breaking change to current UX.
+- **Decision:** option 1 — full gating per PRD intent. Peer activity completely hidden until follow accepted; feeds visible only to: accepted followers + linked teachers.
+- Schema migration now includes `community_feeds` policy rewrite (drops `feed_authenticated_select`, adds `feed_accepted_follow_select` + `feed_linked_teacher_select`).
 
 **Schema migration ready:** `schema_phase13_community_architecture.sql` created with:
 - `follows` table (pending/accepted/revoked states, bidirectional request model)
