@@ -112,6 +112,22 @@ Visual-only upgrade of the M3 body map from flat terracotta capsules to a medica
 
 ---
 
+## M3b — Hyper-Detailed Anatomical Illustration + Labeled Full-Screen Viewer ✅ Done
+
+Pushed the M3a vector illustration much further to approach a professional medical-illustration reference the user supplied: finer muscle-head separation, a region-based color palette, joint tendon detail, and a complete header/sub-muscle/leader-line label system — while keeping true photorealism explicitly out of scope (no image-generation tool exists in this environment; the reference images are photographic/3D renders, not something hand-authored SVG can match 1:1).
+
+**Delivered:**
+- **Taxonomy expansion:** 91 → 123 tap zones (63 front / 60 back). New muscle-head splits (Deltoid → Anterior/Middle/Posterior, Biceps → Short/Long Head, Pectoralis Major → Sternal/Clavicular Head, Triceps → +Medial Head, Gastrocnemius → Medial/Lateral Head, hamstrings → +Semimembranosus) plus new named muscles (Splenius Capitis, Rhomboid Major, Teres Minor, Pectineus, Gracilis, Adductor Magnus, Peroneus Longus/Brevis, Flexor Hallucis Longus). Source of truth: `tools/bodymap/taxonomy.js`.
+- **Region palette:** 6 body-region material gradients replacing the single M3a crimson (Chest emerald, Abs fuchsia, Shoulders coral, Arms yellow, Thighs crimson/salmon, Calves forest/slate), each still dark enough at the rim for striations to read through.
+- **Joint tendon bursts:** non-interactive radiating fiber overlay at knees, ankles, elbows, wrists.
+- **Full-screen labeled viewer:** new "🔍 View Full Anatomy" modal (`#svg-body-full`) with an expanded canvas, left/right column headers + sub-muscle text + 1px leader lines + target dots, its own Front/Back pill (amber/gold active state) and a "🖐 Tap a muscle to mark" footer hint. The compact in-form widget stays small and unlabeled (not enough width to be legible) but shares the new material/texture upgrade.
+- **Shared interaction state:** `svgBodyStates` is one object read/written by both containers; `buildSvg()`/`attachSvgHandlers()`/`svgTap()`/`applyFeeling()` are container-parameterized so a mark made in either view instantly syncs to the other.
+- **Legacy compatibility:** `BODY_ZONE_MAP` (`index.html`) updated additively — old zone names (e.g. `Deltoid`, `Biceps`, `Pectoralis Major`) stay mapped alongside the new split names, so historical logs keep contributing correctly to the rest engine. Old logs referencing a retired split-away name still round-trip through the edit flow without data loss; they're just no longer visually re-tappable under the old name (documented, not a bug — a 1:1 migration is inherently ambiguous for a one-to-many split).
+
+**Verified:** all 123 zones pass multi-point tappability sampling (caught and fixed one real overlap: Adductor Magnus fully hidden under Adductors); end-to-end tap → highlight → pick → sync between compact and full-screen containers; legacy log edit with retired zone names causes no crash and preserves data; view-toggle render times stayed smooth (compact ~16ms, full-screen with labels ~30ms).
+
+---
+
 ## M4 — Class Scheduling & Booking Framework (PRD §3.5 + §8)
 
 The largest milestone. The `classes` and `bookings` tables plus capacity trigger already exist in `schema.sql` — this is primarily frontend plus a few schema additions.

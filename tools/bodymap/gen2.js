@@ -98,6 +98,21 @@ function capsuleFibers(x1, y1, r1, x2, y2, r2, n = 4) {
   return fiberSet(x1, y1, x2, y2, r1*0.65, r2*0.65, n, 0);
 }
 
+// Radiating tendon-fiber burst at a joint (knee/ankle/wrist/elbow) — a
+// small ring of short radial lines mimicking fibrous tendon attachment.
+// Returns ONE path string of n open subpaths, stroke-only.
+function jointTendon(cx, cy, r, n = 8, innerR = 0.35) {
+  const f = (v) => v.toFixed(1);
+  const subs = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const ix = cx + Math.cos(a) * r * innerR, iy = cy + Math.sin(a) * r * innerR;
+    const ox = cx + Math.cos(a) * r, oy = cy + Math.sin(a) * r;
+    subs.push(`M${f(ix)},${f(iy)} L${f(ox)},${f(oy)}`);
+  }
+  return subs.join(' ');
+}
+
 // Mirror a path across the vertical axis x=CX. Handles M/L/C (coordinate
 // pairs) and A (elliptical arc: flip endpoint x, negate rotation, flip the
 // sweep flag). Only absolute commands are used by our generators.
@@ -126,4 +141,4 @@ function mirrorPathD(d, CX = 120) {
 }
 
 module.exports = { capsulePath, spindle, teardrop, mirrorPathD,
-                   fiberSet, spindleFibers, teardropFibers, capsuleFibers };
+                   fiberSet, spindleFibers, teardropFibers, capsuleFibers, jointTendon };
