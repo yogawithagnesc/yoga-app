@@ -254,11 +254,13 @@ async function debounceUsernameCheck(e) {
     const { data, error } = await db.rpc('check_username_available', { p_username: username })
 
     if (error) {
+      console.error('RPC error details:', error)
       checkEl.textContent = 'Error checking availability'
       checkEl.className = 'username-check show'
       return
     }
 
+    console.log('RPC response:', data)
     const isAvailable = data && data.length > 0 && data[0].available
     const isDifferent = username !== (document.getElementById('username-input').dataset.original || '')
 
