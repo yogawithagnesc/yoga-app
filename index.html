@@ -233,6 +233,16 @@
   .cw-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
   .cw-resume { font-size: 20px; color: var(--tx-3); flex-shrink: 0; }
 
+  /* Video catalog (M7) */
+  .video-list { display: flex; gap: 10px; overflow-x: auto; padding: 0 22px 16px 28px; }
+  .video-list::-webkit-scrollbar { display: none; }
+  .video-card { flex: 0 0 120px; aspect-ratio: 2/3; background: var(--bg-el); border: 1px solid var(--br-def); border-radius: var(--r-lg); overflow: hidden; cursor: pointer; transition: all 0.15s; text-decoration: none; display: flex; flex-direction: column; }
+  .video-card:hover { border-color: var(--accent); }
+  .video-thumb { height: 65%; background: var(--br-def); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .video-meta { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; justify-content: space-between; }
+  .video-title { font-size: 11px; font-weight: 500; color: var(--tx-1); line-height: 1.3; }
+  .video-duration { font-size: 10px; color: var(--tx-2); }
+
   /* Community */
   .feed { padding: 0 28px; }
   .feed-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--br-sub); }
@@ -664,6 +674,12 @@
           ⚙ Filters<span class="cls-filter-badge" id="cls-filter-badge" style="display:none">0</span>
         </button>
         <div class="cls-filter-chips" id="cls-filter-chips"></div>
+      </div>
+
+      <!-- Video catalog (M7) -->
+      <div id="video-catalog-wrap" style="padding:0 28px 22px;display:none">
+        <div class="section-label">On-Demand Videos</div>
+        <div id="video-catalog-list"></div>
       </div>
 
       <!-- 14-day federated list -->
@@ -1100,33 +1116,63 @@ async function loadMonthLogs() {
    per video with a progress bar, links to video-player.html?videoId=…
 ───────────────────────────────────────── */
 
-// One entry per video. Add more as Mux videos are uploaded.
-var VIDEO_CATALOG = {
-  'intro-vinyasa-flow': {
-    playbackId: 'QSq3Bgs005a0132Qb00AYgn7fyZggqHZWVZxoUrqx1Gzig',
-    title: 'Intro to Vinyasa Flow',
-    style: 'Vinyasa',
-    icon:  '🌊',
-  },
-};
+// Video catalog loaded from DB (replaces hardcoded VIDEO_CATALOG)
+var VIDEOS_LOADED = {};
+
+async function loadVideosCatalog() {
+  if (!currentUser) return;
+
+  const { data: videos, error } = await db.from('videos')
+    .select('id, title, duration_seconds, mux_playback_id')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (error || !videos || !videos.length) {
+    document.getElementById('video-catalog-wrap').style.display = 'none';
+    return;
+  }
+
+  const catalogEl = document.getElementById('video-catalog-list');
+  catalogEl.innerHTML = '';
+
+  const ul = document.createElement('div');
+  ul.className = 'video-list';
+
+  videos.forEach(function(video) {
+    const card = document.createElement('a');
+    card.className = 'video-card';
+    card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
+    const mins = video.duration_seconds ? Math.round(video.duration_seconds / 60) : '–';
+    card.innerHTML =
+      '<div class="video-thumb">🎥</div>' +
+      '<div class="video-meta">' +
+        '<div class="video-title">' + video.title + '</div>' +
+        '<div class="video-duration">' + mins + ' min</div>' +
+      '</div>';
+    ul.appendChild(card);
+  });
+
+  catalogEl.appendChild(ul);
+  document.getElementById('video-catalog-wrap').style.display = 'block';
+}
 
 async function loadContinueWatching() {
   if (!currentUser) return;
 
   var result = await db
     .from('video_progress')
-    .select('video_id, current_time, total_duration, updated_at')
+    .select('id, video_id, position_seconds, completed, last_watched_at, videos(id, title, duration_seconds, mux_playback_id)')
     .eq('user_id', currentUser.id)
-    .gt('current_time', 0)
-    .order('updated_at', { ascending: false });
+    .eq('completed', false)
+    .order('last_watched_at', { ascending: false })
+    .limit(5);
 
   if (!result.data || !result.data.length) return;
 
-  // Keep only catalog-known videos that aren't fully watched (< 95 %)
+  // Filter to in-progress videos
   var inProgress = result.data.filter(function(row) {
-    if (!VIDEO_CATALOG[row.video_id]) return false;
-    if (row.total_duration && row.current_time >= row.total_duration * 0.95) return false;
-    return true;
+    return row.videos && row.position_seconds > 0 && row.position_seconds < (row.videos.duration_seconds || 999999);
   });
 
   if (!inProgress.length) return;
@@ -1135,25 +1181,21 @@ async function loadContinueWatching() {
   cardsEl.innerHTML = '';
 
   inProgress.forEach(function(row) {
-    var meta     = VIDEO_CATALOG[row.video_id];
-    var pct      = row.total_duration
-      ? Math.min(Math.round((row.current_time / row.total_duration) * 100), 99)
-      : 0;
-    var secsLeft = row.total_duration
-      ? Math.max(row.total_duration - row.current_time, 0)
-      : null;
-    var minsLeft = secsLeft !== null ? Math.ceil(secsLeft / 60) : null;
+    var video = row.videos;
+    var durationSecs = video.duration_seconds || 0;
+    var pct = durationSecs ? Math.min(Math.round((row.position_seconds / durationSecs) * 100), 99) : 0;
+    var secsLeft = Math.max(durationSecs - row.position_seconds, 0);
+    var minsLeft = Math.ceil(secsLeft / 60);
 
     var card = document.createElement('a');
     card.className = 'cw-card';
-    card.href = 'video-player.html?videoId=' + encodeURIComponent(row.video_id);
+    card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
     card.innerHTML =
-      '<div class="cw-icon">' + meta.icon + '</div>' +
+      '<div class="cw-icon">🎥</div>' +
       '<div class="cw-info">' +
-        '<div class="cw-title">' + meta.title + '</div>' +
+        '<div class="cw-title">' + video.title + '</div>' +
         '<div class="cw-meta">' +
-          meta.style +
-          (minsLeft !== null ? ' · ' + minsLeft + ' min left' : '') +
+          (minsLeft > 0 ? minsLeft + ' min left' : 'Almost done') +
         '</div>' +
         '<div class="cw-bar-wrap">' +
           '<div class="cw-bar-fill" style="width:' + pct + '%"></div>' +
@@ -2149,6 +2191,8 @@ async function loadClassesTab() {
       await renderStudentFederated();
     }
     subscribeClassesRealtime();
+    // Load on-demand videos (M7)
+    await loadVideosCatalog();
   } catch (err) {
     console.error('Classes tab load failed:', err);
     document.getElementById('cls-list').innerHTML =
