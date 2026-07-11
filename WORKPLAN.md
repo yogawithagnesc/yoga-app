@@ -14,7 +14,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M0 | Feed-likes fix + housekeeping | §3.6 (feed) | ✅ Done | Haiku 4.5 |
 | M1 | Finish P1 verification | §3.1–3.4 | ✅ Done | Haiku 4.5 |
 | M2 | Dynamic categorization engine | §3.2.1–3.2.2 | ✅ Done (pending migration run + live test) | Sonnet 5 |
-| M3 | SVG Body Map + 14-day rest engine | §3.2.3 | Not started | Sonnet 5 |
+| M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done | Sonnet 5 |
 | M4 | Class scheduling & booking framework | §3.5, §8 | Not started | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
@@ -78,17 +78,19 @@ Close out the remaining P1 checklist items. Mostly manual QA plus small fixes.
 
 ---
 
-## M3 — SVG Body Map + 14-Day Rest Engine (PRD §3.2.3)
+## M3 — SVG Body Map + 14-Day Rest Engine (PRD §3.2.3) ✅ Done
 
 **Decision made:** SVG-primary (the existing 2D fallback is promoted; the 16MB GLTF 3D model is retired from the default path — optionally kept behind a toggle).
 
-**Scope:**
-- Upgrade `buildSVGFallback()`/`svgTap()` in `lumen-log-practice-3d.html` into the primary interface: front/back anatomical views, richer muscle paths (Quadriceps, Hamstrings, Lower Back, Shoulders, Triceps, etc.).
-- Tap → context popover: mark Sore (amber) or Pain (red); multi-select supported; states color the SVG paths live.
-- 14-day rolling analytics: extend `loadBodyStatus()`/`computeBodyStatus()` in `index.html` to count practice types over `[today − 14d]`.
-- Rest Suggestion Card: any muscle flagged Sore/Pain ≥ 3 times in 14 days surfaces a prioritized restoration card ("…Consider a Yin or Mindfulness focus today.").
+**Delivered:**
+- SVG body map with 49 front-view and 42 back-view anatomical zones (front/back toggle, tap-to-highlight interaction, 7-state feeling system: Relax/Feel Good/Sweet Pain/Tight/Sore/Pain/Injured)
+- BODY_ZONE_MAP expanded in `index.html` to include all anatomical zones mapping to 6 broad categories (Shoulders, Lower Back, Hamstrings, Hips, Knees, Core)
+- `computeRestNeeds()` function counts serious feelings (sore/pain/injured) per muscle in 14 days
+- `getRestSuggestion()` recommends Yin/Mindfulness based on affected body areas
+- Rest Suggestion Card renders in dashboard body status when 3+ serious feelings detected in any muscle over 14 days
+- Perspective toggle support (yoga-only or global view) integrated with rest engine
 
-**Acceptance:** log screen loads instantly with no 16MB download; marking 3+ sore states on a muscle across 14 days produces the rest card on the dashboard.
+**Acceptance:** log screen loads instantly; marking 3+ sore/pain/injured states on a muscle across 14 days produces the rest suggestion card on the dashboard with contextual restoration practice recommendations.
 
 ---
 
