@@ -6,15 +6,7 @@
 <title>Lumen — Log Practice</title>
 <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- Three.js importmap -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
+<!-- M3: SVG-primary body map (3D model retired) -->
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -120,28 +112,8 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .custom-focus-form{display:flex;gap:8px;margin-top:10px}
 .custom-focus-form input{flex:1}
 
-/* ══ 3D BODY MAP ══ */
-.body3d-wrap{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--bg-el);border:1px solid var(--br-def);margin-bottom:12px}
-#body3d-canvas{width:100%!important;display:block;cursor:grab;touch-action:none}
-#body3d-canvas:active{cursor:grabbing}
-
-/* Loading overlay */
-.body3d-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-el);gap:12px;z-index:5;transition:opacity .4s}
-.body3d-loading.hidden{opacity:0;pointer-events:none}
-.load-spinner{width:32px;height:32px;border:2px solid var(--br-str);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.load-txt{font-size:12px;color:var(--tx-3);letter-spacing:.08em}
-.load-pct{font-size:20px;font-family:'Cormorant Garamond','Noto Serif TC',serif;color:var(--accent)}
-
-/* Hint bar above canvas */
-.body3d-controls{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--br-sub)}
-.view-btns{display:flex;gap:6px}
-.view-btn{padding:5px 12px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:none;color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
-.view-btn:hover,.view-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
-.hint-txt{font-size:10px;color:var(--tx-3);letter-spacing:.05em}
-
-/* Tap hint overlay */
-.tap-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);backdrop-filter:blur(6px);border:1px solid var(--br-str);border-radius:var(--r-full);padding:6px 16px;font-size:11px;color:var(--tx-2);white-space:nowrap;pointer-events:none;transition:opacity .5s;z-index:4}
+/* Tap hint */
+.tap-hint{background:rgba(0,0,0,.65);backdrop-filter:blur(6px);border:1px solid var(--br-str);border-radius:var(--r-full);padding:6px 16px;font-size:11px;color:var(--tx-2);white-space:nowrap;pointer-events:none;transition:opacity .5s}
 .tap-hint.hidden{opacity:0}
 
 /* Feeling picker */
@@ -155,6 +127,7 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 
 /* Legend + area tags */
 .body-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.leg-item{font-size:10px}
 .leg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r-md);background:var(--bg-el);border:1px solid var(--br-sub);font-size:11px;color:var(--tx-2)}
 .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .areas-lbl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-3);margin-bottom:8px}
@@ -162,10 +135,45 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .area-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-full);font-size:11px;border:1px solid;font-weight:500;animation:fadeIn .15s ease}
 .empty-hint{font-size:12px;color:var(--tx-3);padding:4px 0}
 
-/* SVG Fallback */
-.svg-fallback{display:none;flex-direction:column;align-items:center;gap:4px;padding:20px 0}
-.svg-fallback.show{display:flex}
+/* SVG Body Map (M3c: primary interface) */
+.svg-fallback{display:grid;grid-template-columns:40px 1fr 40px;grid-template-rows:auto auto auto;align-items:center;gap:12px 8px;padding:20px;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);margin-bottom:12px}
+.svg-fallback::before{content:'🖐 Tap to\AMark';grid-column:1;grid-row:1/4;white-space:pre;font-size:11px;color:var(--tx-3);text-align:center;line-height:1.3;align-self:center}
+.svg-fallback::after{content:'🖐 Tap to\AMark';grid-column:3;grid-row:1/4;white-space:pre;font-size:11px;color:var(--tx-3);text-align:center;line-height:1.3;align-self:center}
+.svg-view-toggle{grid-column:2;grid-row:1;display:flex;gap:6px;justify-content:center}
+.svg-toggle-btn{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
+.svg-toggle-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .fallback-note{font-size:11px;color:var(--tx-3);text-align:center;line-height:1.6;max-width:280px}
+.view-full-btn{grid-column:2;grid-row:3;display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-ov);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif;justify-content:center}
+.view-full-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* M3c: reference photo body map (decorative — interaction happens via the
+   clickable muscle-name list, not by tapping the image). */
+.bodymap-photo{grid-column:2;grid-row:2;width:100%;max-width:260px;border-radius:var(--r-md);display:block}
+.bodymap-photo-full{width:100%;max-width:380px;border-radius:var(--r-md);display:block}
+
+/* Full-screen anatomy modal */
+.anatomy-modal{position:fixed;inset:0;z-index:300;background:var(--bg);display:none;flex-direction:column}
+.anatomy-modal.show{display:flex}
+.am-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--br-sub);flex-shrink:0}
+.am-title{font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:20px;color:var(--tx-1)}
+.am-close{width:36px;height:36px;border-radius:50%;background:var(--bg-el);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.am-close:hover{border-color:var(--accent);color:var(--accent)}
+.am-body{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px 12px 24px}
+.am-footer{font-size:11px;color:var(--tx-3);text-align:center;padding-bottom:6px}
+
+/* Clickable muscle-name list (M3c primary interaction surface) */
+.muscle-list{width:100%;display:flex;flex-direction:column;gap:16px}
+.ml-group{width:100%}
+.ml-header{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--br-sub)}
+.ml-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 4px;border-bottom:1px solid var(--br-sub)}
+.ml-row:last-child{border-bottom:none}
+.ml-name{font-size:13px;color:var(--tx-1);flex:1;cursor:pointer;user-select:none}
+.ml-name:hover{color:var(--accent)}
+.ml-sides{display:flex;gap:6px;flex-shrink:0}
+.ml-side{min-width:34px;padding:6px 0;border-radius:var(--r-sm);font-size:11px;font-weight:500;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
+.ml-side:hover{border-color:var(--br-str);color:var(--tx-1)}
+.ml-side.marked{color:#080807;font-weight:600;border-color:transparent}
+.ml-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--br-def)}
+.ml-dot.marked{background:var(--accent)}
 
 /* ── MEDIA ── */
 .upload-zone{border:1px dashed var(--br-str);border-radius:var(--r-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-el);position:relative;overflow:hidden}
@@ -340,64 +348,45 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="sec" id="sec-3">
     <div class="sec-hdr"><div class="sec-num">4</div><div class="sec-title">Body Map</div></div>
     <div style="font-size:12px;color:var(--tx-2);margin-bottom:12px;line-height:1.6">
-      Rotate the model, then tap a muscle group to mark how it feels. Data is used to track injury patterns over time.
+      Toggle front/back, then tap a muscle to log how it feels — from Relax to Injured. Data is used to track injury patterns over time.
     </div>
 
-    <!-- 3D VIEWER -->
-    <div class="body3d-wrap" id="body3d-wrap">
-      <!-- Controls bar -->
-      <div class="body3d-controls">
-        <div class="view-btns">
-          <button class="view-btn active" id="vbtn-front" onclick="setView('front')">Front</button>
-          <button class="view-btn" id="vbtn-back" onclick="setView('back')">Back</button>
-          <button class="view-btn" id="vbtn-side" onclick="setView('side')">Side</button>
-          <button class="view-btn" id="vbtn-reset" onclick="setView('reset')">⟳ Reset</button>
-        </div>
-        <div class="hint-txt">Drag to rotate</div>
-      </div>
-
-      <!-- Canvas -->
-      <canvas id="body3d-canvas" height="320"></canvas>
-
-      <!-- Loading -->
-      <div class="body3d-loading" id="body3d-loading">
-        <div class="load-spinner"></div>
-        <div class="load-pct" id="load-pct">0%</div>
-        <div class="load-txt">Loading anatomy model…</div>
-      </div>
-
-      <!-- Tap hint -->
-      <div class="tap-hint" id="tap-hint">👆 Tap a muscle to mark</div>
-
-      <!-- Feeling picker (shown after tap) -->
-      <div class="feel-pick" id="feel-pick">
-        <div class="fp-title" id="fp-muscle-name">—</div>
-        <div class="fp-row">
-          <button class="fp-btn" onclick="applyFeeling('worked')">🎯 Worked</button>
-          <button class="fp-btn" onclick="applyFeeling('tight')">⚡ Tight</button>
-          <button class="fp-btn" onclick="applyFeeling('sore')">🔴 Sore/Pain</button>
-          <button class="fp-btn" onclick="applyFeeling('strong')">💪 Strong</button>
-          <button class="fp-btn fp-clear" onclick="applyFeeling(null)">✕ Clear</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SVG FALLBACK (shown if 3D fails) -->
+    <!-- BODY MAP (M3c: reference photo + click-the-name interaction) -->
     <div class="svg-fallback" id="svg-fallback">
-      <div class="fallback-note" style="background:rgba(200,169,110,0.08);border:1px solid rgba(200,169,110,0.2);border-radius:10px;padding:12px 16px;margin-bottom:12px;">
-        ⚠️ 3D model loads when deployed on Vercel alongside the model files (scene.gltf + scene.bin + textures/).
-        Using SVG anatomy map for preview.
+      <div class="svg-view-toggle" id="svg-view-toggle">
+        <button class="svg-toggle-btn active" data-view="front">Front</button>
+        <button class="svg-toggle-btn" data-view="back">Back</button>
       </div>
-      <svg id="svg-body" viewBox="0 0 200 420" style="width:180px;height:auto"></svg>
+      <img id="bodymap-photo" class="bodymap-photo" src="assets/bodymap-front.png" alt="Body map">
+      <button class="view-full-btn" onclick="openFullAnatomy()">🔍 Tap to Mark Muscles</button>
+    </div>
+
+    <!-- M3c: full-screen viewer — photo + clickable muscle-name list -->
+    <div class="anatomy-modal" id="anatomy-modal">
+      <div class="am-header">
+        <div class="am-title">Body Map</div>
+        <button class="am-close" onclick="closeFullAnatomy()">✕</button>
+      </div>
+      <div class="am-body">
+        <div class="svg-view-toggle" id="svg-view-toggle-full">
+          <button class="svg-toggle-btn active" data-view="front">Front</button>
+          <button class="svg-toggle-btn" data-view="back">Back</button>
+        </div>
+        <img id="bodymap-photo-full" class="bodymap-photo-full" src="assets/bodymap-front.png" alt="Body map">
+
+        <!-- Feeling picker (shown after clicking a muscle name) -->
+        <div class="feel-pick" id="feel-pick-full" style="width:100%;max-width:420px">
+          <div class="fp-title" id="fp-muscle-name-full">—</div>
+          <div class="fp-row" id="fp-row-full"></div>
+        </div>
+
+        <div class="muscle-list" id="muscle-list"></div>
+        <div class="am-footer">🖐 Tap a muscle name to mark</div>
+      </div>
     </div>
 
     <!-- LEGEND -->
-    <div class="body-legend" id="body-legend" style="margin-top:12px">
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(200,169,110,0.8)"></div>🎯 Worked</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#D4956A"></div>⚡ Tight</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#C47070"></div>🔴 Sore/Pain</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#7B9E87"></div>💪 Strong</div>
-    </div>
+    <div class="body-legend" id="body-legend" style="margin-top:12px"></div>
 
     <!-- SELECTED AREAS -->
     <div class="areas-lbl mt10">Marked Areas</div>
@@ -480,376 +469,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
 </div><!-- end phone -->
 
-<!-- ══════════════════════════════════════
-     THREE.JS BODY MAP (module)
-══════════════════════════════════════ -->
-<script type="module">
-import * as THREE from 'three';
-import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-// ─────────────────────────────
-// Anatomical zone detection
-// Model bounds: X≈±0.77, Y≈[-1,+1], Z≈[-0.22,+0.24]
-// Y=+1 head, Y=-1 feet
-// ─────────────────────────────
-function detectZone(pt) {
-  const x = pt.x, y = pt.y, z = pt.z;
-  const ax = Math.abs(x);
-
-  // Side label
-  const side = x >  0.12 ? 'R '
-             : x < -0.12 ? 'L '
-             : '';
-
-  // Outer limbs (arms) – wide x
-  if (ax > 0.55) {
-    if (y > 0.20)  return side + (z >= 0 ? 'Bicep'   : 'Tricep');
-    if (y > -0.10) return side + 'Forearm';
-    return side + 'Hand';
-  }
-
-  // Head
-  if (y > 0.80)  return 'Head';
-  if (y > 0.68 && ax < 0.22) return 'Neck';
-
-  // Shoulders
-  if (y > 0.52 && ax > 0.30)
-    return side + (z >= 0 ? 'Shoulder (Front)' : 'Rear Deltoid');
-
-  // Chest / Upper back
-  if (y > 0.28 && y <= 0.52) {
-    if (z >= 0) return ax > 0.12 ? side + 'Pectoral' : 'Sternum';
-    else        return ax > 0.18 ? side + 'Upper Back (Trap)' : 'Thoracic Spine';
-  }
-
-  // Abs / mid back
-  if (y > 0.04 && y <= 0.28) {
-    if (z >= 0) return ax > 0.16 ? side + 'Oblique' : 'Abs / Core';
-    else        return ax > 0.14 ? side + 'Lat' : 'Mid Back';
-  }
-
-  // Lower abs / lower back
-  if (y > -0.18 && y <= 0.04) {
-    if (z >= 0) return ax > 0.14 ? side + 'Hip Flexor' : 'Lower Abs';
-    else        return ax > 0.14 ? side + 'Glute' : 'Lower Back';
-  }
-
-  // Thigh
-  if (y > -0.52 && y <= -0.18) {
-    if (z >= 0) return side + (ax > 0.14 ? 'Quad (Outer)' : 'Quad (Inner)');
-    else        return side + 'Hamstring';
-  }
-
-  // Knee
-  if (y > -0.63 && y <= -0.52) return side + 'Knee';
-
-  // Lower leg
-  if (y > -0.85 && y <= -0.63) {
-    return side + (z >= 0 ? 'Shin' : 'Calf');
-  }
-
-  // Foot/ankle
-  return side + 'Foot / Ankle';
-}
-
-// ─────────────────────────────
-// Three.js setup
-// ─────────────────────────────
-const canvas   = document.getElementById('body3d-canvas');
-const loadDiv  = document.getElementById('body3d-loading');
-const loadPct  = document.getElementById('load-pct');
-const tapHint  = document.getElementById('tap-hint');
-const feelPick = document.getElementById('feel-pick');
-const fpName   = document.getElementById('fp-muscle-name');
-
-const W = canvas.parentElement.clientWidth;
-const H = 320;
-canvas.width  = W;
-canvas.height = H;
-
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(W, H);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
-renderer.shadowMap.enabled = true;
-
-const scene  = new THREE.Scene();
-scene.background = new THREE.Color(0x111110);
-
-const camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 100);
-camera.position.set(0, 0.05, 3.2);
-
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping    = true;
-controls.dampingFactor    = 0.06;
-controls.target.set(0, 0, 0);
-controls.minDistance      = 1.0;
-controls.maxDistance      = 6.0;
-controls.enablePan        = false;
-
-// Lighting
-const ambient = new THREE.AmbientLight(0xfff8f0, 0.7);
-scene.add(ambient);
-
-const key = new THREE.DirectionalLight(0xfff6e8, 1.6);
-key.position.set(2, 3, 4);
-key.castShadow = true;
-scene.add(key);
-
-const fill = new THREE.DirectionalLight(0xe8f0ff, 0.5);
-fill.position.set(-3, 1, -2);
-scene.add(fill);
-
-const rim = new THREE.DirectionalLight(0xffeedd, 0.4);
-rim.position.set(0, 4, -4);
-scene.add(rim);
-
-// Selection markers
-const markers = []; // {mesh, zone, feeling}
-const areaStates = {}; // zone -> feeling
-let pendingZone = null;
-
-// Bridge module scope → non-module savePractice()
-window.getMuscleFeelings = () =>
-  Object.entries(areaStates).map(([zone, feeling]) => ({ zone, feeling }));
-
-const FEELINGS = {
-  worked: { emoji:'🎯', label:'Worked', bg:'rgba(200,169,110,0.15)', border:'#C8A96E', color:'#C8A96E', hex:0xC8A96E },
-  tight:  { emoji:'⚡', label:'Tight',  bg:'rgba(212,149,106,0.15)', border:'#D4956A', color:'#D4956A', hex:0xD4956A },
-  sore:   { emoji:'🔴', label:'Sore',   bg:'rgba(196,112,112,0.15)', border:'#C47070', color:'#C47070', hex:0xC47070 },
-  strong: { emoji:'💪', label:'Strong', bg:'rgba(123,158,135,0.15)', border:'#7B9E87', color:'#7B9E87', hex:0x7B9E87 },
-};
-
-function addMarker(point, zone, feeling) {
-  // Remove old marker for this zone
-  const existing = markers.findIndex(m => m.zone === zone);
-  if (existing >= 0) {
-    scene.remove(markers[existing].mesh);
-    markers[existing].mesh.geometry.dispose();
-    markers.splice(existing, 1);
-  }
-  if (!feeling) return;
-
-  const geo = new THREE.SphereGeometry(0.028, 12, 12);
-  const mat = new THREE.MeshBasicMaterial({
-    color: FEELINGS[feeling].hex,
-    transparent: true,
-    opacity: 0.92,
-  });
-  const sphere = new THREE.Mesh(geo, mat);
-  sphere.position.copy(point);
-  sphere.position.z += 0.025; // offset toward camera
-  scene.add(sphere);
-
-  // Pulsing ring
-  const ringGeo = new THREE.RingGeometry(0.03, 0.048, 24);
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: FEELINGS[feeling].hex,
-    side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 0.5,
-  });
-  const ring = new THREE.Mesh(ringGeo, ringMat);
-  ring.position.copy(sphere.position);
-  ring.position.z += 0.002;
-  scene.add(ring);
-
-  markers.push({ mesh: sphere, ring, zone, feeling, t: 0 });
-}
-
-// Raycaster
-const raycaster = new THREE.Raycaster();
-const pointer   = new THREE.Vector2();
-let model       = null;
-let modelMeshes = [];
-
-function getCanvasXY(e) {
-  const r = canvas.getBoundingClientRect();
-  if (e.touches) {
-    return {
-      x: e.touches[0].clientX - r.left,
-      y: e.touches[0].clientY - r.top,
-    };
-  }
-  return { x: e.clientX - r.left, y: e.clientY - r.top };
-}
-
-function onCanvasTap(e) {
-  if (controls.state !== -1) return; // dragging
-  const { x, y } = getCanvasXY(e);
-  pointer.x =  (x / W) * 2 - 1;
-  pointer.y = -(y / H) * 2 + 1;
-
-  raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(modelMeshes, true);
-  if (!hits.length) return;
-
-  const hit  = hits[0];
-  const zone = detectZone(hit.point);
-  if (!zone) return;
-
-  pendingZone = { zone, point: hit.point.clone() };
-  fpName.textContent = zone;
-  feelPick.classList.add('show');
-  tapHint.classList.add('hidden');
-}
-
-canvas.addEventListener('click',      onCanvasTap);
-canvas.addEventListener('touchstart', (e) => {
-  // Track drag start
-  canvas._touchStartX = e.touches[0].clientX;
-  canvas._touchStartY = e.touches[0].clientY;
-});
-canvas.addEventListener('touchend', (e) => {
-  const dx = Math.abs(e.changedTouches[0].clientX - canvas._touchStartX);
-  const dy = Math.abs(e.changedTouches[0].clientY - canvas._touchStartY);
-  if (dx < 5 && dy < 5) onCanvasTap(e);
-});
-
-// Load model
-const loader = new GLTFLoader();
-loader.load(
-  './scene.gltf',
-  (gltf) => {
-    model = gltf.scene;
-
-    // Center + scale
-    const box = new THREE.Box3().setFromObject(model);
-    const center = new THREE.Vector3();
-    box.getCenter(center);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    const maxDim = Math.max(size.x, size.y, size.z);
-    model.position.sub(center);
-    model.scale.setScalar(2.0 / maxDim);
-
-    model.traverse(child => {
-      if (child.isMesh) {
-        child.castShadow    = true;
-        child.receiveShadow = true;
-        if (child.material) {
-          child.material.side = THREE.FrontSide;
-        }
-        modelMeshes.push(child);
-      }
-    });
-
-    scene.add(model);
-
-    // Hide loading
-    loadDiv.classList.add('hidden');
-    setTimeout(() => { loadDiv.style.display = 'none'; }, 500);
-  },
-  (xhr) => {
-    const pct = Math.round((xhr.loaded / xhr.total) * 100);
-    loadPct.textContent = pct + '%';
-  },
-  (err) => {
-    console.warn('3D model load failed:', err);
-    // Show SVG fallback
-    loadDiv.style.display = 'none';
-    document.getElementById('body3d-wrap').style.display = 'none';
-    const fb = document.getElementById('svg-fallback');
-    fb.classList.add('show');
-    buildSVGFallback();
-  }
-);
-
-// Apply feeling from picker
-window.applyFeeling = function(feeling) {
-  if (!pendingZone) return;
-  const { zone, point } = pendingZone;
-
-  if (feeling) {
-    areaStates[zone] = feeling;
-    addMarker(point, zone, feeling);
-  } else {
-    delete areaStates[zone];
-    addMarker(point, zone, null);
-  }
-
-  feelPick.classList.remove('show');
-  pendingZone = null;
-  renderAreaTags();
-  window.showToast(STRINGS.zoneMarked(zone));
-};
-
-// Camera presets
-const CAM_PRESETS = {
-  front: { pos: [0, 0.0, 3.2], target: [0,0,0] },
-  back:  { pos: [0, 0.0,-3.2], target: [0,0,0] },
-  side:  { pos: [3.2,0.0, 0],  target: [0,0,0] },
-  reset: { pos: [0, 0.05,3.2], target: [0,0,0] },
-};
-
-window.setView = function(v) {
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('vbtn-' + (v==='reset'?'reset':v))?.classList.add('active');
-  const p = CAM_PRESETS[v] || CAM_PRESETS.reset;
-  // Smooth transition
-  const startPos    = camera.position.clone();
-  const startTarget = controls.target.clone();
-  const endPos      = new THREE.Vector3(...p.pos);
-  const endTarget   = new THREE.Vector3(...p.target);
-  let t = 0;
-  const anim = setInterval(() => {
-    t += 0.07;
-    if (t >= 1) { t = 1; clearInterval(anim); }
-    camera.position.lerpVectors(startPos, endPos, t);
-    controls.target.lerpVectors(startTarget, endTarget, t);
-    controls.update();
-  }, 16);
-};
-
-// Animate
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-
-  // Pulse markers
-  markers.forEach(m => {
-    m.t = (m.t || 0) + 0.04;
-    if (m.ring) {
-      m.ring.scale.setScalar(1 + Math.sin(m.t) * 0.2);
-      m.ring.material.opacity = 0.4 + Math.sin(m.t) * 0.2;
-    }
-  });
-
-  renderer.render(scene, camera);
-}
-animate();
-
-// Resize
-window.addEventListener('resize', () => {
-  const nw = canvas.parentElement.clientWidth;
-  camera.aspect = nw / H;
-  camera.updateProjectionMatrix();
-  renderer.setSize(nw, H);
-  canvas.width = nw;
-});
-
-// Area tags renderer (shared with page JS)
-function renderAreaTags() {
-  const container = document.getElementById('area-tags');
-  container.innerHTML = '';
-  const entries = Object.entries(areaStates);
-  if (!entries.length) {
-    container.innerHTML = '<div class="empty-hint">Tap muscle groups to mark</div>';
-    return;
-  }
-  entries.forEach(([zone, feeling]) => {
-    const f = FEELINGS[feeling];
-    const tag = document.createElement('span');
-    tag.className = 'area-tag';
-    tag.style.cssText = `background:${f.bg};border-color:${f.border};color:${f.color}`;
-    tag.textContent = `${f.emoji} ${zone}`;
-    container.appendChild(tag);
-  });
-}
-</script>
 
 <!-- ══════════════════════════════════════
      PAGE LOGIC (non-module)
@@ -881,6 +500,9 @@ const STRINGS = {
   saveFailed:          'Save failed — please try again',
   practiceSaved:       'Practice saved! ✦',
   mediaUploadFailures: (n) => `Saved — ${n} file(s) failed to upload`,
+  practiceUpdated:     'Practice updated! ✦',
+  loadEditFailed:      'Could not load this session for editing',
+  editingBanner:       'Editing a past session — make your changes and save',
 };
 
 async function initPage() {
@@ -909,8 +531,15 @@ async function initPage() {
 
   if (GROUPS.length) activeGroupId = (GROUPS.find(g => g.default_key === 'yoga') || GROUPS[0]).id;
 
+  // Enhancement: edit an existing log via ?edit=<practice_log_id>
+  const editId = new URLSearchParams(window.location.search).get('edit');
+  if (editId) await loadEditLog(editId);
+
   buildTypes();
   buildFocus();
+  initBodyMap(); // M3c: reference photo + clickable muscle-name list
+
+  if (editId) applyEditPrefillToDOM();
 }
 
 // Which group a practice type currently belongs to for this user: an
@@ -936,6 +565,61 @@ let selType = null;       // practice_categories.id
 let selFocus = new Set(); // focus_areas.id values
 let activeGroupId = null; // practice_groups.id currently shown in the type grid
 let mediaItems = [];      // { file, url, type: 'image'|'video' }
+let editSessionId = null; // practice_logs.id when editing a past session, else null
+let editRow = null;       // the fetched row being edited, held for DOM prefill after render
+
+// ─── EDIT AN EXISTING SESSION (?edit=<id>) ───
+async function loadEditLog(id) {
+  const { data: row, error } = await db.from('practice_logs')
+    .select('id,category_id,practice_date,start_time,mood,notes,intensity,muscle_feelings,focus_area_ids,is_private,duration_minutes')
+    .eq('id', id)
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (error || !row) {
+    console.error('Load edit log failed:', error);
+    showToast(STRINGS.loadEditFailed);
+    return;
+  }
+
+  editSessionId = row.id;
+  editRow = row;
+  selType = row.category_id;
+  selDate = new Date(row.practice_date + 'T00:00:00');
+  selFocus = new Set(row.focus_area_ids || []);
+  (row.muscle_feelings || []).forEach(mf => {
+    if (mf && mf.zone && mf.feeling) muscleStates[mf.zone] = mf.feeling;
+  });
+
+  const cat = CATEGORIES.find(c => c.id === row.category_id);
+  if (cat) activeGroupId = effectiveGroupId(cat);
+}
+
+// Populate the plain DOM fields once buildTypes()/buildFocus()/initBodyMap() have rendered.
+function applyEditPrefillToDOM() {
+  if (!editRow) return;
+  const row = editRow;
+
+  updDate();
+  document.getElementById('dur-val').value = row.duration_minutes || 45;
+  document.getElementById('dur-unit').textContent = (row.duration_minutes || 45) + ' minutes';
+  document.getElementById('start-time').value = row.start_time || '';
+  document.getElementById('notes').value = row.notes || '';
+  updChar();
+  document.getElementById('intensity').value = row.intensity || 3;
+  updIntensity();
+  const privacyEl = document.getElementById('privacy-toggle');
+  if (privacyEl) privacyEl.checked = row.is_private !== false;
+
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.classList.toggle('sel', b.querySelector('.mood-lbl')?.textContent === row.mood);
+  });
+
+  const cta = document.querySelector('.cta-btn[onclick="savePractice()"]');
+  if (cta) cta.textContent = 'Update Practice ✎';
+
+  showToast(STRINGS.editingBanner);
+}
 
 // ─── DATE ───
 async function refreshLoggedDays() {
@@ -1015,10 +699,12 @@ function buildTypes() {
     const nameEl = document.createElement('span');
     nameEl.className='cat-tab-name';
     nameEl.textContent = g.name;
+    nameEl.dataset.groupId = g.id;
     btn.appendChild(nameEl);
 
     btn.onclick=(e)=>{
-      if (nameEl.isContentEditable) return; // mid-rename, don't switch tabs
+      if (btn.dataset.editing === 'true') return; // mid-rename, don't switch tabs
+      if (e.target === nameEl) return; // ignore clicks on the name itself during normal interaction
       activeGroupId=g.id; buildTypeGrid();
       tabs.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
@@ -1026,10 +712,18 @@ function buildTypes() {
 
     // Double-click / double-tap the label to rename in place.
     let lastTap = 0;
-    nameEl.addEventListener('dblclick', (e) => { e.stopPropagation(); startRenameGroup(nameEl, g); });
+    nameEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      startRenameGroup(nameEl, g, btn);
+    });
     nameEl.addEventListener('touchend', (e) => {
       const now = Date.now();
-      if (now - lastTap < 350) { e.stopPropagation(); e.preventDefault(); startRenameGroup(nameEl, g); }
+      if (now - lastTap < 350) {
+        e.stopPropagation();
+        e.preventDefault();
+        startRenameGroup(nameEl, g, btn);
+      }
       lastTap = now;
     });
 
@@ -1046,22 +740,80 @@ function buildTypes() {
   buildTypeGrid();
 }
 
-function startRenameGroup(nameEl, group) {
+function startRenameGroup(nameEl, group, btn) {
+  const originalName = nameEl.textContent;
+  btn.dataset.editing = 'true';
+
   nameEl.contentEditable = 'true';
+  nameEl.style.outline = '2px solid var(--accent)';
+  nameEl.style.padding = '2px 4px';
+  nameEl.style.borderRadius = 'var(--r-sm)';
+  nameEl.style.backgroundColor = 'var(--bg-ov)';
+
+  // Force focus and select all text
   nameEl.focus();
-  document.execCommand && document.execCommand('selectAll', false, null);
+  setTimeout(() => {
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(nameEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) { /* ignore */ }
+  }, 0);
+
+  const cleanup = () => {
+    btn.dataset.editing = 'false';
+    nameEl.contentEditable = 'false';
+    nameEl.style.outline = '';
+    nameEl.style.padding = '';
+    nameEl.style.borderRadius = '';
+    nameEl.style.backgroundColor = '';
+  };
 
   const commit = async () => {
-    nameEl.contentEditable = 'false';
-    const newName = nameEl.textContent.trim().slice(0, 40) || group.name;
+    cleanup();
+    const newName = nameEl.textContent.trim().slice(0, 40) || originalName;
     nameEl.textContent = newName;
-    if (newName === group.name) return;
-    const { error } = await db.from('practice_groups').update({ name: newName }).eq('id', group.id).eq('user_id', currentUser.id);
-    if (error) { console.error('Rename group failed:', error); showToast(STRINGS.groupRenameFailed); nameEl.textContent = group.name; return; }
+
+    if (newName === originalName) return; // no change
+
+    const { error } = await db.from('practice_groups')
+      .update({ name: newName })
+      .eq('id', group.id)
+      .eq('user_id', currentUser.id);
+
+    if (error) {
+      console.error('Rename group failed:', error);
+      showToast(STRINGS.groupRenameFailed);
+      nameEl.textContent = originalName;
+      return;
+    }
+
     group.name = newName;
   };
-  nameEl.addEventListener('blur', commit, { once: true });
-  nameEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); nameEl.blur(); } }, { once: true });
+
+  const onKeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commit();
+      nameEl.removeEventListener('keydown', onKeydown);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+      nameEl.textContent = originalName;
+      nameEl.removeEventListener('keydown', onKeydown);
+    }
+  };
+
+  const onBlur = () => {
+    commit();
+    nameEl.removeEventListener('blur', onBlur);
+    nameEl.removeEventListener('keydown', onKeydown);
+  };
+
+  nameEl.addEventListener('keydown', onKeydown);
+  nameEl.addEventListener('blur', onBlur, { once: true });
 }
 
 async function addGroup() {
@@ -1085,11 +837,61 @@ function buildTypeGrid() {
     .sort((a,b) => a.is_system === b.is_system ? a.sort_order - b.sort_order : (a.is_system ? -1 : 1));
 
   list.forEach(t=>{
-    const card=document.createElement('div'); card.className='type-card'+(selType===t.id?' sel':'');
+    const card=document.createElement('div');
+    card.className='type-card'+(selType===t.id?' sel':'');
     card.dataset.categoryId = t.id;
+    card.dataset.editing = 'false';
+
+    const iconDiv=document.createElement('div');
+    iconDiv.className='type-icon';
+    iconDiv.textContent = t.icon||'✦';
+    card.appendChild(iconDiv);
+
+    const textDiv=document.createElement('div');
+    textDiv.style.flex='1';
+    textDiv.style.minWidth='0';
+
+    const typeNameEl=document.createElement('div');
+    typeNameEl.className='type-name';
+    typeNameEl.textContent = t.name;
+    textDiv.appendChild(typeNameEl);
+
     const sub = t.subtitle || (t.is_system ? '' : 'Custom');
-    card.innerHTML=`<div class="type-icon">${t.icon||'✦'}</div><div style="flex:1;min-width:0"><div class="type-name">${t.name}</div><div class="type-sub">${sub}</div></div><div class="type-chk">${selType===t.id?'✓':''}</div>`;
-    card.onclick=()=>{ if (card.dataset.dragged) { delete card.dataset.dragged; return; } selType=t.id; buildTypeGrid(); };
+    const subDiv=document.createElement('div');
+    subDiv.className='type-sub';
+    subDiv.textContent = sub;
+    textDiv.appendChild(subDiv);
+
+    card.appendChild(textDiv);
+
+    const chkDiv=document.createElement('div');
+    chkDiv.className='type-chk';
+    chkDiv.textContent = selType===t.id?'✓':'';
+    card.appendChild(chkDiv);
+
+    // Prevent single clicks on the name from also selecting the card.
+    typeNameEl.addEventListener('click', (e) => { e.stopPropagation(); });
+
+    // Double-click / double-tap the name to rename in place.
+    typeNameEl.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      startRenameType(typeNameEl, t, card);
+    });
+    let lastTap = 0;
+    typeNameEl.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 350) {
+        e.stopPropagation();
+        e.preventDefault();
+        startRenameType(typeNameEl, t, card);
+      }
+      lastTap = now;
+    });
+
+    card.onclick=()=>{
+      if (card.dataset.dragged || card.dataset.editing === 'true') { delete card.dataset.dragged; return; }
+      selType=t.id; buildTypeGrid();
+    };
     attachTypeDragHandlers(card, t);
     grid.appendChild(card);
   });
@@ -1100,6 +902,81 @@ function buildTypeGrid() {
   addCard.innerHTML=`<div class="type-icon" style="color:var(--accent)">＋</div><div class="type-name" style="color:var(--accent)">Add Custom</div>`;
   addCard.onclick=()=>toggleCustomCatForm(true);
   grid.appendChild(addCard);
+}
+
+function startRenameType(typeNameEl, category, card) {
+  const originalName = typeNameEl.textContent;
+  card.dataset.editing = 'true';
+
+  typeNameEl.contentEditable = 'true';
+  typeNameEl.style.outline = '2px solid var(--accent)';
+  typeNameEl.style.padding = '2px 4px';
+  typeNameEl.style.borderRadius = 'var(--r-sm)';
+  typeNameEl.style.backgroundColor = 'var(--bg-ov)';
+
+  typeNameEl.focus();
+  setTimeout(() => {
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(typeNameEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) { /* ignore */ }
+  }, 0);
+
+  const cleanup = () => {
+    card.dataset.editing = 'false';
+    typeNameEl.contentEditable = 'false';
+    typeNameEl.style.outline = '';
+    typeNameEl.style.padding = '';
+    typeNameEl.style.borderRadius = '';
+    typeNameEl.style.backgroundColor = '';
+  };
+
+  const commit = async () => {
+    cleanup();
+    const newName = typeNameEl.textContent.trim().slice(0, 60) || originalName;
+    typeNameEl.textContent = newName;
+
+    if (newName === originalName) return; // no change
+
+    const { error } = await db.from('practice_categories')
+      .update({ name: newName })
+      .eq('id', category.id);
+
+    if (error) {
+      console.error('Rename practice type failed:', error);
+      showToast(STRINGS.renameFailed || 'Could not rename — please try again');
+      typeNameEl.textContent = originalName;
+      return;
+    }
+
+    category.name = newName;
+    showToast(`Renamed to ${newName} ✓`);
+  };
+
+  const onKeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commit();
+      typeNameEl.removeEventListener('keydown', onKeydown);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+      typeNameEl.textContent = originalName;
+      typeNameEl.removeEventListener('keydown', onKeydown);
+    }
+  };
+
+  const onBlur = () => {
+    commit();
+    typeNameEl.removeEventListener('blur', onBlur);
+    typeNameEl.removeEventListener('keydown', onKeydown);
+  };
+
+  typeNameEl.addEventListener('keydown', onKeydown);
+  typeNameEl.addEventListener('blur', onBlur, { once: true });
 }
 
 // ─── DRAG-AND-DROP: move a practice type between category tabs ───
@@ -1119,12 +996,20 @@ function attachTypeDragHandlers(card, category) {
   card.addEventListener('pointerdown', (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     startX = e.clientX; startY = e.clientY; dragging = false;
-    card.setPointerCapture(e.pointerId);
+    const pointerId = e.pointerId;
+    // Deliberately do NOT call setPointerCapture() here. Capturing before a
+    // drag is confirmed retargets every subsequent event for this pointer —
+    // including the mousedown/click/dblclick compat events for this same
+    // click — to `card`, which silently breaks click/dblclick on any child
+    // (like the renameable name text) regardless of what listeners are
+    // attached to it. Capture is acquired below, only once real dragging
+    // (movement past the threshold) is confirmed.
 
     const onMove = (mv) => {
       const dx = mv.clientX - startX, dy = mv.clientY - startY;
       if (!dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
         dragging = true;
+        card.setPointerCapture(pointerId);
         card.classList.add('dragging');
         ghost = card.cloneNode(true);
         ghost.classList.add('drag-ghost');
@@ -1355,11 +1240,9 @@ async function savePractice() {
   const muscleFeelings = window.getMuscleFeelings ? window.getMuscleFeelings() : [];
   const isPrivate      = document.getElementById('privacy-toggle')?.checked ?? true;
   const durationVal    = parseInt(document.getElementById('dur-val').value) || 45;
-  const sessionId      = crypto.randomUUID();
+  const sessionId      = editSessionId || crypto.randomUUID();
 
   const payload = {
-    id:               sessionId,
-    user_id:          currentUser.id,
     category_id:      category.id,
     style_name:       category.name,
     is_custom:        !category.is_system,
@@ -1373,18 +1256,21 @@ async function savePractice() {
     focus_area_ids:   Array.from(selFocus),
     is_private:       isPrivate,
   };
+  if (!editSessionId) { payload.id = sessionId; payload.user_id = currentUser.id; }
 
   const btn = document.querySelector('.cta-btn');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Saving…';
+  btn.innerHTML = editSessionId ? '<div class="spinner"></div> Updating…' : '<div class="spinner"></div> Saving…';
 
-  const { error } = await db.from('practice_logs').insert(payload);
+  const { error } = editSessionId
+    ? await db.from('practice_logs').update(payload).eq('id', editSessionId).eq('user_id', currentUser.id)
+    : await db.from('practice_logs').insert(payload);
 
   if (error) {
     console.error('Save error:', error);
     showToast(STRINGS.saveFailed);
     btn.disabled = false;
-    btn.innerHTML = 'Save Practice ✦';
+    btn.innerHTML = editSessionId ? 'Update Practice ✎' : 'Save Practice ✦';
     return;
   }
 
@@ -1396,7 +1282,7 @@ async function savePractice() {
 
   btn.innerHTML = '✓ Saved!';
   btn.style.background = 'var(--success)';
-  showToast(STRINGS.practiceSaved);
+  showToast(editSessionId ? STRINGS.practiceUpdated : STRINGS.practiceSaved);
   setTimeout(() => { window.location.href = 'index.html'; }, 1200);
 }
 
@@ -1407,41 +1293,339 @@ function showToast(msg) {
 }
 window.showToast = showToast;
 
-// ─── SVG FALLBACK ───
-function buildSVGFallback() {
-  const svg = document.getElementById('svg-body');
-  svg.innerHTML = `
-  <defs>
-    <radialGradient id="fg1" cx="40%" cy="30%" r="65%"><stop offset="0%" stop-color="#D4805A"/><stop offset="55%" stop-color="#A85040"/><stop offset="100%" stop-color="#6A2C1E"/></radialGradient>
-  </defs>
-  <ellipse cx="100" cy="34" rx="24" ry="30" fill="url(#fg1)" class="svgm" data-z="Head" onclick="svgTap(this)"/>
-  <rect cx="89" cy="60" width="22" height="16" rx="4" fill="url(#fg1)" class="svgm" data-z="Neck" onclick="svgTap(this)" x="89" y="60"/>
-  <path d="M80,96 C68,108 62,128 64,150 C66,162 76,168 92,166 L110,166 L128,166 C144,168 154,162 156,150 C158,128 152,108 140,96 L110,92 Z" fill="url(#fg1)" class="svgm" data-z="Chest" onclick="svgTap(this)"/>
-  <path d="M60,90 C44,96 36,112 38,130 C40,144 50,154 62,150 C72,146 78,130 76,112 C74,100 68,90 60,90 Z" fill="url(#fg1)" class="svgm" data-z="L Shoulder" onclick="svgTap(this)"/>
-  <path d="M160,90 C176,96 184,112 182,130 C180,144 170,154 158,150 C148,146 142,130 144,112 C146,100 152,90 160,90 Z" fill="url(#fg1)" class="svgm" data-z="R Shoulder" onclick="svgTap(this)"/>
-  <path d="M38,132 C30,142 28,164 32,178 C36,190 46,196 56,192 C66,188 72,176 72,160 C72,144 66,130 58,128 Z" fill="url(#fg1)" class="svgm" data-z="L Bicep" onclick="svgTap(this)"/>
-  <path d="M182,132 C190,142 192,164 188,178 C184,190 174,196 164,192 C154,188 148,176 148,160 C148,144 154,130 162,128 Z" fill="url(#fg1)" class="svgm" data-z="R Bicep" onclick="svgTap(this)"/>
-  <path d="M84,164 C70,172 64,192 64,210 C64,224 72,232 84,232 C96,232 102,224 102,210 L102,168 Z" fill="url(#fg1)" class="svgm" data-z="L Oblique" onclick="svgTap(this)"/>
-  <path d="M136,164 C150,172 156,192 156,210 C156,224 148,232 136,232 C124,232 118,224 118,210 L118,168 Z" fill="url(#fg1)" class="svgm" data-z="R Oblique" onclick="svgTap(this)"/>
-  <rect x="98" y="162" width="24" height="70" rx="4" fill="url(#fg1)" class="svgm" data-z="Core / Abs" onclick="svgTap(this)"/>
-  <rect x="76" y="232" width="28" height="80" rx="12" fill="url(#fg1)" class="svgm" data-z="L Quad" onclick="svgTap(this)"/>
-  <rect x="116" y="232" width="28" height="80" rx="12" fill="url(#fg1)" class="svgm" data-z="R Quad" onclick="svgTap(this)"/>
-  <ellipse cx="90" cy="320" rx="14" ry="11" fill="#A87058" class="svgm" data-z="L Knee" onclick="svgTap(this)"/>
-  <ellipse cx="130" cy="320" rx="14" ry="11" fill="#A87058" class="svgm" data-z="R Knee" onclick="svgTap(this)"/>
-  <rect x="78" y="332" width="22" height="64" rx="10" fill="url(#fg1)" class="svgm" data-z="L Shin" onclick="svgTap(this)"/>
-  <rect x="120" y="332" width="22" height="64" rx="10" fill="url(#fg1)" class="svgm" data-z="R Shin" onclick="svgTap(this)"/>
-  `;
-  svg.querySelectorAll('.svgm').forEach(el=>{
-    el.style.cursor='pointer';
-    el.addEventListener('mouseenter', ()=>el.style.filter='brightness(1.3)');
-    el.addEventListener('mouseleave', ()=>el.style.filter='');
+// ─── BODY MAP: REFERENCE PHOTO + CLICKABLE MUSCLE-NAME LIST (M3c) ───
+// Interaction moved from tapping shapes on an SVG figure to clicking a
+// real, plain-text muscle name in a grouped list (Neck/Chest/Shoulders/…)
+// alongside the reference photo — the photo is decorative only. This
+// removes the need for pixel-accurate hit-regions entirely, so every
+// individually named muscle from the reference (down to each wrist/thumb
+// muscle) gets its own row instead of being grouped for touch-target size.
+//
+// Display labels mirror the reference photo's wording; each maps to a
+// clean canonical `zone` key (reused from the M3b taxonomy so historical
+// data, index.html's BODY_ZONE_MAP, and the rest engine all keep working
+// unchanged). `bilateral: true` items render L/R chip buttons and store
+// under "L <zone>"/"R <zone>" (same convention every prior milestone
+// used); `bilateral: false` items are single midline structures.
+const BODYMAP_IMG = { front: 'assets/bodymap-front.png', back: 'assets/bodymap-back.png' };
+
+const MUSCLE_LIST = {
+  front: [
+    { header: 'Neck', items: [
+      { label: 'Omohyoid', zone: 'Omohyoid', bilateral: true },
+      { label: 'Sternohyoid', zone: 'Sternohyoid', bilateral: true },
+      { label: 'Sternocleidomastoid', zone: 'Sternocleidomastoid', bilateral: true },
+      { label: 'Trapezius', zone: 'Trapezius', bilateral: false },
+    ] },
+    { header: 'Chest', items: [
+      { label: 'Pectoralis Major (Sternal Head)', zone: 'Pectoralis Major Sternal Head', bilateral: true },
+      { label: 'Pectoralis Major (Clavicular Head)', zone: 'Pectoralis Major Clavicular Head', bilateral: true },
+    ] },
+    { header: 'Shoulders', items: [
+      { label: 'Deltoid Anterior Head', zone: 'Deltoid Anterior Head', bilateral: true },
+      { label: 'Deltoid Middle Head', zone: 'Deltoid Middle Head', bilateral: true },
+    ] },
+    { header: 'Biceps', items: [
+      { label: 'Biceps Brachii Short Head', zone: 'Biceps Brachii Short Head', bilateral: true },
+      { label: 'Biceps Brachii Long Head', zone: 'Biceps Brachii Long Head', bilateral: true },
+      { label: 'Brachialis', zone: 'Brachialis', bilateral: true },
+    ] },
+    { header: 'Forearms', items: [
+      { label: 'Brachioradialis', zone: 'Brachioradialis', bilateral: true },
+      { label: 'Palmaris Longus', zone: 'Palmaris Longus', bilateral: true },
+      { label: 'Extensor Carpi Ulnaris', zone: 'Extensor Carpi Ulnaris', bilateral: true },
+      { label: 'Flexor Carpi Radialis', zone: 'Flexor Carpi Radialis', bilateral: true },
+      { label: 'Abductor Pollicis Longus', zone: 'Abductor Pollicis Longus', bilateral: true },
+      { label: 'Extensor Pollicis Brevis', zone: 'Extensor Pollicis Brevis', bilateral: true },
+      { label: 'Extensor Pollicis Longus', zone: 'Extensor Pollicis Longus', bilateral: true },
+    ] },
+    { header: 'Abs', items: [
+      { label: 'Serratus Anterior', zone: 'Serratus Anterior', bilateral: true },
+      { label: 'External Oblique', zone: 'External Oblique', bilateral: true },
+      { label: 'Tendinous Inscriptions', zone: 'Tendinous Inscriptions', bilateral: false },
+      { label: 'Rectus Abdominis', zone: 'Rectus Abdominis', bilateral: false },
+    ] },
+    { header: 'Quadriceps', items: [
+      { label: 'Vastus Lateralis', zone: 'Vastus Lateralis', bilateral: true },
+      { label: 'Vastus Medialis', zone: 'Vastus Medialis', bilateral: true },
+      { label: 'Rectus Femoris', zone: 'Rectus Femoris', bilateral: true },
+    ] },
+    { header: 'Thighs', items: [
+      { label: 'Tensor Fasciae Latae', zone: 'Tensor Fasciae Latae', bilateral: true },
+      { label: 'Sartorius', zone: 'Sartorius', bilateral: true },
+      { label: 'Pectineus', zone: 'Pectineus', bilateral: true },
+      { label: 'Adductor Longus', zone: 'Adductors', bilateral: true },
+      { label: 'Gracilis', zone: 'Gracilis', bilateral: true },
+    ] },
+    { header: 'Hamstrings', items: [
+      { label: 'Iliotibial Band', zone: 'Iliotibial Band', bilateral: true },
+      { label: 'Biceps Femoris Long Head', zone: 'Biceps Femoris Long Head', bilateral: true },
+      { label: 'Semitendinosus', zone: 'Semitendinosus', bilateral: true },
+      { label: 'Adductor Magnus', zone: 'Adductor Magnus', bilateral: true },
+      { label: 'Semimembranosus', zone: 'Semimembranosus', bilateral: true },
+    ] },
+    { header: 'Calves', items: [
+      { label: 'Gastrocnemius', zone: 'Gastrocnemius', bilateral: true },
+      { label: 'Tibialis Anterior', zone: 'Tibialis Anterior', bilateral: true },
+      { label: 'Peroneus Longus', zone: 'Peroneus Longus', bilateral: true },
+      { label: 'Extensor Digitorum Longus', zone: 'Extensor Digitorum Longus', bilateral: true },
+      { label: 'Soleus', zone: 'Soleus', bilateral: true },
+      { label: 'Peroneus Brevis', zone: 'Peroneus Brevis', bilateral: true },
+      { label: 'Flexor Hallucis Longus', zone: 'Flexor Hallucis Longus', bilateral: true },
+    ] },
+  ],
+  back: [
+    { header: 'Neck & Upper Back', items: [
+      { label: 'Splenius Capitis', zone: 'Splenius Capitis', bilateral: true },
+      { label: 'Sternocleidomastoid', zone: 'Sternocleidomastoid', bilateral: true },
+      { label: 'Trapezius', zone: 'Trapezius', bilateral: false },
+      { label: 'Rhomboid Major', zone: 'Rhomboid Major', bilateral: true },
+    ] },
+    { header: 'Shoulders', items: [
+      { label: 'Deltoid Middle Head', zone: 'Deltoid Middle Head', bilateral: true },
+      { label: 'Deltoid Posterior Head', zone: 'Deltoid Posterior Head', bilateral: true },
+      { label: 'Teres Minor', zone: 'Teres Minor', bilateral: true },
+      { label: 'Infraspinatus', zone: 'Infraspinatus', bilateral: true },
+    ] },
+    { header: 'Mid-Back', items: [
+      { label: 'Latissimus Dorsi', zone: 'Latissimus Dorsi', bilateral: true },
+      { label: 'Teres Major', zone: 'Teres Major', bilateral: true },
+    ] },
+    { header: 'Arms (Triceps)', items: [
+      { label: 'Triceps Long Head', zone: 'Triceps Long Head', bilateral: true },
+      { label: 'Triceps Lateral Head', zone: 'Triceps Lateral Head', bilateral: true },
+      { label: 'Triceps Medial Head', zone: 'Triceps Medial Head', bilateral: true },
+    ] },
+    { header: 'Forearms', items: [
+      { label: 'Forearm Extensors', zone: 'Forearm Extensors', bilateral: true },
+      { label: 'Extensor Carpi Ulnaris', zone: 'Extensor Carpi Ulnaris', bilateral: true },
+      { label: 'Abductor Pollicis Longus', zone: 'Abductor Pollicis Longus', bilateral: true },
+      { label: 'Extensor Pollicis Longus', zone: 'Extensor Pollicis Longus', bilateral: true },
+    ] },
+    { header: 'Lower Back & Core', items: [
+      { label: 'Erector Spinae', zone: 'Erector Spinae', bilateral: false },
+    ] },
+    { header: 'Glutes', items: [
+      { label: 'Gluteus Maximus', zone: 'Gluteus Maximus', bilateral: true },
+      { label: 'Gluteus Medius', zone: 'Gluteus Medius', bilateral: true },
+    ] },
+    { header: 'Hamstrings', items: [
+      { label: 'Biceps Femoris Long Head', zone: 'Biceps Femoris Long Head', bilateral: true },
+      { label: 'Semitendinosus', zone: 'Semitendinosus', bilateral: true },
+      { label: 'Semimembranosus', zone: 'Semimembranosus', bilateral: true },
+    ] },
+    { header: 'Calves', items: [
+      { label: 'Gastrocnemius Medial Head', zone: 'Gastrocnemius Medial Head', bilateral: true },
+      { label: 'Gastrocnemius Lateral Head', zone: 'Gastrocnemius Lateral Head', bilateral: true },
+      { label: 'Soleus', zone: 'Soleus', bilateral: true },
+      { label: 'Peroneus Brevis', zone: 'Peroneus Brevis', bilateral: true },
+      { label: 'Flexor Hallucis Longus', zone: 'Flexor Hallucis Longus', bilateral: true },
+      { label: 'Achilles Tendon', zone: 'Achilles', bilateral: true },
+    ] },
+  ],
+};
+
+const muscleStates = {}; // zone -> feeling
+let bodymapViewCompact = 'front';
+let bodymapViewFull = 'front';
+
+function initBodyMap() {
+  document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
+  document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
+  buildFeelPickerButtons('fp-row-full');
+  buildBodyLegend();
+  renderAreaTags();
+}
+
+function openFullAnatomy() {
+  document.getElementById('anatomy-modal').classList.add('show');
+  bodymapViewFull = bodymapViewCompact; // open on whichever view the compact photo was showing
+  syncFullToggleUI();
+  document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
+  renderMuscleList(bodymapViewFull);
+}
+function closeFullAnatomy() {
+  document.getElementById('anatomy-modal').classList.remove('show');
+  document.getElementById('feel-pick-full').classList.remove('show');
+  window.pendingZone = null;
+  // Keep the compact widget's photo in sync with whatever view was last shown in the modal.
+  bodymapViewCompact = bodymapViewFull;
+  document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
+  syncCompactToggleUI();
+}
+window.openFullAnatomy = openFullAnatomy;
+window.closeFullAnatomy = closeFullAnatomy;
+
+function syncCompactToggleUI() {
+  document.querySelectorAll('#svg-view-toggle .svg-toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-view') === bodymapViewCompact);
   });
 }
-function svgTap(el) {
-  const zone = el.getAttribute('data-z');
-  window.pendingZone = { zone, point: null };
-  document.getElementById('fp-muscle-name').textContent = zone;
-  document.getElementById('feel-pick').classList.add('show');
+function syncFullToggleUI() {
+  document.querySelectorAll('#svg-view-toggle-full .svg-toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-view') === bodymapViewFull);
+  });
+}
+
+document.querySelectorAll('#svg-view-toggle .svg-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    bodymapViewCompact = e.currentTarget.getAttribute('data-view');
+    syncCompactToggleUI();
+    document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
+  });
+});
+document.querySelectorAll('#svg-view-toggle-full .svg-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    bodymapViewFull = e.currentTarget.getAttribute('data-view');
+    syncFullToggleUI();
+    document.getElementById('feel-pick-full').classList.remove('show');
+    window.pendingZone = null;
+    document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
+    renderMuscleList(bodymapViewFull);
+  });
+});
+
+// ─── 7-STATE MUSCLE FEELING SCALE ───
+const FEELINGS = {
+  relax:     { emoji: '😌', label: 'Relax',      color: '#7B9E87' },
+  feelgood:  { emoji: '💪', label: 'Feel Good',  color: '#C8A96E' },
+  sweetpain: { emoji: '🔥', label: 'Sweet Pain', color: '#6E9FB0' },
+  tight:     { emoji: '⚡', label: 'Tight',      color: '#D4956A' },
+  sore:      { emoji: '🟠', label: 'Sore',       color: '#C77B4A' },
+  pain:      { emoji: '🔴', label: 'Pain',       color: '#C47070' },
+  injured:   { emoji: '🚨', label: 'Injured',    color: '#8B3A3A' },
+};
+
+// ─── CLICKABLE MUSCLE LIST ───
+function renderMuscleList(view) {
+  const container = document.getElementById('muscle-list');
+  container.innerHTML = '';
+  MUSCLE_LIST[view].forEach(group => {
+    const g = document.createElement('div');
+    g.className = 'ml-group';
+
+    const h = document.createElement('div');
+    h.className = 'ml-header';
+    h.textContent = group.header;
+    g.appendChild(h);
+
+    group.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'ml-row';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'ml-name';
+      nameEl.textContent = item.label;
+      row.appendChild(nameEl);
+
+      if (item.bilateral) {
+        const sides = document.createElement('div');
+        sides.className = 'ml-sides';
+        ['L', 'R'].forEach(side => {
+          const zone = `${side} ${item.zone}`;
+          const btn = document.createElement('button');
+          btn.className = 'ml-side';
+          btn.textContent = side;
+          const feeling = muscleStates[zone];
+          if (feeling && FEELINGS[feeling]) {
+            btn.classList.add('marked');
+            btn.style.background = FEELINGS[feeling].color;
+          }
+          btn.onclick = () => muscleTap(zone, `${item.label} (${side === 'L' ? 'Left' : 'Right'})`);
+          sides.appendChild(btn);
+        });
+        row.appendChild(sides);
+      } else {
+        const dot = document.createElement('div');
+        dot.className = 'ml-dot';
+        const feeling = muscleStates[item.zone];
+        if (feeling && FEELINGS[feeling]) {
+          dot.classList.add('marked');
+          dot.style.background = FEELINGS[feeling].color;
+        }
+        nameEl.onclick = () => muscleTap(item.zone, item.label);
+        row.appendChild(dot);
+      }
+      g.appendChild(row);
+    });
+    container.appendChild(g);
+  });
+}
+
+function muscleTap(zone, displayLabel) {
+  window.pendingZone = { zone, label: displayLabel };
+  document.getElementById('fp-muscle-name-full').textContent = displayLabel;
+  document.getElementById('feel-pick-full').classList.add('show');
+}
+
+function buildFeelPickerButtons(rowId) {
+  const row = document.getElementById(rowId);
+  row.innerHTML = '';
+  Object.entries(FEELINGS).forEach(([key, f]) => {
+    const btn = document.createElement('button');
+    btn.className = 'fp-btn';
+    btn.style.cssText = `background:${f.color}26;border-color:${f.color};color:${f.color}`;
+    btn.textContent = `${f.emoji} ${f.label}`;
+    btn.onclick = () => applyFeeling(key);
+    row.appendChild(btn);
+  });
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'fp-btn fp-clear';
+  clearBtn.textContent = '✕ Clear';
+  clearBtn.onclick = () => applyFeeling(null);
+  row.appendChild(clearBtn);
+}
+
+function buildBodyLegend() {
+  const legend = document.getElementById('body-legend');
+  legend.innerHTML = '';
+  Object.values(FEELINGS).forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'leg-item';
+    item.innerHTML = `<div class="leg-dot" style="background:${f.color}"></div>${f.emoji} ${f.label}`;
+    legend.appendChild(item);
+  });
+}
+
+// ─── APPLY FEELING TO MUSCLE ───
+window.applyFeeling = function(feeling) {
+  if (!window.pendingZone) return;
+  const { zone, label } = window.pendingZone;
+
+  if (feeling) {
+    muscleStates[zone] = feeling;
+  } else {
+    delete muscleStates[zone];
+  }
+
+  document.getElementById('feel-pick-full').classList.remove('show');
+  window.pendingZone = null;
+  renderMuscleList(bodymapViewFull);
+  renderAreaTags();
+  showToast(feeling ? `${label}: ${FEELINGS[feeling].label}` : `${label} cleared`);
+};
+
+// ─── GET MUSCLE FEELINGS (for savePractice) ───
+window.getMuscleFeelings = () =>
+  Object.entries(muscleStates).map(([zone, feeling]) => ({ zone, feeling }));
+
+// ─── RENDER MARKED AREAS ───
+function renderAreaTags() {
+  const container = document.getElementById('area-tags');
+  container.innerHTML = '';
+  const entries = Object.entries(muscleStates);
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty-hint">Tap a muscle name to mark</div>';
+    return;
+  }
+  entries.forEach(([zone, feeling]) => {
+    const f = FEELINGS[feeling] || { emoji: '✦', color: '#C8A96E' };
+    const tag = document.createElement('span');
+    tag.className = 'area-tag';
+    tag.style.cssText = `background:${f.color}26;border-color:${f.color};color:${f.color}`;
+    tag.textContent = `${f.emoji} ${zone}`;
+    container.appendChild(tag);
+  });
 }
 
 // ─── INIT ───

@@ -1,0 +1,6 @@
+# tools/bodymap build artifacts — regenerate via:
+#   node build_front2.js && node build_back2.js
+tools/bodymap/*.html
+tools/bodymap/*_markup.txt
+tools/bodymap/*_zones.json
+tools/bodymap/*.png

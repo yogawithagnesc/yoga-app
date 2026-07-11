@@ -385,6 +385,14 @@
   .dlr-info { display: flex; flex-direction: column; gap: 2px; }
   .dlr-name { font-size: 14px; font-weight: 500; color: var(--tx-1); }
   .dlr-dur  { font-size: 12px; color: var(--tx-2); }
+  .dlr-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .dlr-edit {
+    font-size: 12px; color: var(--accent); background: var(--adim);
+    border: 1px solid rgba(200,169,110,0.3); border-radius: var(--r-sm);
+    padding: 6px 12px; cursor: pointer; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+    transition: background 0.15s; text-decoration: none; display: inline-block;
+  }
+  .dlr-edit:hover { background: rgba(200,169,110,0.2); }
   .dlr-del  {
     font-size: 12px; color: var(--error); background: rgba(196,112,112,0.1);
     border: 1px solid rgba(196,112,112,0.3); border-radius: var(--r-sm);
@@ -932,18 +940,109 @@ async function loadContinueWatching() {
 ───────────────────────────────────────── */
 var BODY_CATEGORIES  = ['Shoulders', 'Lower Back', 'Hamstrings', 'Hips', 'Knees', 'Core'];
 var BODY_ZONE_MAP     = {
-  'Shoulder (Front)': 'Shoulders',
-  'Rear Deltoid':     'Shoulders',
-  'Lower Back':       'Lower Back',
-  'Hamstring':        'Hamstrings',
-  'Hip Flexor':       'Hips',
-  'Glute':            'Hips',
+  // Shoulders / Upper Back
+  'Deltoid':          'Shoulders',
+  'Trapezius':        'Shoulders',
+  'Infraspinatus':    'Shoulders',
+  'Teres Major':      'Shoulders',
+  'Sternocleidomastoid': 'Shoulders',
+  'Pectoralis Major': 'Shoulders',
+  // Lower Back
+  'Erector Spinae':   'Lower Back',
+  'Latissimus Dorsi': 'Lower Back',
+  // Hamstrings
+  'Biceps Femoris':   'Hamstrings',
+  'Semitendinosus':   'Hamstrings',
+  'Iliotibial Band':  'Hamstrings',
+  // Hips / Glutes
+  'Gluteus Maximus':  'Hips',
+  'Gluteus Medius':   'Hips',
+  'Tensor Fasciae Latae': 'Hips',
+  // Knees / Quads
   'Knee':             'Knees',
-  'Abs / Core':       'Core',
+  'Vastus Lateralis': 'Knees',
+  'Vastus Medialis':  'Knees',
+  'Rectus Femoris':   'Knees',
+  // Core
+  'Upper Abs':        'Core',
   'Lower Abs':        'Core',
-  'Oblique':          'Core',
+  'External Oblique': 'Core',
+  'Serratus Anterior':'Core',
+  // Arms (mapped to Shoulders for simplicity)
+  'Biceps':           'Shoulders',
+  'Brachialis':       'Shoulders',
+  'Triceps Long Head':'Shoulders',
+  'Triceps Lateral Head':'Shoulders',
+  'Forearm Flexors':  'Shoulders',
+  'Forearm Extensors':'Shoulders',
+  'Brachioradialis':  'Shoulders',
+  // Legs
+  'Tibialis Anterior':'Knees',
+  'Gastrocnemius':    'Knees',
+  'Soleus':           'Knees',
+  'Sartorius':        'Knees',
+  // Other
+  'Head':             'Shoulders',
+  'Neck':             'Shoulders',
+  'Hand':             'Shoulders',
+  'Foot':             'Knees',
+  'Ankle':            'Knees',
+  'Achilles':         'Knees',
+  'Adductors':        'Hips',
+
+  // M3b — additive: finer-grained zones from the hyper-detailed body map.
+  // Old base names above are kept unchanged so historical logs keep
+  // scoring correctly; these are new entries only.
+  'Pectoralis Major Sternal Head':    'Shoulders',
+  'Pectoralis Major Clavicular Head': 'Shoulders',
+  'Biceps Brachii Long Head':  'Shoulders',
+  'Biceps Brachii Short Head': 'Shoulders',
+  'Deltoid Anterior Head':  'Shoulders',
+  'Deltoid Middle Head':    'Shoulders',
+  'Deltoid Posterior Head': 'Shoulders',
+  'Adductor Magnus': 'Hips',
+  'Pectineus':        'Hips',
+  'Gracilis':          'Hips',
+  'Peroneus Longus':  'Knees',
+  'Splenius Capitis':  'Shoulders',
+  'Rhomboid Major':    'Shoulders',
+  'Teres Minor':       'Shoulders',
+  'Triceps Medial Head': 'Shoulders',
+  'Biceps Femoris Long Head': 'Hamstrings',
+  'Semimembranosus':   'Hamstrings',
+  'Gastrocnemius Medial Head':  'Knees',
+  'Gastrocnemius Lateral Head': 'Knees',
+  'Peroneus Brevis':      'Knees',
+  'Flexor Hallucis Longus':'Knees',
+
+  // M3c — additive: the click-list body map (reference photo + clickable
+  // muscle names) tracks every individually named muscle instead of
+  // grouping small ones onto shared tap targets, so these are newly
+  // trackable on their own.
+  'Omohyoid':    'Shoulders',
+  'Sternohyoid': 'Shoulders',
+  'Palmaris Longus':          'Shoulders',
+  'Extensor Carpi Ulnaris':   'Shoulders',
+  'Flexor Carpi Radialis':    'Shoulders',
+  'Abductor Pollicis Longus': 'Shoulders',
+  'Extensor Pollicis Brevis': 'Shoulders',
+  'Extensor Pollicis Longus': 'Shoulders',
+  'Extensor Digitorum Longus':'Knees',
+  'Rectus Abdominis': 'Core',
 };
-var BODY_FEELING_WEIGHT = { sore: 3, tight: 2, worked: 1, strong: -1 };
+// Weight system: serious feelings trigger fatigue, recovery feelings reduce it
+var BODY_FEELING_WEIGHT = {
+  injured:   4,  // most critical
+  pain:      3.5, // serious alert
+  sore:      3,   // warning state
+  tight:     1.5, // minor concern
+  sweetpain: 1,   // neutral (good burn)
+  feelgood:  -1,  // positive recovery signal
+  relax:     -0.5, // relaxation benefit
+  // Legacy values for backwards compatibility
+  worked:    1,
+  strong:    -1,
+};
 var BODY_LEVELS = {
   ok:       { label: 'Ok',       color: 'var(--success)', bg: 'rgba(123,158,135,0.12)' },
   watch:    { label: 'Watch',    color: 'var(--warning)', bg: 'rgba(212,149,106,0.12)' },
@@ -1001,9 +1100,72 @@ function computeBodyStatus() {
 }
 
 function levelForScore(score) {
-  if (score > 4) return BODY_LEVELS.fatigued;
-  if (score > 1) return BODY_LEVELS.watch;
+  // Adjusted thresholds for new weight system: pain/injury flags trigger Watch immediately
+  if (score > 3.5) return BODY_LEVELS.fatigued;  // 1 pain + 1 sore, or 2 sores = fatigued
+  if (score > 1.5) return BODY_LEVELS.watch;    // 1 sore or 1 pain = watch
   return BODY_LEVELS.ok;
+}
+
+// Count serious feelings (sore/pain/injured) per muscle in 14 days
+function computeRestNeeds() {
+  var muscleCounts = {}; // zone -> count of sore/pain/injured flags
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var yogaOnly = STATE.perspective === 'yoga';
+
+  STATE.bodyRaw.forEach(function(log) {
+    if (yogaOnly && !(log.practice_categories && log.practice_categories.category_type === 'yoga')) return;
+
+    var logDate = new Date(log.practice_date + 'T00:00:00');
+    var daysAgo = Math.round((today - logDate) / 86400000);
+    if (daysAgo < 0 || daysAgo > 13) return;
+
+    (log.muscle_feelings || []).forEach(function(mf) {
+      // Count only serious feelings: sore, pain, injured (lowercase)
+      if (['sore', 'pain', 'injured'].indexOf(mf.feeling) >= 0) {
+        var zone = mf.zone || '';
+        muscleCounts[zone] = (muscleCounts[zone] || 0) + 1;
+      }
+    });
+  });
+
+  // Return muscles with 3+ serious feelings in 14 days
+  var needsRest = [];
+  Object.keys(muscleCounts).forEach(function(zone) {
+    if (muscleCounts[zone] >= 3) {
+      needsRest.push({ zone: zone, count: muscleCounts[zone] });
+    }
+  });
+
+  return needsRest.sort(function(a, b) { return b.count - a.count; });
+}
+
+// Suggest restoration practices based on affected areas
+function getRestSuggestion(restNeeds) {
+  if (!restNeeds || !restNeeds.length) return null;
+
+  // Count affected areas
+  var affectedAreas = {};
+  restNeeds.forEach(function(item) {
+    var base = (item.zone || '').replace(/^[LR] /, '');
+    var cat = BODY_ZONE_MAP[base];
+    if (cat) affectedAreas[cat] = (affectedAreas[cat] || 0) + 1;
+  });
+
+  // Recommend Yin for lower body, Mindfulness for upper body
+  var hasLowerBody = affectedAreas['Hamstrings'] || affectedAreas['Hips'] || affectedAreas['Knees'];
+  var hasUpperBody = affectedAreas['Shoulders'] || affectedAreas['Core'];
+
+  var suggestion = '';
+  if (hasLowerBody && !hasUpperBody) {
+    suggestion = '🧘 Consider a Yin or Restorative yoga session to support recovery.';
+  } else if (hasUpperBody && !hasLowerBody) {
+    suggestion = '🧘 Consider a Mindfulness or gentle stretching session.';
+  } else {
+    suggestion = '🧘 Consider a gentle, restorative practice to support full-body recovery.';
+  }
+
+  return suggestion;
 }
 
 function renderBodyStatus() {
@@ -1018,6 +1180,27 @@ function renderBodyStatus() {
 
   var scores = computeBodyStatus();
   el.innerHTML = '';
+
+  // First, check for rest needs and show rest suggestion if applicable
+  var restNeeds = computeRestNeeds();
+  if (restNeeds && restNeeds.length > 0) {
+    var suggestion = getRestSuggestion(restNeeds);
+    if (suggestion) {
+      var restCard = document.createElement('div');
+      restCard.className = 'body-status-row';
+      restCard.innerHTML =
+        '<div style="width:100%;text-align:center;color:var(--warning);font-size:13px;padding:10px;background:rgba(212,149,106,0.08);border-radius:6px;border-left:3px solid var(--warning)">' +
+        suggestion +
+        '</div>';
+      el.appendChild(restCard);
+
+      // Add separator
+      var sep = document.createElement('div');
+      sep.style.height = '8px';
+      el.appendChild(sep);
+    }
+  }
+
   BODY_CATEGORIES.forEach(function(cat) {
     var lvl = levelForScore(scores[cat]);
     var row = document.createElement('div');
@@ -1051,7 +1234,10 @@ function openDayLogs(day) {
         '<span class="dlr-name">' + log.style_name + '</span>' +
         '<span class="dlr-dur">' + log.duration_minutes + ' min</span>' +
       '</div>' +
-      '<button class="dlr-del" onclick="deleteLog(\'' + log.id + '\',' + day + ')">Delete</button>';
+      '<div class="dlr-actions">' +
+        '<a class="dlr-edit" href="lumen-log-practice-3d.html?edit=' + log.id + '">Edit</a>' +
+        '<button class="dlr-del" onclick="deleteLog(\'' + log.id + '\',' + day + ')">Delete</button>' +
+      '</div>';
     list.appendChild(row);
   });
 

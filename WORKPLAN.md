@@ -14,7 +14,8 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M0 | Feed-likes fix + housekeeping | §3.6 (feed) | ✅ Done | Haiku 4.5 |
 | M1 | Finish P1 verification | §3.1–3.4 | ✅ Done | Haiku 4.5 |
 | M2 | Dynamic categorization engine | §3.2.1–3.2.2 | ✅ Done (pending migration run + live test) | Sonnet 5 |
-| M3 | SVG Body Map + 14-day rest engine | §3.2.3 | Not started | Sonnet 5 |
+| M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done (verified live) | Sonnet 5 |
+| M3a | Advanced anatomical illustration redesign | §3.2.3 | ✅ Done | Sonnet 5 |
 | M4 | Class scheduling & booking framework | §3.5, §8 | Not started | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
@@ -78,17 +79,72 @@ Close out the remaining P1 checklist items. Mostly manual QA plus small fixes.
 
 ---
 
-## M3 — SVG Body Map + 14-Day Rest Engine (PRD §3.2.3)
+## M3 — SVG Body Map + 14-Day Rest Engine (PRD §3.2.3) ✅ Done
 
 **Decision made:** SVG-primary (the existing 2D fallback is promoted; the 16MB GLTF 3D model is retired from the default path — optionally kept behind a toggle).
 
-**Scope:**
-- Upgrade `buildSVGFallback()`/`svgTap()` in `lumen-log-practice-3d.html` into the primary interface: front/back anatomical views, richer muscle paths (Quadriceps, Hamstrings, Lower Back, Shoulders, Triceps, etc.).
-- Tap → context popover: mark Sore (amber) or Pain (red); multi-select supported; states color the SVG paths live.
-- 14-day rolling analytics: extend `loadBodyStatus()`/`computeBodyStatus()` in `index.html` to count practice types over `[today − 14d]`.
-- Rest Suggestion Card: any muscle flagged Sore/Pain ≥ 3 times in 14 days surfaces a prioritized restoration card ("…Consider a Yin or Mindfulness focus today.").
+**Delivered:**
+- SVG body map with 49 front-view and 42 back-view anatomical zones (front/back toggle, tap-to-highlight interaction, 7-state feeling system: Relax/Feel Good/Sweet Pain/Tight/Sore/Pain/Injured)
+- BODY_ZONE_MAP expanded in `index.html` to include all anatomical zones mapping to 6 broad categories (Shoulders, Lower Back, Hamstrings, Hips, Knees, Core)
+- `computeRestNeeds()` function counts serious feelings (sore/pain/injured) per muscle in 14 days
+- `getRestSuggestion()` recommends Yin/Mindfulness based on affected body areas
+- Rest Suggestion Card renders in dashboard body status when 3+ serious feelings detected in any muscle over 14 days
+- Perspective toggle support (yoga-only or global view) integrated with rest engine
 
-**Acceptance:** log screen loads instantly with no 16MB download; marking 3+ sore states on a muscle across 14 days produces the rest card on the dashboard.
+**Acceptance:** log screen loads instantly; marking 3+ sore/pain/injured states on a muscle across 14 days produces the rest suggestion card on the dashboard with contextual restoration practice recommendations.
+
+**Post-M3 enhancements (verified live):** Body Status scoring updated to the 7-state feeling weights (single Sore/Pain now correctly reads Watch/Fatigued); historic practice log editing via `?edit=<id>` on the log page with Edit links in the dashboard day-log modal.
+
+---
+
+## M3a — Advanced Anatomical Illustration Redesign ✅ Done
+
+Visual-only upgrade of the M3 body map from flat terracotta capsules to a medically-styled anatomical illustration. Zero behavioral change: same 91 zones, `data-z` names, tap/pick flow, and front/back toggle.
+
+**Delivered:**
+- **Material:** crimson/burgundy muscle bellies via per-muscle radial gradient (`#muscleGrad`); silver-gray fascia/tendon material (`#fasciaGrad`)
+- **Fascia layer** (non-interactive, `pointer-events:none`): thoracolumbar fascia diamond, linea alba + tendinous intersections (six-pack seams), inguinal ligaments, patellar tendons, triceps tendon flats; IT band and Achilles zones re-materialed as tendon (`svgm-t` class) while staying tappable
+- **Striation texture:** 67 fiber-line overlays running along each muscle's contraction axis (fanning pec/trap/lat/glute fibers, vertical rectus/erector fibers, spindle-bowed limb fibers)
+- **Rim lighting:** shared `#chisel` specular-lighting filter (top-left light) chisels every muscle's contour; hover/picking brightness composes with it
+- **Toolkit** checked into `tools/bodymap/` (generators, build scripts, integration splicer, Playwright verification) — regenerate there, never hand-edit the inline SVG
+
+**Verified:** all 91 zones pass multi-point tappability sampling; feeling override/clear restores the correct base material (muscle vs tendon); end-to-end tap → highlight → pick → view-toggle in the real page with stubbed auth; view-toggle render ~38ms (filter cost negligible).
+
+---
+
+## M3b — Hyper-Detailed Anatomical Illustration + Labeled Full-Screen Viewer ✅ Done
+
+Pushed the M3a vector illustration much further to approach a professional medical-illustration reference the user supplied: finer muscle-head separation, a region-based color palette, joint tendon detail, and a complete header/sub-muscle/leader-line label system — while keeping true photorealism explicitly out of scope (no image-generation tool exists in this environment; the reference images are photographic/3D renders, not something hand-authored SVG can match 1:1).
+
+**Delivered:**
+- **Taxonomy expansion:** 91 → 123 tap zones (63 front / 60 back). New muscle-head splits (Deltoid → Anterior/Middle/Posterior, Biceps → Short/Long Head, Pectoralis Major → Sternal/Clavicular Head, Triceps → +Medial Head, Gastrocnemius → Medial/Lateral Head, hamstrings → +Semimembranosus) plus new named muscles (Splenius Capitis, Rhomboid Major, Teres Minor, Pectineus, Gracilis, Adductor Magnus, Peroneus Longus/Brevis, Flexor Hallucis Longus). Source of truth: `tools/bodymap/taxonomy.js`.
+- **Region palette:** 6 body-region material gradients replacing the single M3a crimson (Chest emerald, Abs fuchsia, Shoulders coral, Arms yellow, Thighs crimson/salmon, Calves forest/slate), each still dark enough at the rim for striations to read through.
+- **Joint tendon bursts:** non-interactive radiating fiber overlay at knees, ankles, elbows, wrists.
+- **Full-screen labeled viewer:** new "🔍 View Full Anatomy" modal (`#svg-body-full`) with an expanded canvas, left/right column headers + sub-muscle text + 1px leader lines + target dots, its own Front/Back pill (amber/gold active state) and a "🖐 Tap a muscle to mark" footer hint. The compact in-form widget stays small and unlabeled (not enough width to be legible) but shares the new material/texture upgrade.
+- **Shared interaction state:** `svgBodyStates` is one object read/written by both containers; `buildSvg()`/`attachSvgHandlers()`/`svgTap()`/`applyFeeling()` are container-parameterized so a mark made in either view instantly syncs to the other.
+- **Legacy compatibility:** `BODY_ZONE_MAP` (`index.html`) updated additively — old zone names (e.g. `Deltoid`, `Biceps`, `Pectoralis Major`) stay mapped alongside the new split names, so historical logs keep contributing correctly to the rest engine. Old logs referencing a retired split-away name still round-trip through the edit flow without data loss; they're just no longer visually re-tappable under the old name (documented, not a bug — a 1:1 migration is inherently ambiguous for a one-to-many split).
+
+**Verified:** all 123 zones pass multi-point tappability sampling (caught and fixed one real overlap: Adductor Magnus fully hidden under Adductors); end-to-end tap → highlight → pick → sync between compact and full-screen containers; legacy log edit with retired zone names causes no crash and preserves data; view-toggle render times stayed smooth (compact ~16ms, full-screen with labels ~30ms).
+
+---
+
+## M3c — Reference Photo + Clickable Muscle-Name List ✅ Done (supersedes M3a/M3b's SVG illustration)
+
+The user supplied the actual reference photos (front/back) used to spec M3b and asked for the exact photo look, plus proposed a different interaction model: click a muscle's *name* in a list next to the photo, rather than tap a region of the image. Assessed feasibility first: true pixel-for-pixel use of "these exact photos" required the actual image files (not achievable from M3b's hand-authored SVG, and pasted chat images aren't retrievable as files) — resolved once the user pushed the two PNGs to the repo (`Lumen - Body map (Front/Back) (V1).png` on `main`), now stored as `assets/bodymap-front.png` / `assets/bodymap-back.png`. The click-list model turned out to be a net simplification: it removes the need for pixel-accurate hit-regions entirely, so it was implemented directly rather than treated as a fallback.
+
+**Delivered:**
+- **Photo is the visual, list is the interaction:** the body map now displays the exact reference PNGs (decorative, non-interactive) with a grouped, real-DOM list of clickable muscle names below/alongside it — headers matching the reference (Neck, Chest, Shoulders, Biceps, Forearms, Abs, Quadriceps, Thighs, Hamstrings, Calves front; Neck & Upper Back, Shoulders, Mid-Back, Arms (Triceps), Forearms, Lower Back & Core, Glutes, Hamstrings, Calves back).
+- **Full individual muscle granularity:** since rows are just text (not spatial polygons), every named muscle from the reference gets its own row — including the small forearm/wrist muscles (Palmaris Longus, Extensor Carpi Ulnaris, Abductor Pollicis Longus, etc.) that M3b had to group onto shared tap targets for touch-target-size reasons. Data source: `MUSCLE_LIST` in `lumen-log-practice-3d.html`.
+- **Bilateral L/R chips:** paired muscles (most of them) render two small chip buttons; midline structures (Trapezius, Erector Spinae, Rectus Abdominis, etc.) are a single clickable row. Multi-select across as many muscles as needed, one feeling per muscle via the existing 7-state picker.
+- **Compact widget + full-screen modal:** the in-form widget shows the photo + a "🔍 Tap to Mark Muscles" button (kept small — the full list doesn't fit at ~260px wide); the full-screen modal is the primary interactive surface (photo + complete clickable list + picker + footer hint), reusing the modal shell built in M3b.
+- **Legacy-safe canonical zones:** display labels mirror the reference photo's wording, but each stores under a clean canonical `zone` key reused from M3b's taxonomy (typos/duplicates in the AI-generated reference text, e.g. "Sarotorius", "Biceos Femoris", "Perenous Lingus", were not carried into the data model — only into nothing, since display text was normalized to the canonical spelling throughout). `BODY_ZONE_MAP` (`index.html`) additively extended for the newly-individually-tracked muscles (Omohyoid, Sternohyoid, the wrist muscles, Rectus Abdominis, Extensor Digitorum Longus).
+- **`tools/bodymap/`'s SVG generation toolkit (gen2.js/render.js/build_front2.js/build_back2.js/integrate.js) is retired** — no longer wired into the live page, kept for historical reference only (its canonical zone names seeded `MUSCLE_LIST`'s `zone` keys).
+
+**Verified:** page loads with no JS errors; both views render the correct photo + list (10 header groups / 42 rows front, matching back); click → picker → multi-select confirmed across bilateral and midline muscles; front/back toggle rebuilds the list correctly; compact widget and full-screen modal stay in sync on open/close; `savePractice()` inserts the correct `muscle_feelings` payload; editing a pre-M3c log with retired SVG-era zone names causes no crash and the current list stays fully functional (same accepted limitation as M3b: orphaned old names survive round-trip but aren't visually re-selectable under their old name).
+
+**UI Layout adjustment (2026-07-11):** repositioned the "Tap to Mark" instruction text from below the photo to the left and right edges of the body-map pane using a 3-column grid layout, creating visual symmetry with the reference photo's side-annotated design. The instruction is now flanked on both sides while the photo + toggle + CTA remain centered.
+
+**Follow-up enhancement (post-M3c):** refactor the full-screen modal to display the muscle list in left and right columns flanking the central photo — organized by the reference photo's anatomical section headers (Neck, Chest, Shoulders, Biceps, etc.) in the sequence they appear in the photos (front and back). This would make the muscle names visible at all times alongside their visual locations, reducing the need for the modal footer hint and creating a more self-documenting interface. Scope: restructure `.am-body` grid layout, merge `renderMuscleList()` into a two-column render pass, verify no regression in the click → picker → save flow.
 
 ---
 
