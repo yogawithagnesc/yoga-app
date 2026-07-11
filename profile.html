@@ -85,15 +85,15 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .teacher-link:hover{text-decoration:underline}
 
 /* Username edit */
-.username-row{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--br-sub)}
-.username-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx-2);width:60px;flex-shrink:0}
-.username-input{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-sm);padding:8px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-1);outline:none;transition:border-color .2s}
+.username-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--br-sub)}
+.username-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx-2);display:block;margin-bottom:8px}
+.username-input{width:100%;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:15px;color:var(--tx-1);outline:none;transition:border-color .2s;-webkit-appearance:none}
 .username-input:focus{border-color:var(--accent)}
-.username-check{font-size:11px;color:var(--tx-3);margin-top:4px;display:none;min-height:16px}
+.username-check{font-size:12px;color:var(--tx-3);margin-top:8px;display:none;min-height:16px}
 .username-check.show{display:block}
 .username-check.available{color:var(--success)}
 .username-check.unavailable{color:var(--error)}
-.username-save-btn{font-size:11px;font-weight:600;background:var(--accent);border:none;border-radius:var(--r-sm);color:var(--tx-inv);padding:8px 14px;cursor:pointer;transition:all .15s;min-height:32px;min-width:44px}
+.username-save-btn{width:100%;margin-top:10px;padding:13px;background:var(--accent);border:none;border-radius:var(--r-lg);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;font-weight:600;color:var(--tx-inv);cursor:pointer;transition:all .2s;min-height:44px}
 .username-save-btn:hover{background:var(--accent-h)}
 .username-save-btn:disabled{opacity:.5;cursor:not-allowed}
 
@@ -130,12 +130,12 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
           <span class="role-badge" id="id-role">—</span>
         </div>
       </div>
-      <div class="username-row">
-        <label class="username-label">Username</label>
+      <div class="username-section">
+        <label class="username-label" for="username-input">Username</label>
         <input class="username-input" id="username-input" type="text" placeholder="Set your unique username" maxlength="32"/>
-        <button class="username-save-btn" id="username-save-btn" onclick="saveUsernameExplicit()">Save</button>
+        <div class="username-check" id="username-check"></div>
+        <button class="username-save-btn" id="username-save-btn" onclick="saveUsernameExplicit()">Save Username</button>
       </div>
-      <div class="username-check" id="username-check"></div>
     </div>
 
     <!-- Teacher/Studio: Generate Join Code -->
