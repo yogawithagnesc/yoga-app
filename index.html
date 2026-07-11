@@ -385,6 +385,14 @@
   .dlr-info { display: flex; flex-direction: column; gap: 2px; }
   .dlr-name { font-size: 14px; font-weight: 500; color: var(--tx-1); }
   .dlr-dur  { font-size: 12px; color: var(--tx-2); }
+  .dlr-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .dlr-edit {
+    font-size: 12px; color: var(--accent); background: var(--adim);
+    border: 1px solid rgba(200,169,110,0.3); border-radius: var(--r-sm);
+    padding: 6px 12px; cursor: pointer; font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+    transition: background 0.15s; text-decoration: none; display: inline-block;
+  }
+  .dlr-edit:hover { background: rgba(200,169,110,0.2); }
   .dlr-del  {
     font-size: 12px; color: var(--error); background: rgba(196,112,112,0.1);
     border: 1px solid rgba(196,112,112,0.3); border-radius: var(--r-sm);
@@ -1186,7 +1194,10 @@ function openDayLogs(day) {
         '<span class="dlr-name">' + log.style_name + '</span>' +
         '<span class="dlr-dur">' + log.duration_minutes + ' min</span>' +
       '</div>' +
-      '<button class="dlr-del" onclick="deleteLog(\'' + log.id + '\',' + day + ')">Delete</button>';
+      '<div class="dlr-actions">' +
+        '<a class="dlr-edit" href="lumen-log-practice-3d.html?edit=' + log.id + '">Edit</a>' +
+        '<button class="dlr-del" onclick="deleteLog(\'' + log.id + '\',' + day + ')">Delete</button>' +
+      '</div>';
     list.appendChild(row);
   });
 

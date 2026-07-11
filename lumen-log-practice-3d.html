@@ -456,6 +456,9 @@ const STRINGS = {
   saveFailed:          'Save failed — please try again',
   practiceSaved:       'Practice saved! ✦',
   mediaUploadFailures: (n) => `Saved — ${n} file(s) failed to upload`,
+  practiceUpdated:     'Practice updated! ✦',
+  loadEditFailed:      'Could not load this session for editing',
+  editingBanner:       'Editing a past session — make your changes and save',
 };
 
 async function initPage() {
@@ -484,9 +487,15 @@ async function initPage() {
 
   if (GROUPS.length) activeGroupId = (GROUPS.find(g => g.default_key === 'yoga') || GROUPS[0]).id;
 
+  // Enhancement: edit an existing log via ?edit=<practice_log_id>
+  const editId = new URLSearchParams(window.location.search).get('edit');
+  if (editId) await loadEditLog(editId);
+
   buildTypes();
   buildFocus();
   buildSVGFallback(); // M3: SVG as primary interface
+
+  if (editId) applyEditPrefillToDOM();
 }
 
 // Which group a practice type currently belongs to for this user: an
@@ -512,6 +521,61 @@ let selType = null;       // practice_categories.id
 let selFocus = new Set(); // focus_areas.id values
 let activeGroupId = null; // practice_groups.id currently shown in the type grid
 let mediaItems = [];      // { file, url, type: 'image'|'video' }
+let editSessionId = null; // practice_logs.id when editing a past session, else null
+let editRow = null;       // the fetched row being edited, held for DOM prefill after render
+
+// ─── EDIT AN EXISTING SESSION (?edit=<id>) ───
+async function loadEditLog(id) {
+  const { data: row, error } = await db.from('practice_logs')
+    .select('id,category_id,practice_date,start_time,mood,notes,intensity,muscle_feelings,focus_area_ids,is_private,duration_minutes')
+    .eq('id', id)
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (error || !row) {
+    console.error('Load edit log failed:', error);
+    showToast(STRINGS.loadEditFailed);
+    return;
+  }
+
+  editSessionId = row.id;
+  editRow = row;
+  selType = row.category_id;
+  selDate = new Date(row.practice_date + 'T00:00:00');
+  selFocus = new Set(row.focus_area_ids || []);
+  (row.muscle_feelings || []).forEach(mf => {
+    if (mf && mf.zone && mf.feeling) svgBodyStates[mf.zone] = mf.feeling;
+  });
+
+  const cat = CATEGORIES.find(c => c.id === row.category_id);
+  if (cat) activeGroupId = effectiveGroupId(cat);
+}
+
+// Populate the plain DOM fields once buildTypes()/buildFocus()/buildSVGFallback() have rendered.
+function applyEditPrefillToDOM() {
+  if (!editRow) return;
+  const row = editRow;
+
+  updDate();
+  document.getElementById('dur-val').value = row.duration_minutes || 45;
+  document.getElementById('dur-unit').textContent = (row.duration_minutes || 45) + ' minutes';
+  document.getElementById('start-time').value = row.start_time || '';
+  document.getElementById('notes').value = row.notes || '';
+  updChar();
+  document.getElementById('intensity').value = row.intensity || 3;
+  updIntensity();
+  const privacyEl = document.getElementById('privacy-toggle');
+  if (privacyEl) privacyEl.checked = row.is_private !== false;
+
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.classList.toggle('sel', b.querySelector('.mood-lbl')?.textContent === row.mood);
+  });
+
+  const cta = document.querySelector('.cta-btn[onclick="savePractice()"]');
+  if (cta) cta.textContent = 'Update Practice ✎';
+
+  showToast(STRINGS.editingBanner);
+}
 
 // ─── DATE ───
 async function refreshLoggedDays() {
@@ -1132,11 +1196,9 @@ async function savePractice() {
   const muscleFeelings = window.getMuscleFeelings ? window.getMuscleFeelings() : [];
   const isPrivate      = document.getElementById('privacy-toggle')?.checked ?? true;
   const durationVal    = parseInt(document.getElementById('dur-val').value) || 45;
-  const sessionId      = crypto.randomUUID();
+  const sessionId      = editSessionId || crypto.randomUUID();
 
   const payload = {
-    id:               sessionId,
-    user_id:          currentUser.id,
     category_id:      category.id,
     style_name:       category.name,
     is_custom:        !category.is_system,
@@ -1150,18 +1212,21 @@ async function savePractice() {
     focus_area_ids:   Array.from(selFocus),
     is_private:       isPrivate,
   };
+  if (!editSessionId) { payload.id = sessionId; payload.user_id = currentUser.id; }
 
   const btn = document.querySelector('.cta-btn');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Saving…';
+  btn.innerHTML = editSessionId ? '<div class="spinner"></div> Updating…' : '<div class="spinner"></div> Saving…';
 
-  const { error } = await db.from('practice_logs').insert(payload);
+  const { error } = editSessionId
+    ? await db.from('practice_logs').update(payload).eq('id', editSessionId).eq('user_id', currentUser.id)
+    : await db.from('practice_logs').insert(payload);
 
   if (error) {
     console.error('Save error:', error);
     showToast(STRINGS.saveFailed);
     btn.disabled = false;
-    btn.innerHTML = 'Save Practice ✦';
+    btn.innerHTML = editSessionId ? 'Update Practice ✎' : 'Save Practice ✦';
     return;
   }
 
@@ -1173,7 +1238,7 @@ async function savePractice() {
 
   btn.innerHTML = '✓ Saved!';
   btn.style.background = 'var(--success)';
-  showToast(STRINGS.practiceSaved);
+  showToast(editSessionId ? STRINGS.practiceUpdated : STRINGS.practiceSaved);
   setTimeout(() => { window.location.href = 'index.html'; }, 1200);
 }
 
@@ -1196,6 +1261,7 @@ function buildSVGFallback() {
   document.querySelectorAll('#svg-body .svgm').forEach(updateSvgMuscleColor);
   buildFeelPickerButtons();
   buildBodyLegend();
+  renderAreaTags();
 }
 
 function getSVGMarkup(view) {
