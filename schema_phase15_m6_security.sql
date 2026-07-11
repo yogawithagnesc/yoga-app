@@ -130,10 +130,9 @@ BEGIN
       COUNT(DISTINCT b.id) as attended
     FROM public.classes c
     LEFT JOIN public.bookings b ON c.id = b.class_id
-      AND b.booking_date BETWEEN p_start_date AND p_end_date
       AND b.status = 'confirmed'
-    WHERE c.teacher_id = p_studio_id
-      OR (c.created_by = p_studio_id)
+    WHERE (c.teacher_id = p_studio_id OR c.assigned_teacher_id = p_studio_id)
+      AND c.start_time::date BETWEEN p_start_date AND p_end_date
     GROUP BY c.id, c.title, c.capacity
   )
   SELECT
