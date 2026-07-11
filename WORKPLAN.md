@@ -17,7 +17,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done (verified live) | Sonnet 5 |
 | M3a | Advanced anatomical illustration redesign | §3.2.3 | ✅ Done | Sonnet 5 |
 | M4 | Class scheduling & booking framework | §3.5, §8 | ✅ Phase A + Phase B done | Sonnet 5 (+ Opus 4.8 design pass) |
-| M5 | Cross-role community architecture | §3.6 | 🚧 Schema designed, awaiting feed-gating decision | Sonnet 5 (+ Opus 4.8 RLS review done) |
+| M5 | Cross-role community architecture | §3.6 | ✅ Done (schema pending migration run) | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | Not started | Haiku 4.5 / Sonnet 5 |
 | M8 | Polish: theme, localization, OAuth | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
@@ -204,29 +204,30 @@ An Opus 4.8 planning pass proposed a 7×15 weekly DnD grid per §8.2's literal s
 
 ---
 
-## M5 — Cross-Role Community Architecture (PRD §3.6) — 🚧 In Progress
+## M5 — Cross-Role Community Architecture (PRD §3.6) — ✅ Done
 
-**Delivered (schema phase 13):** Opus 4.8 planning pass completed. Full RLS/privacy model designed with 6 key privacy decisions:
-1. **Sub-community visibility** — group name/existence visible only to owner + accepted members. Members can see co-member rosters.
-2. **Group broadcasts** — teacher-only posts in M5; member-authored posts deferred. Realtime `group_bulletins` push notifications to member dashboards.
-3. **Follows** — bidirectional/asymmetric-request: A requests (pending), B accepts → A sees B's peer activity.
-4. **Red flags** — computed only over `is_private = false` logs + Pain/Injured feelings (reuses 14-day window). Students can set `route_feedback_to` flag.
-5. **Feedback INSERT** — teacher→student only on non-private logs (enforced at DB level); student→teacher portal direction. Both directions 1–2000 char limit.
-6. **30-day dashboard** — client-side aggregation of student's own logs (no privacy concerns).
+An Opus 4.8 planning pass designed the full RLS/privacy model before any code was written, since this milestone crosses more trust boundaries than any prior one. Six privacy decisions were resolved and implemented exactly as designed:
+1. **Sub-community visibility** — group name/existence visible only to owner + accepted members. Members can see co-member rosters (`is_group_member()` SECURITY DEFINER helper avoids RLS self-recursion between `group_members` and `group_bulletins`).
+2. **Group broadcasts** — teacher-only posts (member-authored posts deferred to a future phase). Realtime `group_bulletins` INSERT events push into each member's dashboard instantly via a per-group `postgres_changes` channel.
+3. **Follows** — bidirectional/asymmetric-request: follower creates a `pending` row, followee accepts/declines. Accepting immediately re-triggers a feed reload so newly-visible peer activity appears without a manual refresh.
+4. **Red flags** — `compute_red_flags()` (SECURITY DEFINER) scans only `is_private = false` logs for Pain/Injured feelings in the last 14 days, or a student-set `practice_logs.route_feedback_to` flag. Never reads private data, matching the §3.1 promise that private logs are structurally invisible to teachers.
+5. **Feedback** — `feedback` table extended with a `direction` field: `teacher_to_student` (requires `session_id`, DB-enforced to a non-private log the teacher can already read) and `student_to_teacher` (requires `target_entity_id`, a general portal not tied to one session). Both directions carry a 1–2000 char DB constraint.
+6. **30-day dashboard** — `body_fatigue_30day()` aggregates the student's own logs only (no privacy concerns since a user always sees their full own history); rendered as a 30-bar client-side chart on the home page.
 
-**Critical design decision — CONFIRMED:**
-- Current `community_feeds` policy grants all authenticated users read of the entire public feed. M5's peer-gating intent (PRD §3.6.2: "peer activity hidden until follow accepted") requires **dropping** this global visibility and gating all feeds behind: accepted follows (peer) + linked teacher (roster). Breaking change to current UX.
-- **Decision:** option 1 — full gating per PRD intent. Peer activity completely hidden until follow accepted; feeds visible only to: accepted followers + linked teachers.
-- Schema migration now includes `community_feeds` policy rewrite (drops `feed_authenticated_select`, adds `feed_accepted_follow_select` + `feed_linked_teacher_select`).
+**Critical design decision — CONFIRMED (breaking change, by design):** the old `feed_authenticated_select` policy (every authenticated user reads the entire public feed) was dropped and replaced with `feed_accepted_follow_select` (peer activity, gated on an accepted follow) + `feed_linked_teacher_select` (roster activity, gated on active linkage). Peer activity is now completely hidden until a follow request is accepted, per PRD §3.6.2's literal acceptance criterion. No feed-related JS changed — RLS does the gating transparently.
 
-**Schema migration ready:** `schema_phase13_community_architecture.sql` created with:
-- `follows` table (pending/accepted/revoked states, bidirectional request model)
-- `groups` + `group_members` + `group_bulletins` (teacher-owned cohorts, realtime broadcasts)
-- `feedback` extensions (direction field, INSERT policies for teacher→student and student→teacher)
-- `practice_logs.route_feedback_to` flag extension
-- SECURITY DEFINER helpers: `is_group_member()` (RLS recursion prevention), `compute_red_flags()` (teacher roster red-flag scanning), `body_fatigue_30day()` (30-day dashboard aggregation)
+**Schema migration:** `schema_phase13_community_architecture.sql` (idempotent) — adds `follows`, `groups`, `group_members`, `group_bulletins`; extends `feedback` (`direction`, `target_entity_id`, relaxed `session_id` nullability, char-length + direction-shape CHECK constraints) and `practice_logs` (`route_feedback_to`); rewrites `community_feeds` RLS; adds `is_group_member()`, `compute_red_flags()`, `body_fatigue_30day()`, and `lookup_profile_by_email()` (a narrow-disclosure SECURITY DEFINER function resolving email → id/display_name/role for the "follow by email" flow — needed because base `profiles` RLS doesn't expose arbitrary peer profiles, so a lookup *before* any follows relationship exists can't go through the normal table policy). Also adds a `profiles_follow_related_select` policy so a pending/accepted follow's counterpart display_name is readable in the UI. **Action required: run in Supabase SQL Editor after phase 12.**
 
-**Next steps:** (1) confirm feed-gating design decision with user; (2) run schema migration in Supabase SQL Editor; (3) implement teacher.html roster + groups UI; (4) implement index.html peer feed + follows + group section; (5) feedback portal; (6) 30-day dashboard.
+**Delivered (frontend):**
+- `teacher.html` — tabbed into Roster / Groups / Feedback. Roster rows show a 🚩 (severe pain) or 💬 (routed feedback) badge sourced from `compute_red_flags()`. Groups tab: create group, add/remove linked students as members, compose + send bulletins (each render shows the last 5). Feedback tab lists all `student_to_teacher` feedback received.
+- `index.html` Community tab — new **Peer Connections** section: follow-by-email search (via `lookup_profile_by_email` RPC), incoming request accept/decline, a Following list. New **My Groups** section: renders each group the user belongs to with its 5 most recent bulletins, live-updated via a per-group realtime subscription (bulletins flash on arrival). New **feedback portal** entry (student role only, visible when linked to ≥1 teacher/studio) opening a modal with a target-teacher chip picker, a 2000-char-limited textarea with live counter, and a respectful-tone hint.
+- `index.html` home page — new **Progress Trend** card (30-day fatigue bar chart, hidden when no data), fed by `body_fatigue_30day()`.
+
+**Verified:** `tools/community/verify_m5.js` (Playwright, stubbed Supabase with a real mutating in-memory dataset so multi-step CRUD — create group → add member → post bulletin — reflects correctly across reloads within a scenario) — 25/25 checks across 5 scenarios: peer follows (pending request shown, accept moves to Following, send-by-email success message); My Groups (section visibility, bulletin rendering, realtime bulletin arrival without reload); feedback portal (portal visibility gated on linkage, modal target chips, correct insert payload, closes on submit); 30-day fatigue widget (visibility, 30 bars rendered, high-fatigue day flagged); teacher roster/groups/feedback (red flag badge only on the flagged student, group creation, member add, bulletin send, feedback-received list). Re-ran `verify_m4.js` (23/23) and `verify_m4b.js` (25/25) afterward with no regressions from the shared `index.html` changes.
+
+**Bugs caught and fixed during verification:** (1) `sendFollowRequest()`'s success message was being wiped immediately because `loadFollows()` rebuilds the whole section DOM including the message element — fixed by setting the message after the reload completes, not before. (2) `teacher.html`'s group card `<div>` never received its `id` attribute, so per-group DOM lookups (`#add-member-<id>`, `#bulletin-input-<id>`) worked by accident only because there was exactly one group in early manual testing — fixed by setting `card.id` explicitly.
+
+**Deferred:** member-authored bulletins (and their approval workflow), a notification/receipt queue with unread counts, teacher-facing aggregate fatigue trends (would risk exposing private-log-derived data — correctly scoped to M6's studio aggregate tier instead), peer invitation by unique username (M6, shares the `follows` schema built here per the WORKPLAN dependency note).
 
 **Scope:**
 - Linked Students Portfolio for teachers: roster table querying shared practice logs of joined students (respecting `is_private`).

@@ -251,7 +251,7 @@ Reconciled as of 2026-07-10. Full milestone detail in WORKPLAN.md.
 - [x] Feed likes schema deployed (`schema_phase7_feed_likes.sql`)
 - [x] Feed likes persistence bug **root-caused and fixed**: the count-sync trigger lacked SECURITY DEFINER and `community_feeds` has no UPDATE RLS policy, so count updates were silently filtered to zero rows. Fix: `schema_phase8_fix_like_count.sql` — **run and verified live** (like/unlike now persists correctly).
 - [x] Dynamic Practice Categorization Engine (§3.2.1) + Hierarchical Practice Focus & Ecosystem Recommendation (§3.2.2) — implemented via `schema_phase9_categorization_engine.sql` (pending migration run + live test)
-- [ ] Remaining §3.6 scope (roster monitor, groups, broadcasts, follows, feedback portal, 30-day metrics) — WORKPLAN M5
+- [x] Remaining §3.6 scope (roster monitor, groups, broadcasts, follows, feedback portal, 30-day metrics) — WORKPLAN M5 implemented; `schema_phase13_community_architecture.sql` pending migration run
 
 ## P3 — Live Classes & Booking
 - [ ] Studio/teacher class creation UI — not started (M4)

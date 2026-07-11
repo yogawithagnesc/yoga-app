@@ -91,6 +91,51 @@ CREATE POLICY "follows_endpoint_delete" ON public.follows
 
 
 -- ────────────────────────────────────────────────────────────
+-- PROFILES: follow-related visibility
+--    The base schema only exposes profiles to: self, linked
+--    teachers/studios (of their students), and publicly for
+--    teacher/studio roles. Peer students have no visibility into
+--    each other's profiles by default, which would leave a
+--    follower/followee's display_name unreadable in the follows
+--    UI. Grant read access to any profile with which the caller
+--    has a follows row (either direction, any status — a pending
+--    request must still show the requester's name).
+-- ────────────────────────────────────────────────────────────
+CREATE POLICY "profiles_follow_related_select" ON public.profiles
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.follows f
+      WHERE (f.follower_id = auth.uid() AND f.followee_id = profiles.id)
+         OR (f.followee_id = auth.uid() AND f.follower_id = profiles.id)
+    )
+  );
+
+-- ────────────────────────────────────────────────────────────
+-- HELPER: lookup_profile_by_email(p_email)
+--    The "follow by email" flow needs to resolve an email to a
+--    profile id *before* any follows relationship exists — which
+--    the RLS policy above can't cover (chicken-and-egg). This
+--    SECURITY DEFINER function exposes only id + display_name for
+--    an exact (case-insensitive) email match, mirroring the
+--    narrow-disclosure pattern already used by join-code lookup.
+-- ────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.lookup_profile_by_email(p_email text)
+RETURNS TABLE (id uuid, display_name text, role text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN QUERY
+    SELECT p.id, p.display_name, p.role
+    FROM public.profiles p
+    WHERE lower(p.email) = lower(p_email)
+    LIMIT 1;
+END;
+$$;
+
+
+-- ────────────────────────────────────────────────────────────
 -- 2. GROUPS
 --    Teacher-owned private sub-communities (e.g., "Private
 --    Coaching Circle", "Intermediate Flow Cohort").
@@ -110,9 +155,18 @@ CREATE INDEX IF NOT EXISTS groups_owner_idx ON public.groups (owner_id);
 
 ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
 
--- Teacher/studio owners have full CRUD over their own groups
+-- Teacher/studio owners have full CRUD over their own groups.
+-- WITH CHECK additionally requires a teacher/studio role on INSERT/UPDATE
+-- (students cannot create groups).
 CREATE POLICY "groups_owner_all" ON public.groups
-  FOR ALL USING (owner_id = auth.uid());
+  FOR ALL USING (owner_id = auth.uid())
+  WITH CHECK (
+    owner_id = auth.uid()
+    AND EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.role IN ('teacher', 'studio')
+    )
+  );
 
 -- Group members can read groups they belong to
 CREATE POLICY "groups_member_select" ON public.groups
@@ -267,7 +321,18 @@ CREATE POLICY IF NOT EXISTS "feed_own_delete" ON public.community_feeds
 --    This migration extends it with direction and target fields,
 --    adds character length constraints, and creates INSERT policies
 --    for both teacher→student and student→teacher directions.
+--
+--    session_id was originally NOT NULL (feedback was scoped to a
+--    specific practice log). The student→teacher portal (PRD §3.6.2)
+--    is general feedback not tied to any one session, so session_id
+--    is relaxed to nullable here; a CHECK enforces that
+--    teacher_to_student feedback (which comments on a specific log)
+--    still requires it.
 -- ────────────────────────────────────────────────────────────
+
+-- Relax session_id to nullable for general student→teacher feedback
+ALTER TABLE public.feedback
+  ALTER COLUMN session_id DROP NOT NULL;
 
 -- Add direction field (teacher_to_student or student_to_teacher)
 ALTER TABLE public.feedback
@@ -277,6 +342,14 @@ ALTER TABLE public.feedback
 -- Add target_entity_id (the recipient of feedback)
 ALTER TABLE public.feedback
   ADD COLUMN IF NOT EXISTS target_entity_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+-- Enforce: teacher_to_student feedback must reference a specific session;
+-- student_to_teacher feedback must target a specific entity.
+ALTER TABLE public.feedback
+  ADD CONSTRAINT IF NOT EXISTS feedback_direction_shape CHECK (
+    (direction = 'teacher_to_student' AND session_id IS NOT NULL)
+    OR (direction = 'student_to_teacher' AND target_entity_id IS NOT NULL)
+  );
 
 -- Add text length constraint (1–2000 chars, enforced at DB level)
 ALTER TABLE public.feedback

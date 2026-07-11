@@ -376,6 +376,48 @@
   .feed-empty { padding: 20px 0; color: var(--tx-2); font-size: 13px; }
   .feed-spinner { padding: 20px 0; color: var(--tx-2); font-size: 13px; }
 
+  /* ── M5: Peer follows ── */
+  .follow-search { display: flex; gap: 8px; margin-bottom: 12px; }
+  .follow-search input { flex: 1; background: var(--bg); border: 1.5px solid var(--br-def); border-radius: var(--r-md); padding: 11px 12px; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 13px; color: var(--tx-1); outline: none; }
+  .follow-search input:focus { border-color: var(--accent); }
+  .follow-search button { background: var(--accent); border: none; border-radius: var(--r-md); padding: 0 16px; color: var(--bg); font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .follow-msg { font-size: 12px; margin-top: 6px; color: var(--tx-3); }
+  .follow-msg.err { color: var(--error); }
+  .follow-msg.ok { color: var(--success); }
+  .follow-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--br-sub); }
+  .follow-row:last-child { border-bottom: none; }
+  .follow-name { font-size: 13px; font-weight: 500; color: var(--tx-1); }
+  .follow-sub { font-size: 11px; color: var(--tx-3); }
+  .follow-actions { margin-left: auto; display: flex; gap: 6px; }
+  .follow-btn { font-size: 11px; font-weight: 600; border-radius: var(--r-sm); padding: 7px 12px; cursor: pointer; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; border: 1px solid var(--br-def); background: var(--bg); color: var(--tx-2); }
+  .follow-btn.accept { background: var(--success); border-color: var(--success); color: var(--bg); }
+  .follow-btn.decline { background: rgba(196,112,112,0.1); border-color: rgba(196,112,112,0.3); color: var(--error); }
+
+  /* ── M5: Groups & bulletins ── */
+  .group-card { background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg); padding: 16px; margin-bottom: 14px; }
+  .group-card-name { font-size: 15px; font-weight: 600; color: var(--tx-1); }
+  .group-card-desc { font-size: 12px; color: var(--tx-3); margin-top: 2px; }
+  .bulletin-item { padding: 10px 0; border-top: 1px solid var(--br-sub); }
+  .bulletin-item:first-of-type { border-top: 1px solid var(--br-sub); margin-top: 10px; }
+  .bulletin-item-body { font-size: 13px; color: var(--tx-1); line-height: 1.5; }
+  .bulletin-item-time { font-size: 10px; color: var(--tx-3); margin-top: 4px; }
+  .bulletin-item.new { animation: bulletinFlash 1.5s ease; }
+  @keyframes bulletinFlash { from { background: rgba(200,169,110,0.15); } to { background: transparent; } }
+
+  /* ── M5: Feedback portal ── */
+  .feedback-portal-btn { width: 100%; background: transparent; border: 1px dashed var(--accent); border-radius: var(--r-lg); padding: 14px; color: var(--accent); font-family: 'DM Sans', 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 14px; }
+  .feedback-portal-btn:hover { background: var(--adim); }
+  .feedback-char-count { font-size: 11px; color: var(--tx-3); text-align: right; margin-top: 4px; margin-bottom: 16px; }
+  .feedback-char-count.limit { color: var(--error); }
+  .feedback-tone-hint { font-size: 11px; color: var(--tx-3); line-height: 1.5; background: var(--bg-el); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 16px; }
+
+  /* ── M5: 30-day fatigue dashboard ── */
+  .fatigue-card { background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg); padding: 18px; }
+  .fatigue-chart { display: flex; align-items: flex-end; gap: 2px; height: 60px; margin-top: 12px; }
+  .fatigue-bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; opacity: 0.75; }
+  .fatigue-bar.high { background: var(--error); opacity: 0.85; }
+  .fatigue-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--tx-3); margin-top: 6px; }
+
   /* Day-log modal rows */
   .day-log-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -580,6 +622,14 @@
           <div id="body-status-rows"></div>
         </div>
       </div>
+
+      <div class="section" id="fatigue-section" style="display:none">
+        <div class="section-label">Progress Trend <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 30 days</span></div>
+        <div class="fatigue-card">
+          <div class="fatigue-chart" id="fatigue-chart"></div>
+          <div class="fatigue-legend"><span>30 days ago</span><span>Today</span></div>
+        </div>
+      </div>
     </div>
 
     <!-- ─── COURSES PAGE ─── -->
@@ -623,6 +673,21 @@
 
       <!-- Connections section (content injected by loadConnections()) -->
       <div id="connections-section" style="padding:0 28px 22px"></div>
+
+      <!-- Feedback portal entry (student role only) -->
+      <div id="feedback-portal-wrap" style="padding:0 28px 4px;display:none">
+        <button class="feedback-portal-btn" onclick="openFeedbackModal()">💬 Send Feedback to Teacher/Studio</button>
+      </div>
+
+      <!-- Peer follows: requests + search -->
+      <div class="section-label" style="padding:0 28px;margin-bottom:14px">Peer Connections</div>
+      <div id="follow-section" style="padding:0 28px 22px"></div>
+
+      <!-- My Groups (sub-community bulletins) -->
+      <div id="groups-section-wrap" style="display:none">
+        <div class="section-label" style="padding:0 28px;margin-bottom:14px">My Groups</div>
+        <div id="groups-section" style="padding:0 28px 22px"></div>
+      </div>
 
       <div class="section-label" style="padding:0 28px;margin-bottom:14px">Recent Activity</div>
       <div class="feed" id="feed">
@@ -730,6 +795,21 @@
   </div>
 </div>
 
+<!-- Feedback Portal Modal (M5 — student → teacher/studio) -->
+<div class="overlay" id="feedback-modal" style="display:none" onclick="if(event.target===this)closeFeedbackModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Send Feedback</div>
+    <div class="field-label">To</div>
+    <div class="chips" id="feedback-target-chips"></div>
+    <div class="field-label">Your Message</div>
+    <textarea id="feedback-body" maxlength="2000" placeholder="Share your thoughts, questions, or a review…" style="width:100%;min-height:120px;background:var(--bg-el);border:1.5px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;color:var(--tx-1);outline:none;resize:none" oninput="updateFeedbackCharCount()"></textarea>
+    <div class="feedback-char-count" id="feedback-char-count">0 / 2000</div>
+    <div class="feedback-tone-hint">Please keep feedback constructive and respectful — this message goes directly to your teacher or studio.</div>
+    <button class="save-btn" onclick="submitFeedback()">Send Feedback</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════
      JAVASCRIPT — ONE SINGLE SCRIPT BLOCK
 ═══════════════════════════════════════ -->
@@ -821,6 +901,9 @@ let currentUserRole = null;
 
     // Load last-14-days muscle feelings for the Body Status widget
     loadBodyStatus();
+
+    // Load 30-day fatigue trend (M5 progress dashboard)
+    loadFatigueTrend();
 
   } catch (err) {
     console.error('Auth check failed:', err);
@@ -1216,6 +1299,41 @@ async function loadBodyStatus() {
   renderBodyStatus();
 }
 
+// ── M5: 30-DAY FATIGUE TREND ──────────────────────────────
+// Client-side aggregation of the student's own logs (no privacy
+// concerns — a user always sees their own full history regardless
+// of is_private). Uses the body_fatigue_30day() SQL helper.
+async function loadFatigueTrend() {
+  if (!currentUser) return;
+  var { data, error } = await db.rpc('body_fatigue_30day', { p_user_id: currentUser.id });
+  if (error) { console.error('loadFatigueTrend failed:', error); return; }
+
+  var section = document.getElementById('fatigue-section');
+  var chartEl = document.getElementById('fatigue-chart');
+  if (!data || !data.length) { section.style.display = 'none'; return; }
+
+  section.style.display = 'block';
+  chartEl.innerHTML = '';
+
+  // Build a dense 30-day series (fill gaps with 0) so bar spacing is even
+  var byDate = {};
+  data.forEach(function(row) { byDate[row.date] = row.serious_count; });
+  var maxCount = Math.max.apply(null, data.map(function(r) { return r.serious_count; }).concat([1]));
+
+  for (var i = 29; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var key = d.toISOString().split('T')[0];
+    var count = byDate[key] || 0;
+    var heightPct = Math.max(4, Math.round((count / maxCount) * 100));
+    var bar = document.createElement('div');
+    bar.className = 'fatigue-bar' + (count >= 3 ? ' high' : '');
+    bar.style.height = heightPct + '%';
+    bar.title = key + ': ' + count + ' fatigue marker' + (count === 1 ? '' : 's');
+    chartEl.appendChild(bar);
+  }
+}
+
 function computeBodyStatus() {
   var scores = {};
   BODY_CATEGORIES.forEach(function(c) { scores[c] = 0; });
@@ -1429,7 +1547,7 @@ var communityLoaded  = false;
 async function loadCommunity() {
   if (communityLoaded) return;
   communityLoaded = true;
-  await Promise.all([loadConnections(), loadFeed()]);
+  await Promise.all([loadConnections(), loadFeed(), loadFollows(), loadGroups(), setupFeedbackPortal()]);
 }
 
 // ── FEED ────────────────────────────────────────────────────
@@ -1569,6 +1687,273 @@ async function loadConnections() {
       '<div class="connect-card-title" style="margin-bottom:6px">Connections</div>' +
       '<div style="font-size:13px;color:var(--tx-1)">' + label + ' →</div>' +
     '</a>';
+}
+
+// ── M5: PEER FOLLOWS ──────────────────────────────────────
+// Bidirectional follow model: requester creates a 'pending' row,
+// target accepts to flip it to 'accepted'. Peer activity in the
+// feed is gated by RLS on accepted follows — no client-side
+// filtering needed once accepted.
+async function loadFollows() {
+  var el = document.getElementById('follow-section');
+  if (!el || !currentUser) return;
+  el.innerHTML = '<div class="feed-spinner">Loading…</div>';
+
+  var [incomingRes, outgoingRes] = await Promise.all([
+    db.from('follows')
+      .select('id, follower_id, status, profiles!follows_follower_id_fkey(display_name)')
+      .eq('followee_id', currentUser.id)
+      .order('created_at', { ascending: false }),
+    db.from('follows')
+      .select('id, followee_id, status, profiles!follows_followee_id_fkey(display_name)')
+      .eq('follower_id', currentUser.id)
+      .order('created_at', { ascending: false }),
+  ]);
+
+  var incoming = incomingRes.data || [];
+  var outgoing = outgoingRes.data || [];
+  var pendingIncoming = incoming.filter(function(f) { return f.status === 'pending'; });
+  var accepted = outgoing.filter(function(f) { return f.status === 'accepted'; })
+    .concat(incoming.filter(function(f) { return f.status === 'accepted'; }));
+
+  var html = '';
+
+  html += '<div class="follow-search">' +
+    '<input type="email" id="follow-email-input" placeholder="Peer email address" />' +
+    '<button onclick="sendFollowRequest()">Follow</button>' +
+    '</div>' +
+    '<div class="follow-msg" id="follow-search-msg"></div>';
+
+  if (pendingIncoming.length) {
+    html += '<div class="section-label" style="margin-top:14px;margin-bottom:8px">Requests</div>';
+    pendingIncoming.forEach(function(f) {
+      var name = f.profiles ? f.profiles.display_name : 'Someone';
+      html += '<div class="follow-row">' +
+        '<div class="avatar" style="background:var(--accent);color:var(--bg);font-weight:600;width:34px;height:34px;font-size:13px">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+        '<div><div class="follow-name">' + name + '</div><div class="follow-sub">wants to follow you</div></div>' +
+        '<div class="follow-actions">' +
+          '<button class="follow-btn accept" onclick="respondFollow(\'' + f.id + '\',\'accepted\')">Accept</button>' +
+          '<button class="follow-btn decline" onclick="respondFollow(\'' + f.id + '\',\'revoked\')">Decline</button>' +
+        '</div></div>';
+    });
+  }
+
+  if (accepted.length) {
+    html += '<div class="section-label" style="margin-top:14px;margin-bottom:8px">Following</div>';
+    accepted.forEach(function(f) {
+      var name = f.profiles ? f.profiles.display_name : 'Someone';
+      html += '<div class="follow-row">' +
+        '<div class="avatar" style="background:var(--accent);color:var(--bg);font-weight:600;width:34px;height:34px;font-size:13px">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+        '<div><div class="follow-name">' + name + '</div><div class="follow-sub">connected</div></div>' +
+        '</div>';
+    });
+  }
+
+  if (!pendingIncoming.length && !accepted.length) {
+    html += '<div class="empty-hint" style="padding:6px 0">Follow a peer by email to see their activity in your feed.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+async function sendFollowRequest() {
+  var input = document.getElementById('follow-email-input');
+  var msgEl = document.getElementById('follow-search-msg');
+  var email = input.value.trim().toLowerCase();
+  msgEl.className = 'follow-msg';
+  msgEl.textContent = '';
+  if (!email) return;
+
+  var { data: targets, error: lookupErr } = await db.rpc('lookup_profile_by_email', { p_email: email });
+  var target = targets && targets.length ? targets[0] : null;
+
+  if (lookupErr || !target) {
+    msgEl.className = 'follow-msg err';
+    msgEl.textContent = 'No user found with that email.';
+    return;
+  }
+  if (target.id === currentUser.id) {
+    msgEl.className = 'follow-msg err';
+    msgEl.textContent = "You can't follow yourself.";
+    return;
+  }
+
+  var { error } = await db.from('follows').insert({
+    follower_id: currentUser.id,
+    followee_id: target.id,
+    status: 'pending',
+  });
+
+  if (error) {
+    msgEl.className = 'follow-msg err';
+    msgEl.textContent = error.code === '23505' ? 'Follow request already sent.' : 'Could not send request.';
+    console.error('Follow request failed:', error);
+    return;
+  }
+
+  input.value = '';
+  await loadFollows();
+  // loadFollows() rebuilds the whole section (including this message
+  // element), so the success message is set after the re-render.
+  var newMsgEl = document.getElementById('follow-search-msg');
+  if (newMsgEl) {
+    newMsgEl.className = 'follow-msg ok';
+    newMsgEl.textContent = 'Follow request sent!';
+  }
+}
+
+async function respondFollow(followId, newStatus) {
+  var { error } = await db.from('follows')
+    .update({ status: newStatus, responded_at: new Date().toISOString() })
+    .eq('id', followId);
+  if (error) { console.error('Respond follow failed:', error); return; }
+  await loadFollows();
+  // Accepting a follow may reveal new feed rows the current user can now see
+  if (newStatus === 'accepted') { feedLoaded = false; await loadFeed(); }
+}
+
+// ── M5: GROUPS (sub-communities) ──────────────────────────
+var GROUP_CHANNELS = [];
+async function loadGroups() {
+  var wrap = document.getElementById('groups-section-wrap');
+  var el = document.getElementById('groups-section');
+  if (!el || !currentUser) return;
+
+  var { data: memberships, error } = await db.from('group_members')
+    .select('group_id, groups(id, name, description)')
+    .eq('student_id', currentUser.id);
+
+  if (error) { console.error('Load groups failed:', error); return; }
+
+  if (!memberships || !memberships.length) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  el.innerHTML = '';
+
+  // Tear down any previous realtime subscriptions before re-rendering
+  GROUP_CHANNELS.forEach(function(ch) { db.removeChannel(ch); });
+  GROUP_CHANNELS = [];
+
+  for (var i = 0; i < memberships.length; i++) {
+    var g = memberships[i].groups;
+    if (!g) continue;
+
+    var { data: bulletins } = await db.from('group_bulletins')
+      .select('id, body, created_at')
+      .eq('group_id', g.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    var card = document.createElement('div');
+    card.className = 'group-card';
+    card.id = 'group-card-' + g.id;
+    card.innerHTML =
+      '<div class="group-card-name">' + g.name + '</div>' +
+      (g.description ? '<div class="group-card-desc">' + g.description + '</div>' : '') +
+      '<div id="bulletins-' + g.id + '">' +
+        (bulletins && bulletins.length
+          ? bulletins.map(function(b) { return bulletinItemHtml(b); }).join('')
+          : '<div class="empty-hint" style="margin-top:10px">No bulletins yet.</div>') +
+      '</div>';
+    el.appendChild(card);
+
+    // Realtime: new bulletins push into this group's card instantly
+    var ch = db.channel('group-bulletins-' + g.id)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'group_bulletins',
+        filter: 'group_id=eq.' + g.id,
+      }, function(payload) {
+        var listEl = document.getElementById('bulletins-' + payload.new.group_id);
+        if (!listEl) return;
+        var empty = listEl.querySelector('.empty-hint');
+        if (empty) empty.remove();
+        listEl.insertAdjacentHTML('afterbegin', bulletinItemHtml(payload.new, true));
+      })
+      .subscribe();
+    GROUP_CHANNELS.push(ch);
+  }
+}
+
+function bulletinItemHtml(b, isNew) {
+  return '<div class="bulletin-item' + (isNew ? ' new' : '') + '">' +
+    '<div class="bulletin-item-body">' + b.body + '</div>' +
+    '<div class="bulletin-item-time">' + new Date(b.created_at).toLocaleString() + '</div>' +
+    '</div>';
+}
+
+// ── M5: FEEDBACK PORTAL (student → teacher/studio) ────────
+var FEEDBACK_TARGETS = [];
+var FEEDBACK_SELECTED_TARGET = null;
+
+async function setupFeedbackPortal() {
+  var wrap = document.getElementById('feedback-portal-wrap');
+  if (!wrap || !currentUser || currentUserRole !== 'student') return;
+
+  var { data: links } = await db.from('studio_linkages')
+    .select('entity_id, profiles!studio_linkages_entity_id_fkey(display_name)')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'active');
+
+  FEEDBACK_TARGETS = (links || []).map(function(l) {
+    return { id: l.entity_id, name: l.profiles ? l.profiles.display_name : 'Unknown' };
+  });
+
+  wrap.style.display = FEEDBACK_TARGETS.length ? 'block' : 'none';
+}
+
+function openFeedbackModal() {
+  if (!FEEDBACK_TARGETS.length) return;
+  var chipsEl = document.getElementById('feedback-target-chips');
+  chipsEl.innerHTML = '';
+  FEEDBACK_SELECTED_TARGET = FEEDBACK_TARGETS[0].id;
+  FEEDBACK_TARGETS.forEach(function(t, idx) {
+    var chip = document.createElement('button');
+    chip.className = 'chip' + (idx === 0 ? ' on' : '');
+    chip.textContent = t.name;
+    chip.onclick = function() {
+      FEEDBACK_SELECTED_TARGET = t.id;
+      chipsEl.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+      chip.classList.add('on');
+    };
+    chipsEl.appendChild(chip);
+  });
+  document.getElementById('feedback-body').value = '';
+  updateFeedbackCharCount();
+  document.getElementById('feedback-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFeedbackModal() {
+  document.getElementById('feedback-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function updateFeedbackCharCount() {
+  var body = document.getElementById('feedback-body').value;
+  var countEl = document.getElementById('feedback-char-count');
+  countEl.textContent = body.length + ' / 2000';
+  countEl.classList.toggle('limit', body.length > 2000);
+}
+
+async function submitFeedback() {
+  var body = document.getElementById('feedback-body').value.trim();
+  if (!body || !FEEDBACK_SELECTED_TARGET || body.length > 2000) return;
+
+  var { error } = await db.from('feedback').insert({
+    author_id: currentUser.id,
+    target_entity_id: FEEDBACK_SELECTED_TARGET,
+    direction: 'student_to_teacher',
+    session_id: null,
+    body: body,
+  });
+
+  if (error) { console.error('Submit feedback failed:', error); return; }
+  closeFeedbackModal();
+  showToast('Feedback sent!');
 }
 
 

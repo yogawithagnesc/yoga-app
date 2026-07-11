@@ -72,6 +72,51 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .sr-name{font-size:13px;color:var(--tx-1);font-weight:500}
 .sr-date{font-size:11px;color:var(--tx-3)}
 .sr-dur{font-size:12px;color:var(--tx-2)}
+
+/* Red flag badge */
+.flag-badge{margin-left:8px;font-size:14px;flex-shrink:0;cursor:help}
+.flag-badge.pain{filter:drop-shadow(0 0 4px rgba(196,112,112,0.5))}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;padding:0 20px 14px;position:sticky;top:73px;background:var(--bg);z-index:50}
+.tab-btn{flex:1;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px 6px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:12px;font-weight:500;color:var(--tx-2);cursor:pointer;transition:all .15s}
+.tab-btn.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.tab-panel{display:none}
+.tab-panel.on{display:block}
+
+/* Groups */
+.group-card{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:16px;margin-bottom:14px}
+.group-name{font-size:15px;font-weight:600;color:var(--tx-1)}
+.group-desc{font-size:12px;color:var(--tx-3);margin-top:2px}
+.group-meta{font-size:11px;color:var(--tx-2);margin-top:8px}
+.group-members{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.member-chip{display:flex;align-items:center;gap:6px;background:var(--bg-ov);border:1px solid var(--br-def);border-radius:var(--r-full);padding:5px 10px 5px 6px;font-size:12px;color:var(--tx-1)}
+.member-chip .m-avatar{width:18px;height:18px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.member-chip .m-remove{color:var(--tx-3);cursor:pointer;font-size:10px;padding:2px}
+.member-chip .m-remove:hover{color:var(--error)}
+.group-add-member{display:flex;gap:8px;margin-top:10px}
+.group-add-member select{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:9px 10px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:12px;color:var(--tx-2)}
+.bulletin-list{margin-top:12px;border-top:1px solid var(--br-sub);padding-top:12px}
+.bulletin-row{padding:8px 0;border-bottom:1px solid var(--br-sub)}
+.bulletin-row:last-child{border-bottom:none}
+.bulletin-body{font-size:13px;color:var(--tx-1);line-height:1.5}
+.bulletin-time{font-size:10px;color:var(--tx-3);margin-top:4px}
+.bulletin-compose{display:flex;gap:8px;margin-top:10px}
+.bulletin-compose textarea{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-1);outline:none;resize:none;min-height:44px}
+.bulletin-compose textarea:focus{border-color:var(--accent)}
+.bulletin-send{background:var(--accent);border:none;border-radius:var(--r-md);padding:0 16px;color:var(--tx-inv);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
+.bulletin-send:hover{background:var(--accent-h)}
+.create-group-btn{width:100%;background:transparent;border:1px dashed var(--accent);border-radius:var(--r-lg);padding:14px;color:var(--accent);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px}
+.create-group-btn:hover{background:var(--accent-dim)}
+.group-form{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:16px;margin-bottom:16px}
+.group-form input,.group-form textarea{width:100%;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:11px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;color:var(--tx-1);outline:none;margin-bottom:10px}
+.group-form input:focus,.group-form textarea:focus{border-color:var(--accent)}
+
+/* Feedback received */
+.feedback-row{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:10px}
+.feedback-author{font-size:12px;font-weight:600;color:var(--tx-1)}
+.feedback-body{font-size:13px;color:var(--tx-2);margin-top:6px;line-height:1.5}
+.feedback-time{font-size:10px;color:var(--tx-3);margin-top:6px}
 </style>
 </head>
 <body>
@@ -82,40 +127,67 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
     <div class="hdr-title">My Students</div>
   </div>
 
+  <div class="tabs">
+    <button class="tab-btn on" id="tab-btn-roster" onclick="switchTeacherTab('roster')">Roster</button>
+    <button class="tab-btn" id="tab-btn-groups" onclick="switchTeacherTab('groups')">Groups</button>
+    <button class="tab-btn" id="tab-btn-feedback" onclick="switchTeacherTab('feedback')">Feedback</button>
+  </div>
+
   <div class="scroll" id="scroll">
 
-    <div class="card">
-      <div class="section-label">Shared Categories</div>
-      <div id="cat-list"></div>
-      <div class="cat-form">
-        <input type="text" id="cat-name" placeholder="Category name (e.g. Restorative Flow)" maxlength="40">
-        <select id="cat-type">
-          <option value="yoga">Yoga</option>
-          <option value="movement">Movement</option>
-          <option value="breathwork">Breathwork</option>
-        </select>
-        <button class="cat-add-btn" onclick="addCategory()">Add</button>
+    <div class="tab-panel on" id="panel-roster">
+      <div class="card">
+        <div class="section-label">Shared Categories</div>
+        <div id="cat-list"></div>
+        <div class="cat-form">
+          <input type="text" id="cat-name" placeholder="Category name (e.g. Restorative Flow)" maxlength="40">
+          <select id="cat-type">
+            <option value="yoga">Yoga</option>
+            <option value="movement">Movement</option>
+            <option value="breathwork">Breathwork</option>
+          </select>
+          <button class="cat-add-btn" onclick="addCategory()">Add</button>
+        </div>
       </div>
+
+      <div class="card">
+        <div class="section-label">Shared Focus Areas</div>
+        <div id="focus-list"></div>
+        <div class="cat-form">
+          <input type="text" id="focus-label" placeholder="Focus name (e.g. Wrists)" maxlength="30">
+          <button class="cat-add-btn" onclick="addFocus()">Add</button>
+        </div>
+        <div class="empty-hint" style="margin-top:4px">Shared focuses appear as "Recommended" badges on your linked students' log screen.</div>
+      </div>
+
+      <div class="section-label">Linked Students</div>
+      <div id="students-list"></div>
     </div>
 
-    <div class="card">
-      <div class="section-label">Shared Focus Areas</div>
-      <div id="focus-list"></div>
-      <div class="cat-form">
-        <input type="text" id="focus-label" placeholder="Focus name (e.g. Wrists)" maxlength="30">
-        <button class="cat-add-btn" onclick="addFocus()">Add</button>
+    <div class="tab-panel" id="panel-groups">
+      <button class="create-group-btn" onclick="toggleGroupForm()">＋ Create Group</button>
+      <div class="group-form" id="group-form" style="display:none">
+        <input type="text" id="new-group-name" placeholder="Group name (e.g. Private Coaching Circle)" maxlength="80">
+        <textarea id="new-group-desc" placeholder="Description (optional)" rows="2"></textarea>
+        <button class="cat-add-btn" style="width:100%" onclick="createGroup()">Create</button>
       </div>
-      <div class="empty-hint" style="margin-top:4px">Shared focuses appear as "Recommended" badges on your linked students' log screen.</div>
+      <div id="groups-list"></div>
     </div>
 
-    <div class="section-label">Linked Students</div>
-    <div id="students-list"></div>
+    <div class="tab-panel" id="panel-feedback">
+      <div class="section-label">Feedback Received</div>
+      <div id="feedback-list"></div>
+    </div>
 
   </div>
 </div>
 
 <script>
 let currentUser = null
+let RED_FLAGS = {} // student_id -> [{ flag_type, detail }]
+let LINKED_STUDENTS = [] // [{ student_id, display_name }]
+let GROUPS_LOADED = false
+let FEEDBACK_LOADED = false
 
 ;(async function init() {
   const { data: { session } } = await db.auth.getSession()
@@ -128,8 +200,39 @@ let currentUser = null
     return
   }
 
+  await loadRedFlags()
   await Promise.all([loadCategories(), loadFocusAreas(), loadStudents()])
 })()
+
+function switchTeacherTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('on'))
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'))
+  document.getElementById('panel-' + tab).classList.add('on')
+  document.getElementById('tab-btn-' + tab).classList.add('on')
+  if (tab === 'groups' && !GROUPS_LOADED) { GROUPS_LOADED = true; loadGroups() }
+  if (tab === 'feedback' && !FEEDBACK_LOADED) { FEEDBACK_LOADED = true; loadFeedbackReceived() }
+}
+
+// ── RED FLAG ALERTS ───────────────────────────────────────
+async function loadRedFlags() {
+  const { data, error } = await db.rpc('compute_red_flags', { p_teacher_id: currentUser.id })
+  if (error) { console.error('compute_red_flags failed:', error); return }
+  RED_FLAGS = {}
+  ;(data || []).forEach(row => {
+    if (!RED_FLAGS[row.student_id]) RED_FLAGS[row.student_id] = []
+    RED_FLAGS[row.student_id].push({ flag_type: row.flag_type, detail: row.detail })
+  })
+}
+
+function flagBadgeHtml(studentId) {
+  const flags = RED_FLAGS[studentId]
+  if (!flags || !flags.length) return ''
+  const painFlag = flags.find(f => f.flag_type === 'severe_pain')
+  const icon = painFlag ? '🚩' : '💬'
+  const cls = painFlag ? 'pain' : ''
+  const title = flags.map(f => f.detail).join(' · ')
+  return '<span class="flag-badge ' + cls + '" title="' + title.replace(/"/g, '&quot;') + '">' + icon + '</span>'
+}
 
 // ── SHARED CATEGORIES ─────────────────────────────────────
 async function loadCategories() {
@@ -234,6 +337,7 @@ async function loadStudents() {
 
   const el = document.getElementById('students-list')
   el.innerHTML = ''
+  LINKED_STUDENTS = []
 
   if (!links || !links.length) {
     el.innerHTML = '<div class="empty-hint">No linked students yet. Share your join code from the Profile page.</div>'
@@ -242,6 +346,7 @@ async function loadStudents() {
 
   for (const link of links) {
     const name = link.profiles ? link.profiles.display_name : 'Unknown'
+    LINKED_STUDENTS.push({ student_id: link.student_id, display_name: name })
 
     const { data: sessions } = await db.from('practice_logs')
       .select('id, practice_date, style_name, duration_minutes, mood')
@@ -258,7 +363,7 @@ async function loadStudents() {
       '<div class="student-hdr" onclick="toggleStudent(this)">' +
         '<div class="student-avatar">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
         '<div>' +
-          '<div class="student-name">' + name + '</div>' +
+          '<div class="student-name">' + name + flagBadgeHtml(link.student_id) + '</div>' +
           '<div class="student-meta">' + shared.length + ' shared session' + (shared.length === 1 ? '' : 's') + ' · ' + totalMin + ' min</div>' +
         '</div>' +
         '<span class="student-chevron">▶</span>' +
@@ -284,6 +389,164 @@ function toggleStudent(headerEl) {
   const show = !detail.classList.contains('show')
   detail.classList.toggle('show', show)
   chevron.classList.toggle('open', show)
+}
+
+// ── GROUPS (sub-communities) ──────────────────────────────
+function toggleGroupForm() {
+  const form = document.getElementById('group-form')
+  form.style.display = form.style.display === 'none' ? 'block' : 'none'
+}
+
+async function createGroup() {
+  const nameInput = document.getElementById('new-group-name')
+  const descInput = document.getElementById('new-group-desc')
+  const name = nameInput.value.trim()
+  if (!name) return
+
+  const { error } = await db.from('groups').insert({
+    owner_id: currentUser.id,
+    name,
+    description: descInput.value.trim() || null,
+  })
+  if (error) { console.error('Create group failed:', error); return }
+  nameInput.value = ''
+  descInput.value = ''
+  document.getElementById('group-form').style.display = 'none'
+  await loadGroups()
+}
+
+async function loadGroups() {
+  const { data: groups, error } = await db.from('groups')
+    .select('id, name, description, created_at')
+    .eq('owner_id', currentUser.id)
+    .order('created_at', { ascending: false })
+
+  const el = document.getElementById('groups-list')
+  el.innerHTML = ''
+  if (error) { console.error('Load groups failed:', error); return }
+
+  if (!groups || !groups.length) {
+    el.innerHTML = '<div class="empty-hint">No groups yet. Create one to segment your roster into cohorts (e.g. Private Coaching Circle).</div>'
+    return
+  }
+
+  for (const g of groups) {
+    const { data: members } = await db.from('group_members')
+      .select('student_id, profiles!group_members_student_id_fkey(display_name)')
+      .eq('group_id', g.id)
+
+    const { data: bulletins } = await db.from('group_bulletins')
+      .select('id, body, created_at')
+      .eq('group_id', g.id)
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    const memberList = members || []
+    const memberIds = new Set(memberList.map(m => m.student_id))
+    const availableStudents = LINKED_STUDENTS.filter(s => !memberIds.has(s.student_id))
+
+    const card = document.createElement('div')
+    card.className = 'group-card'
+    card.id = 'group-card-' + g.id
+    card.innerHTML =
+      '<div class="group-name">' + g.name + '</div>' +
+      (g.description ? '<div class="group-desc">' + g.description + '</div>' : '') +
+      '<div class="group-meta">' + memberList.length + ' member' + (memberList.length === 1 ? '' : 's') + '</div>' +
+      '<div class="group-members">' +
+        memberList.map(m => {
+          const mname = m.profiles ? m.profiles.display_name : 'Unknown'
+          return '<span class="member-chip"><span class="m-avatar">' + (mname || 'U').charAt(0).toUpperCase() + '</span>' + mname +
+            '<span class="m-remove" onclick="removeMember(\'' + g.id + '\',\'' + m.student_id + '\')">✕</span></span>'
+        }).join('') +
+      '</div>' +
+      (availableStudents.length
+        ? '<div class="group-add-member">' +
+            '<select id="add-member-' + g.id + '">' +
+              availableStudents.map(s => '<option value="' + s.student_id + '">' + s.display_name + '</option>').join('') +
+            '</select>' +
+            '<button class="cat-add-btn" onclick="addMember(\'' + g.id + '\')">Add</button>' +
+          '</div>'
+        : '') +
+      '<div class="bulletin-list">' +
+        (bulletins && bulletins.length
+          ? bulletins.map(b =>
+              '<div class="bulletin-row"><div class="bulletin-body">' + b.body + '</div><div class="bulletin-time">' + new Date(b.created_at).toLocaleString() + '</div></div>'
+            ).join('')
+          : '<div class="empty-hint">No bulletins sent yet.</div>') +
+        '<div class="bulletin-compose">' +
+          '<textarea id="bulletin-input-' + g.id + '" placeholder="Write a bulletin…" maxlength="2000"></textarea>' +
+          '<button class="bulletin-send" onclick="sendBulletin(\'' + g.id + '\')">Send</button>' +
+        '</div>' +
+      '</div>'
+    el.appendChild(card)
+  }
+}
+
+async function addMember(groupId) {
+  const select = document.getElementById('add-member-' + groupId)
+  const studentId = select.value
+  if (!studentId) return
+
+  const { error } = await db.from('group_members').insert({
+    group_id: groupId,
+    student_id: studentId,
+    added_by: currentUser.id,
+  })
+  if (error) { console.error('Add member failed:', error); return }
+  await loadGroups()
+}
+
+async function removeMember(groupId, studentId) {
+  const { error } = await db.from('group_members')
+    .delete()
+    .eq('group_id', groupId)
+    .eq('student_id', studentId)
+  if (error) { console.error('Remove member failed:', error); return }
+  await loadGroups()
+}
+
+async function sendBulletin(groupId) {
+  const input = document.getElementById('bulletin-input-' + groupId)
+  const body = input.value.trim()
+  if (!body) return
+
+  const { error } = await db.from('group_bulletins').insert({
+    group_id: groupId,
+    author_id: currentUser.id,
+    body,
+  })
+  if (error) { console.error('Send bulletin failed:', error); return }
+  input.value = ''
+  await loadGroups()
+}
+
+// ── FEEDBACK RECEIVED ─────────────────────────────────────
+async function loadFeedbackReceived() {
+  const { data, error } = await db.from('feedback')
+    .select('id, body, created_at, author_id, profiles!feedback_author_id_fkey(display_name)')
+    .eq('target_entity_id', currentUser.id)
+    .eq('direction', 'student_to_teacher')
+    .order('created_at', { ascending: false })
+
+  const el = document.getElementById('feedback-list')
+  el.innerHTML = ''
+  if (error) { console.error('Load feedback failed:', error); return }
+
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-hint">No feedback received yet.</div>'
+    return
+  }
+
+  data.forEach(f => {
+    const authorName = f.profiles ? f.profiles.display_name : 'A student'
+    const row = document.createElement('div')
+    row.className = 'feedback-row'
+    row.innerHTML =
+      '<div class="feedback-author">' + authorName + '</div>' +
+      '<div class="feedback-body">' + f.body + '</div>' +
+      '<div class="feedback-time">' + new Date(f.created_at).toLocaleString() + '</div>'
+    el.appendChild(row)
+  })
 }
 </script>
 </body>
