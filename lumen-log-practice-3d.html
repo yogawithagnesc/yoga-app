@@ -1205,7 +1205,11 @@ function buildTypeGrid() {
 
     card.onclick=()=>{
       if (card.dataset.dragged || card.dataset.editing === 'true') { delete card.dataset.dragged; return; }
-      selType=t.id; buildTypeGrid();
+      // Delay to allow dblclick event to fire first
+      setTimeout(() => {
+        if (card.dataset.editing === 'true') return; // dblclick set editing mode
+        selType=t.id; buildTypeGrid();
+      }, 250);
     };
     attachTypeDragHandlers(card, t);
     grid.appendChild(card);
