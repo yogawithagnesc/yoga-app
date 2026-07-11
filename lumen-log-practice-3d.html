@@ -141,6 +141,11 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .svg-toggle-btn{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .svg-toggle-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .fallback-note{font-size:11px;color:var(--tx-3);text-align:center;line-height:1.6;max-width:280px}
+/* Anatomical muscle zones: default gradient flesh tone + subtle separating outline */
+#svg-body .svgm-bg{fill:url(#fg1)}
+#svg-body .svgm{fill:url(#fg1);stroke:#5A2418;stroke-width:0.6;transition:fill .15s,filter .1s}
+#svg-body .svgm:hover{filter:brightness(1.28)}
+#svg-body .svgm.picking{filter:brightness(1.55) saturate(1.2)}
 
 /* ── MEDIA ── */
 .upload-zone{border:1px dashed var(--br-str);border-radius:var(--r-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-el);position:relative;overflow:hidden}
@@ -1194,78 +1199,106 @@ function buildSVGFallback() {
 }
 
 function getSVGMarkup(view) {
-  const grad = '<defs><radialGradient id="fg1" cx="40%" cy="30%" r="65%"><stop offset="0%" stop-color="#D4805A"/><stop offset="55%" stop-color="#A85040"/><stop offset="100%" stop-color="#6A2C1E"/></radialGradient></defs>';
+  const grad = '<defs><radialGradient id="fg1" cx="42%" cy="28%" r="72%"><stop offset="0%" stop-color="#C56A4A"/><stop offset="55%" stop-color="#A85040"/><stop offset="100%" stop-color="#6A2C1E"/></radialGradient></defs>';
 
   if (view === 'front') {
     return grad + `
-      <ellipse cx="120" cy="42" rx="27" ry="33" class="svgm" data-z="Head"/>
-      <path d="M109.2,68.0 L105.3,89.3 A15,15 0 0 0 134.7,89.3 L130.8,68.0 A11,11 0 0 0 109.2,68.0 Z" class="svgm" data-z="Neck"/>
-      <path d="M92,94 C100,88 140,88 148,94 C150,100 148,108 140,110 C130,106 110,106 100,110 C92,108 90,100 92,94 Z" class="svgm" data-z="Trapezius"/>
-      <path d="M120,102 L94,100 C82,102 74,114 73,130 C72,146 78,160 96,164 L120,164 Z" class="svgm" data-z="L Pectoralis"/>
-      <path d="M 120.0,102L 146.0,100C 158.0,102 166.0,114 167.0,130C 168.0,146 162.0,160 144.0,164L 120.0,164Z" class="svgm" data-z="R Pectoralis"/>
-      <path d="M51.1,118.1 L42.1,206.7 A13,13 0 0 0 67.6,211.0 L88.5,124.4 A19,19 0 0 0 51.1,118.1 Z" class="svgm" data-z="L Biceps"/>
-      <path d="M151.5,124.4 L172.4,211.0 A13,13 0 0 0 197.9,206.7 L188.9,118.1 A19,19 0 0 0 151.5,124.4 Z" class="svgm" data-z="R Biceps"/>
-      <path d="M96,100 C80,98 62,104 54,120 C48,132 50,148 62,154 C74,158 86,150 90,136 C93,124 94,110 96,100 Z" class="svgm" data-z="L Deltoid"/>
-      <path d="M 144.0,100C 160.0,98 178.0,104 186.0,120C 192.0,132 190.0,148 178.0,154C 166.0,158 154.0,150 150.0,136C 147.0,124 146.0,110 144.0,100Z" class="svgm" data-z="R Deltoid"/>
-      <path d="M42.0,207.9 L41.0,299.9 A9,9 0 0 0 59.0,300.9 L67.9,209.3 A13,13 0 0 0 42.0,207.9 Z" class="svgm" data-z="L Forearm"/>
-      <path d="M172.1,209.3 L181.0,300.9 A9,9 0 0 0 199.0,299.9 L198.0,207.9 A13,13 0 0 0 172.1,209.3 Z" class="svgm" data-z="R Forearm"/>
-      <path d="M42,292 C36,296 34,312 38,328 C41,338 50,340 55,332 C58,322 57,306 54,294 C51,290 46,290 42,292 Z" class="svgm" data-z="L Hand"/>
-      <path d="M 198.0,292C 204.0,296 206.0,312 202.0,328C 199.0,338 190.0,340 185.0,332C 182.0,322 183.0,306 186.0,294C 189.0,290 194.0,290 198.0,292Z" class="svgm" data-z="R Hand"/>
-      <ellipse cx="83" cy="162" rx="7" ry="15" class="svgm" data-z="L Serratus"/>
-      <ellipse cx="157" cy="162" rx="7" ry="15" class="svgm" data-z="R Serratus"/>
-      <path d="M104,164 L136,164 C140,180 140,206 136,232 C132,246 128,252 120,252 C112,252 108,246 104,232 C100,206 100,180 104,164 Z" class="svgm" data-z="Rectus Abdominis"/>
-      <path d="M92,178 C88,192 88,212 92,228 C95,238 100,244 104,240 C102,218 102,192 104,168 C98,170 94,174 92,178 Z" class="svgm" data-z="L Obliques"/>
-      <path d="M 148.0,178C 152.0,192 152.0,212 148.0,228C 145.0,238 140.0,244 136.0,240C 138.0,218 138.0,192 136.0,168C 142.0,170 146.0,174 148.0,178Z" class="svgm" data-z="R Obliques"/>
-      <path d="M74.0,282.2 L75.0,404.1 A18,18 0 0 0 110.9,406.2 L125.8,285.2 A26,26 0 0 0 74.0,282.2 Z" class="svgm" data-z="L Quadriceps"/>
-      <path d="M114.2,285.2 L129.1,406.2 A18,18 0 0 0 165.0,404.1 L166.0,282.2 A26,26 0 0 0 114.2,285.2 Z" class="svgm" data-z="R Quadriceps"/>
-      <path d="M90,244 C86,252 85,262 87,272 C90,278 98,280 106,276 C110,268 110,256 106,248 C102,242 96,240 90,244 Z" class="svgm" data-z="L Hip Flexor"/>
-      <path d="M 150.0,244C 154.0,252 155.0,262 153.0,272C 150.0,278 142.0,280 134.0,276C 130.0,268 130.0,256 134.0,248C 138.0,242 144.0,240 150.0,244Z" class="svgm" data-z="R Hip Flexor"/>
-      <path d="M114,278 C111,292 111,308 114,322 C116,330 118,332 120,330 L120,276 C118,275 115,276 114,278 Z" class="svgm" data-z="L Adductors"/>
-      <path d="M 126.0,278C 129.0,292 129.0,308 126.0,322C 124.0,330 122.0,332 120.0,330L 120.0,276C 122.0,275 125.0,276 126.0,278Z" class="svgm" data-z="R Adductors"/>
-      <path d="M78.0,412.3 L80.0,528.2 A10,10 0 0 0 100.0,528.7 L108.0,413.0 A15,15 0 0 0 78.0,412.3 Z" class="svgm" data-z="L Tibialis Anterior"/>
-      <path d="M132.0,413.0 L140.0,528.7 A10,10 0 0 0 160.0,528.2 L162.0,412.3 A15,15 0 0 0 132.0,413.0 Z" class="svgm" data-z="R Tibialis Anterior"/>
-      <ellipse cx="93" cy="404" rx="15" ry="12" class="svgm" data-z="L Knee"/>
-      <ellipse cx="147" cy="404" rx="15" ry="12" class="svgm" data-z="R Knee"/>
-      <ellipse cx="90" cy="528" rx="12" ry="9" class="svgm" data-z="L Ankle"/>
-      <ellipse cx="150" cy="528" rx="12" ry="9" class="svgm" data-z="R Ankle"/>
-      <path d="M78,532 C72,536 68,548 74,556 C82,562 100,562 106,556 C110,550 106,540 98,534 C92,530 84,530 78,532 Z" class="svgm" data-z="L Foot"/>
-      <path d="M 162.0,532C 168.0,536 172.0,548 166.0,556C 158.0,562 140.0,562 134.0,556C 130.0,550 134.0,540 142.0,534C 148.0,530 156.0,530 162.0,532Z" class="svgm" data-z="R Foot"/>
+      <path d="M92,102 C74,106 66,124 66,150 C66,192 72,242 84,272 C92,288 104,294 120,294 C136,294 148,288 156,272 C168,242 174,192 174,150 C174,124 166,106 148,102 C136,98 104,98 92,102 Z" class="svgm-bg"/>
+      <ellipse cx="120" cy="42" rx="26" ry="32" class="svgm" data-z="Head"/>
+      <path d="M111,68 L108,90 A13,13 0 0 0 132,90 L129,68 A11,11 0 0 0 111,68 Z" class="svgm" data-z="Neck"/>
+      <path d="M112,70 C110,80 110,90 116,97 C119,95 119,89 116,82 C114,76 113,72 113,70 C113,69 112,69 112,70 Z" class="svgm" data-z="L Sternocleidomastoid"/>
+      <path d="M128.0,70 C130.0,80 130.0,90 124.0,97 C121.0,95 121.0,89 124.0,82 C126.0,76 127.0,72 127.0,70 C127.0,69 128.0,69 128.0,70 Z" class="svgm" data-z="R Sternocleidomastoid"/>
+      <path d="M120,90 C108,90 98,95 86,104 C96,110 108,113 120,113 C132,113 144,110 154,104 C142,95 132,90 120,90 Z" class="svgm" data-z="Trapezius"/>
+      <path d="M118,106 L96,105 C84,107 74,116 72,129 C71,142 78,154 92,159 C104,163 114,160 118,150 L118,106 Z" class="svgm" data-z="L Pectoralis Major"/>
+      <path d="M122.0,106 L144.0,105 C156.0,107 166.0,116 168.0,129 C169.0,142 162.0,154 148.0,159 C136.0,163 126.0,160 122.0,150 L122.0,106 Z" class="svgm" data-z="R Pectoralis Major"/>
+      <path d="M66.0,128.0 C48.5,144.9 42.0,171.5 48.0,202.0 C67.3,177.7 73.8,151.1 66.0,128.0 Z" class="svgm" data-z="L Biceps"/>
+      <path d="M174.0,128 C191.5,144.9 198.0,171.5 192.0,202 C172.7,177.7 166.2,151.1 174.0,128 Z" class="svgm" data-z="R Biceps"/>
+      <path d="M74.0,150.0 C62.3,169.4 57.3,187.4 60.0,200.0 C68.9,190.6 73.9,172.6 74.0,150.0 Z" class="svgm" data-z="L Brachialis"/>
+      <path d="M166.0,150 C177.7,169.4 182.7,187.4 180.0,200 C171.1,190.6 166.1,172.6 166.0,150 Z" class="svgm" data-z="R Brachialis"/>
+      <path d="M55.8,105.0 C49.5,120.8 56.0,150.0 56.0,150.0 C56.0,150.0 79.3,131.2 84.2,115.0 C88.6,102.2 60.3,92.3 55.8,105.0 Z" class="svgm" data-z="L Deltoid"/>
+      <path d="M184.2,105 C190.5,120.8 184.0,150 184.0,150 C184.0,150 160.7,131.2 155.8,115 C151.4,102.2 179.7,92.3 184.2,105 Z" class="svgm" data-z="R Deltoid"/>
+      <path d="M36.0,205.6 L33.0,289.7 A8,8 0 0 0 48.9,291.0 L59.9,207.6 A12,12 0 0 0 36.0,205.6 Z" class="svgm" data-z="L Forearm Flexors"/>
+      <path d="M204.0,205.6 L207.0,289.7 A8,8 0 0 1 191.1,291 L180.1,207.6 A12,12 0 0 1 204.0,205.6 Z" class="svgm" data-z="R Forearm Flexors"/>
+      <path d="M52.0,200.0 C43.3,212.7 40.4,235.1 44.0,262.0 C54.3,236.9 57.2,214.5 52.0,200.0 Z" class="svgm" data-z="L Brachioradialis"/>
+      <path d="M188.0,200 C196.7,212.7 199.6,235.1 196.0,262 C185.7,236.9 182.8,214.5 188.0,200 Z" class="svgm" data-z="R Brachioradialis"/>
+      <path d="M42,290 C35,294 33,312 38,328 C42,338 51,340 56,332 C59,321 57,304 53,292 C50,288 45,287 42,290 Z" class="svgm" data-z="L Hand"/>
+      <path d="M198.0,290 C205.0,294 207.0,312 202.0,328 C198.0,338 189.0,340 184.0,332 C181.0,321 183.0,304 187.0,292 C190.0,288 195.0,287 198.0,290 Z" class="svgm" data-z="R Hand"/>
+      <path d="M90,150 C84,152 80,162 81,174 C82,184 88,190 94,186 C98,182 98,170 96,158 C95,153 93,150 90,150 Z" class="svgm" data-z="L Serratus Anterior"/>
+      <path d="M150.0,150 C156.0,152 160.0,162 159.0,174 C158.0,184 152.0,190 146.0,186 C142.0,182 142.0,170 144.0,158 C145.0,153 147.0,150 150.0,150 Z" class="svgm" data-z="R Serratus Anterior"/>
+      <path d="M92,162 C86,176 85,200 90,222 C93,234 100,240 104,234 C102,210 102,182 104,160 C99,158 95,159 92,162 Z" class="svgm" data-z="L External Oblique"/>
+      <path d="M148.0,162 C154.0,176 155.0,200 150.0,222 C147.0,234 140.0,240 136.0,234 C138.0,210 138.0,182 136.0,160 C141.0,158 145.0,159 148.0,162 Z" class="svgm" data-z="R External Oblique"/>
+      <path d="M106,160 L134,160 C137,174 137,192 134,206 C131,214 128,216 120,216 C112,216 109,214 106,206 C103,192 103,174 106,160 Z" class="svgm" data-z="Upper Abs"/>
+      <path d="M107,218 L133,218 C135,232 134,250 129,262 C125,270 115,270 111,262 C106,250 105,232 107,218 Z" class="svgm" data-z="Lower Abs"/>
+      <path d="M83.0,293.0 C71.2,319.4 74.5,357.2 92.0,398.0 C102.3,354.8 99.1,317.0 83.0,293.0 Z" class="svgm" data-z="L Vastus Lateralis"/>
+      <path d="M157.0,293 C168.8,319.4 165.5,357.2 148.0,398 C137.7,354.8 140.9,317 157.0,293 Z" class="svgm" data-z="R Vastus Lateralis"/>
+      <path d="M122.0,392.9 C120.6,370.5 105.0,338.0 105.0,338.0 C105.0,338.0 95.4,372.7 98.0,395.1 C99.0,405.8 122.9,403.7 122.0,392.9 Z" class="svgm" data-z="L Vastus Medialis"/>
+      <path d="M118.0,392.9 C119.4,370.5 135.0,338 135.0,338 C135.0,338 144.6,372.7 142.0,395.1 C141.0,405.8 117.1,403.7 118.0,392.9 Z" class="svgm" data-z="R Vastus Medialis"/>
+      <path d="M115.0,292.0 C107.5,319.2 108.3,355.2 117.0,392.0 C124.3,354.8 123.5,318.8 115.0,292.0 Z" class="svgm" data-z="L Adductors"/>
+      <path d="M125.0,292 C132.5,319.2 131.7,355.2 123.0,392 C115.7,354.8 116.5,318.8 125.0,292 Z" class="svgm" data-z="R Adductors"/>
+      <path d="M99.0,290.0 C89.0,325.0 88.0,364.6 96.0,400.0 C106.0,365.0 107.0,325.4 99.0,290.0 Z" class="svgm" data-z="L Rectus Femoris"/>
+      <path d="M141.0,290 C151.0,325 152.0,364.6 144.0,400 C134.0,365 133.0,325.4 141.0,290 Z" class="svgm" data-z="R Rectus Femoris"/>
+      <path d="M89.0,288.0 C90.8,324.1 98.4,363.7 110.0,398.0 C108.2,361.9 100.6,322.3 89.0,288.0 Z" class="svgm" data-z="L Sartorius"/>
+      <path d="M151.0,288 C149.2,324.1 141.6,363.7 130.0,398 C131.8,361.9 139.4,322.3 151.0,288 Z" class="svgm" data-z="R Sartorius"/>
+      <path d="M86,262 C79,268 76,282 80,294 C84,302 92,302 96,294 C98,282 97,270 93,262 C91,258 88,259 86,262 Z" class="svgm" data-z="L Tensor Fasciae Latae"/>
+      <path d="M154.0,262 C161.0,268 164.0,282 160.0,294 C156.0,302 148.0,302 144.0,294 C142.0,282 143.0,270 147.0,262 C149.0,258 152.0,259 154.0,262 Z" class="svgm" data-z="R Tensor Fasciae Latae"/>
+      <ellipse cx="97" cy="406" rx="15" ry="12" class="svgm" data-z="L Knee"/>
+      <ellipse cx="143" cy="406" rx="15" ry="12" class="svgm" data-z="R Knee"/>
+      <path d="M90.0,416.0 C80.1,438.5 78.7,476.0 86.0,520.0 C96.7,476.7 98.1,439.2 90.0,416.0 Z" class="svgm" data-z="L Tibialis Anterior"/>
+      <path d="M150.0,416 C159.9,438.5 161.3,476 154.0,520 C143.3,476.7 141.9,439.2 150.0,416 Z" class="svgm" data-z="R Tibialis Anterior"/>
+      <path d="M92.0,419.4 C89.8,451.4 100.0,500.0 100.0,500.0 C100.0,500.0 115.0,452.6 116.0,420.6 C116.5,409.8 92.6,408.6 92.0,419.4 Z" class="svgm" data-z="L Gastrocnemius"/>
+      <path d="M148.0,419.4 C150.2,451.4 140.0,500 140.0,500 C140.0,500 125.0,452.6 124.0,420.6 C123.5,409.8 147.4,408.6 148.0,419.4 Z" class="svgm" data-z="R Gastrocnemius"/>
+      <path d="M96.0,470.0 C86.7,486.7 85.3,506.1 92.0,524.0 C101.3,507.3 102.7,487.9 96.0,470.0 Z" class="svgm" data-z="L Soleus"/>
+      <path d="M144.0,470 C153.3,486.7 154.7,506.1 148.0,524 C138.7,507.3 137.3,487.9 144.0,470 Z" class="svgm" data-z="R Soleus"/>
+      <ellipse cx="90" cy="530" rx="11" ry="9" class="svgm" data-z="L Ankle"/>
+      <ellipse cx="150" cy="530" rx="11" ry="9" class="svgm" data-z="R Ankle"/>
+      <path d="M78,534 C72,538 68,550 74,558 C82,564 100,564 106,558 C110,552 106,542 98,536 C92,532 84,532 78,534 Z" class="svgm" data-z="L Foot"/>
+      <path d="M162.0,534 C168.0,538 172.0,550 166.0,558 C158.0,564 140.0,564 134.0,558 C130.0,552 134.0,542 142.0,536 C148.0,532 156.0,532 162.0,534 Z" class="svgm" data-z="R Foot"/>
     `;
   } else {
     return grad + `
-      <path d="M96,96 C80,100 74,116 73,140 C72,172 76,210 84,240 C90,256 100,262 120,262 C140,262 150,256 156,240 C164,210 168,172 167,140 C166,116 160,100 144,96 C136,92 104,92 96,96 Z" class="svgm-bg"/>
-      <ellipse cx="120" cy="42" rx="27" ry="33" class="svgm" data-z="Head"/>
-      <path d="M109.2,68.0 L105.3,89.3 A15,15 0 0 0 134.7,89.3 L130.8,68.0 A11,11 0 0 0 109.2,68.0 Z" class="svgm" data-z="Neck"/>
-      <path d="M120,92 C104,94 88,100 76,112 C86,120 104,128 120,130 C136,128 154,120 164,112 C152,100 136,94 120,92 Z" class="svgm" data-z="Trapezius"/>
-      <path d="M51.1,118.1 L42.1,206.7 A13,13 0 0 0 67.6,211.0 L88.5,124.4 A19,19 0 0 0 51.1,118.1 Z" class="svgm" data-z="L Triceps"/>
-      <path d="M151.5,124.4 L172.4,211.0 A13,13 0 0 0 197.9,206.7 L188.9,118.1 A19,19 0 0 0 151.5,124.4 Z" class="svgm" data-z="R Triceps"/>
-      <path d="M42.0,207.9 L41.0,299.9 A9,9 0 0 0 59.0,300.9 L67.9,209.3 A13,13 0 0 0 42.0,207.9 Z" class="svgm" data-z="L Forearm Extensors"/>
-      <path d="M172.1,209.3 L181.0,300.9 A9,9 0 0 0 199.0,299.9 L198.0,207.9 A13,13 0 0 0 172.1,209.3 Z" class="svgm" data-z="R Forearm Extensors"/>
-      <path d="M42,292 C36,296 34,312 38,328 C41,338 50,340 55,332 C58,322 57,306 54,294 C51,290 46,290 42,292 Z" class="svgm" data-z="L Hand"/>
-      <path d="M 198.0,292C 204.0,296 206.0,312 202.0,328C 199.0,338 190.0,340 185.0,332C 182.0,322 183.0,306 186.0,294C 189.0,290 194.0,290 198.0,292Z" class="svgm" data-z="R Hand"/>
-      <path d="M96,134 C82,138 74,152 73,172 C72,196 78,220 92,232 C100,238 106,232 106,220 C106,192 104,160 104,140 C102,136 99,134 96,134 Z" class="svgm" data-z="L Latissimus Dorsi"/>
-      <path d="M 144.0,134C 158.0,138 166.0,152 167.0,172C 168.0,196 162.0,220 148.0,232C 140.0,238 134.0,232 134.0,220C 134.0,192 136.0,160 136.0,140C 138.0,136 141.0,134 144.0,134Z" class="svgm" data-z="R Latissimus Dorsi"/>
-      <path d="M106,182 L134,182 C138,200 138,222 132,240 C127,250 113,250 108,240 C102,222 102,200 106,182 Z" class="svgm" data-z="Erector Spinae"/>
-      <path d="M96,100 C80,98 62,104 54,120 C48,132 50,148 62,154 C74,158 86,150 90,136 C93,124 94,110 96,100 Z" class="svgm" data-z="L Deltoid"/>
-      <path d="M 144.0,100C 160.0,98 178.0,104 186.0,120C 192.0,132 190.0,148 178.0,154C 166.0,158 154.0,150 150.0,136C 147.0,124 146.0,110 144.0,100Z" class="svgm" data-z="R Deltoid"/>
-      <ellipse cx="82" cy="150" rx="11" ry="16" class="svgm" data-z="L Infraspinatus"/>
-      <ellipse cx="158" cy="150" rx="11" ry="16" class="svgm" data-z="R Infraspinatus"/>
-      <ellipse cx="92" cy="248" rx="13" ry="14" class="svgm" data-z="L Glute Medius"/>
-      <ellipse cx="148" cy="248" rx="13" ry="14" class="svgm" data-z="R Glute Medius"/>
-      <path d="M74.0,290.2 L75.0,404.2 A18,18 0 0 0 110.8,406.4 L125.8,293.4 A26,26 0 0 0 74.0,290.2 Z" class="svgm" data-z="L Hamstrings"/>
-      <path d="M114.2,293.4 L129.2,406.4 A18,18 0 0 0 165.0,404.2 L166.0,290.2 A26,26 0 0 0 114.2,293.4 Z" class="svgm" data-z="R Hamstrings"/>
-      <path d="M92,254 C78,258 70,272 70,290 C70,308 80,320 98,320 C110,320 118,312 119,296 L119,258 C112,254 100,252 92,254 Z" class="svgm" data-z="L Glute Maximus"/>
-      <path d="M 148.0,254C 162.0,258 170.0,272 170.0,290C 170.0,308 160.0,320 142.0,320C 130.0,320 122.0,312 121.0,296L 121.0,258C 128.0,254 140.0,252 148.0,254Z" class="svgm" data-z="R Glute Maximus"/>
-      <path d="M77.0,412.3 L78.0,468.2 A13,13 0 0 0 103.9,469.2 L108.9,413.4 A16,16 0 0 0 77.0,412.3 Z" class="svgm" data-z="L Gastrocnemius"/>
-      <path d="M131.1,413.4 L136.1,469.2 A13,13 0 0 0 162.0,468.2 L163.0,412.3 A16,16 0 0 0 131.1,413.4 Z" class="svgm" data-z="R Gastrocnemius"/>
-      <path d="M78.0,468.7 L81.0,522.5 A9,9 0 0 0 99.0,522.8 L103.9,469.2 A13,13 0 0 0 78.0,468.7 Z" class="svgm" data-z="L Soleus"/>
-      <path d="M136.1,469.2 L141.0,522.8 A9,9 0 0 0 159.0,522.5 L162.0,468.7 A13,13 0 0 0 136.1,469.2 Z" class="svgm" data-z="R Soleus"/>
-      <ellipse cx="93" cy="404" rx="15" ry="12" class="svgm" data-z="L Knee"/>
-      <ellipse cx="147" cy="404" rx="15" ry="12" class="svgm" data-z="R Knee"/>
-      <ellipse cx="90" cy="528" rx="10" ry="9" class="svgm" data-z="L Achilles"/>
-      <ellipse cx="150" cy="528" rx="10" ry="9" class="svgm" data-z="R Achilles"/>
-      <path d="M78,532 C72,536 68,548 74,556 C82,562 100,562 106,556 C110,550 106,540 98,534 C92,530 84,530 78,532 Z" class="svgm" data-z="L Foot"/>
-      <path d="M 162.0,532C 168.0,536 172.0,548 166.0,556C 158.0,562 140.0,562 134.0,556C 130.0,550 134.0,540 142.0,534C 148.0,530 156.0,530 162.0,532Z" class="svgm" data-z="R Foot"/>
+      <path d="M92,102 C74,106 66,124 66,150 C66,192 72,242 84,272 C92,288 104,294 120,294 C136,294 148,288 156,272 C168,242 174,192 174,150 C174,124 166,106 148,102 C136,98 104,98 92,102 Z" class="svgm-bg"/>
+      <ellipse cx="120" cy="42" rx="26" ry="32" class="svgm" data-z="Head"/>
+      <path d="M111,68 L108,90 A13,13 0 0 0 132,90 L129,68 A11,11 0 0 0 111,68 Z" class="svgm" data-z="Neck"/>
+      <path d="M120,90 C104,92 90,99 80,112 C98,120 92,148 108,172 L120,186 L132,172 C148,148 142,120 160,112 C150,99 136,92 120,90 Z" class="svgm" data-z="Trapezius"/>
+      <path d="M66.0,132.0 C52.7,153.3 47.6,179.2 52.0,204.0 C65.3,182.7 70.4,156.8 66.0,132.0 Z" class="svgm" data-z="L Triceps Long Head"/>
+      <path d="M174.0,132 C187.3,153.3 192.4,179.2 188.0,204 C174.7,182.7 169.6,156.8 174.0,132 Z" class="svgm" data-z="R Triceps Long Head"/>
+      <path d="M74.0,138.0 C63.9,153.4 59.6,175.7 62.0,200.0 C73.3,178.4 77.6,156.1 74.0,138.0 Z" class="svgm" data-z="L Triceps Lateral Head"/>
+      <path d="M166.0,138 C176.1,153.4 180.4,175.7 178.0,200 C166.7,178.4 162.4,156.1 166.0,138 Z" class="svgm" data-z="R Triceps Lateral Head"/>
+      <path d="M38.0,205.3 L33.0,289.5 A8,8 0 0 0 48.9,291.2 L61.9,207.8 A12,12 0 0 0 38.0,205.3 Z" class="svgm" data-z="L Forearm Extensors"/>
+      <path d="M202.0,205.3 L207.0,289.5 A8,8 0 0 1 191.1,291.2 L178.1,207.8 A12,12 0 0 1 202.0,205.3 Z" class="svgm" data-z="R Forearm Extensors"/>
+      <path d="M42,290 C35,294 33,312 38,328 C42,338 51,340 56,332 C59,321 57,304 53,292 C50,288 45,287 42,290 Z" class="svgm" data-z="L Hand"/>
+      <path d="M198.0,290 C205.0,294 207.0,312 202.0,328 C198.0,338 189.0,340 184.0,332 C181.0,321 183.0,304 187.0,292 C190.0,288 195.0,287 198.0,290 Z" class="svgm" data-z="R Hand"/>
+      <path d="M110,138 C94,142 80,158 78,184 C77,208 85,228 101,238 C109,242 115,236 115,224 C115,196 113,162 112,142 C112,139 111,138 110,138 Z" class="svgm" data-z="L Latissimus Dorsi"/>
+      <path d="M130.0,138 C146.0,142 160.0,158 162.0,184 C163.0,208 155.0,228 139.0,238 C131.0,242 125.0,236 125.0,224 C125.0,196 127.0,162 128.0,142 C128.0,139 129.0,138 130.0,138 Z" class="svgm" data-z="R Latissimus Dorsi"/>
+      <path d="M110,180 L130,180 C133,200 133,226 128,246 C124,256 116,256 112,246 C107,226 107,200 110,180 Z" class="svgm" data-z="Erector Spinae"/>
+      <path d="M92,196 C87,208 87,224 92,238 C96,246 102,246 104,238 C103,222 103,206 104,192 C99,191 95,193 92,196 Z" class="svgm" data-z="L External Oblique"/>
+      <path d="M148.0,196 C153.0,208 153.0,224 148.0,238 C144.0,246 138.0,246 136.0,238 C137.0,222 137.0,206 136.0,192 C141.0,191 145.0,193 148.0,196 Z" class="svgm" data-z="R External Oblique"/>
+      <path d="M55.8,105.0 C49.5,120.8 56.0,150.0 56.0,150.0 C56.0,150.0 79.3,131.2 84.2,115.0 C88.6,102.2 60.3,92.3 55.8,105.0 Z" class="svgm" data-z="L Deltoid"/>
+      <path d="M184.2,105 C190.5,120.8 184.0,150 184.0,150 C184.0,150 160.7,131.2 155.8,115 C151.4,102.2 179.7,92.3 184.2,105 Z" class="svgm" data-z="R Deltoid"/>
+      <path d="M98,120 C88,122 82,132 82,144 C82,154 90,160 98,158 C104,156 106,144 104,132 C102,124 101,120 98,120 Z" class="svgm" data-z="L Infraspinatus"/>
+      <path d="M142.0,120 C152.0,122 158.0,132 158.0,144 C158.0,154 150.0,160 142.0,158 C136.0,156 134.0,144 136.0,132 C138.0,124 139.0,120 142.0,120 Z" class="svgm" data-z="R Infraspinatus"/>
+      <path d="M96,158 C90,160 86,168 88,176 C90,182 96,184 100,180 C102,174 101,164 99,158 C98,157 97,157 96,158 Z" class="svgm" data-z="L Teres Major"/>
+      <path d="M144.0,158 C150.0,160 154.0,168 152.0,176 C150.0,182 144.0,184 140.0,180 C138.0,174 139.0,164 141.0,158 C142.0,157 143.0,157 144.0,158 Z" class="svgm" data-z="R Teres Major"/>
+      <path d="M92,258 C78,262 70,278 70,296 C70,314 82,326 100,324 C110,322 118,314 118,298 L118,262 C110,258 100,256 92,258 Z" class="svgm" data-z="L Gluteus Maximus"/>
+      <path d="M148.0,258 C162.0,262 170.0,278 170.0,296 C170.0,314 158.0,326 140.0,324 C130.0,322 122.0,314 122.0,298 L122.0,262 C130.0,258 140.0,256 148.0,258 Z" class="svgm" data-z="R Gluteus Maximus"/>
+      <path d="M90,250 C82,252 77,262 79,274 C81,284 90,288 96,282 C100,274 99,262 96,252 C94,249 92,249 90,250 Z" class="svgm" data-z="L Gluteus Medius"/>
+      <path d="M150.0,250 C158.0,252 163.0,262 161.0,274 C159.0,284 150.0,288 144.0,282 C140.0,274 141.0,262 144.0,252 C146.0,249 148.0,249 150.0,250 Z" class="svgm" data-z="R Gluteus Medius"/>
+      <path d="M92.0,300.0 C81.4,328.1 83.2,364.8 97.0,402.0 C107.1,363.7 105.3,327.0 92.0,300.0 Z" class="svgm" data-z="L Biceps Femoris"/>
+      <path d="M148.0,300 C158.6,328.1 156.8,364.8 143.0,402 C132.9,363.7 134.7,327 148.0,300 Z" class="svgm" data-z="R Biceps Femoris"/>
+      <path d="M110.0,300.0 C101.0,332.9 102.0,369.7 113.0,402.0 C122.0,369.1 121.0,332.3 110.0,300.0 Z" class="svgm" data-z="L Semitendinosus"/>
+      <path d="M130.0,300 C139.0,332.9 138.0,369.7 127.0,402 C118.0,369.1 119.0,332.3 130.0,300 Z" class="svgm" data-z="R Semitendinosus"/>
+      <path d="M82.0,292.0 C78.9,328.1 81.1,368.4 88.0,404.0 C91.1,367.9 88.9,327.6 82.0,292.0 Z" class="svgm" data-z="L Iliotibial Band"/>
+      <path d="M158.0,292 C161.1,328.1 158.9,368.4 152.0,404 C148.9,367.9 151.1,327.6 158.0,292 Z" class="svgm" data-z="R Iliotibial Band"/>
+      <ellipse cx="97" cy="406" rx="15" ry="12" class="svgm" data-z="L Knee"/>
+      <ellipse cx="143" cy="406" rx="15" ry="12" class="svgm" data-z="R Knee"/>
+      <path d="M84.0,417.0 C80.9,448.9 92.0,498.0 92.0,498.0 C92.0,498.0 110.3,451.1 112.0,419.0 C112.9,406.5 85.0,404.4 84.0,417.0 Z" class="svgm" data-z="L Gastrocnemius"/>
+      <path d="M156.0,417 C159.1,448.9 148.0,498 148.0,498 C148.0,498 129.7,451.1 128.0,419 C127.1,406.5 155.0,404.4 156.0,417 Z" class="svgm" data-z="R Gastrocnemius"/>
+      <path d="M95.0,470.0 C84.4,486.5 82.6,505.9 90.0,524.0 C100.6,507.5 102.4,488.1 95.0,470.0 Z" class="svgm" data-z="L Soleus"/>
+      <path d="M145.0,470 C155.6,486.5 157.4,505.9 150.0,524 C139.4,507.5 137.6,488.1 145.0,470 Z" class="svgm" data-z="R Soleus"/>
+      <ellipse cx="90" cy="530" rx="9" ry="9" class="svgm" data-z="L Achilles"/>
+      <ellipse cx="150" cy="530" rx="9" ry="9" class="svgm" data-z="R Achilles"/>
+      <path d="M78,534 C72,538 68,550 74,558 C82,564 100,564 106,558 C110,552 106,542 98,536 C92,532 84,532 78,534 Z" class="svgm" data-z="L Foot"/>
+      <path d="M162.0,534 C168.0,538 172.0,550 166.0,558 C158.0,564 140.0,564 134.0,558 C130.0,552 134.0,542 142.0,536 C148.0,532 156.0,532 162.0,534 Z" class="svgm" data-z="R Foot"/>
     `;
   }
 }
@@ -1273,16 +1306,13 @@ function getSVGMarkup(view) {
 function attachSvgHandlers() {
   document.querySelectorAll('#svg-body .svgm').forEach(el => {
     el.style.cursor = 'pointer';
-    el.addEventListener('mouseenter', () => {
-      el.style.filter = 'brightness(1.3)';
-      el.style.transition = 'all 0.1s';
-    });
-    el.addEventListener('mouseleave', () => {
-      el.style.filter = '';
-      updateSvgMuscleColor(el);
-    });
     el.addEventListener('click', () => svgTap(el));
   });
+}
+
+// Clear the "awaiting feeling" highlight from whatever muscle is mid-pick.
+function clearPickingHighlight() {
+  document.querySelectorAll('#svg-body .svgm.picking').forEach(el => el.classList.remove('picking'));
 }
 
 // ─── 7-STATE MUSCLE FEELING SCALE ───
@@ -1304,6 +1334,9 @@ function updateSvgMuscleColor(el) {
 
 function svgTap(el) {
   const zone = el.getAttribute('data-z');
+  // Highlight just-tapped muscle in a lighter shade while the user chooses.
+  clearPickingHighlight();
+  el.classList.add('picking');
   window.pendingZone = { zone, point: null };
   document.getElementById('fp-muscle-name').textContent = zone;
   document.getElementById('feel-pick').classList.add('show');
@@ -1345,31 +1378,30 @@ document.querySelectorAll('.svg-toggle-btn').forEach(btn => {
     svgCurrentView = view;
     document.querySelectorAll('.svg-toggle-btn').forEach(b => b.classList.remove('active'));
     e.target.classList.add('active');
+    // Cancel any in-progress pick when switching views
+    document.getElementById('feel-pick').classList.remove('show');
+    window.pendingZone = null;
     buildSVGFallback();
   });
 });
 
-// ─── APPLY FEELING TO MUSCLE (works with both 3D and SVG) ───
+// ─── APPLY FEELING TO MUSCLE ───
 window.applyFeeling = function(feeling) {
   if (!window.pendingZone) return;
   const { zone } = window.pendingZone;
 
   if (feeling) {
     svgBodyStates[zone] = feeling;
-    const el = document.querySelector(`[data-z="${zone}"]`);
-    if (el) updateSvgMuscleColor(el);
   } else {
     delete svgBodyStates[zone];
-    const el = document.querySelector(`[data-z="${zone}"]`);
-    if (el) {
-      el.style.fill = 'url(#fg1)';
-    }
   }
+  const el = document.querySelector(`#svg-body [data-z="${zone}"]`);
+  if (el) { el.classList.remove('picking'); updateSvgMuscleColor(el); }
 
   document.getElementById('feel-pick').classList.remove('show');
   window.pendingZone = null;
   renderAreaTags();
-  showToast(STRINGS.zoneMarked(zone));
+  showToast(feeling ? `${zone}: ${FEELINGS[feeling].label}` : `${zone} cleared`);
 };
 
 // ─── GET MUSCLE FEELINGS (for savePractice) ───
