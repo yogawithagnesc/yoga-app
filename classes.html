@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Lumen — Schedule Classes</title>
+<link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://vuodmnhebsjmwdeazdtc.supabase.co'
+  const SUPABASE_KEY = 'sb_publishable_Xkhwx_hNFyRGNp0Njqne3g_qD9VdFHy'
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+</script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080807;--bg-el:#111110;--bg-ov:#1A1917;
+  --br-sub:#1E1E1C;--br-def:#2A2A27;--br-str:#3A3A35;
+  --tx-1:#E8E0D0;--tx-2:#9A9080;--tx-3:#5A5448;--tx-inv:#111110;
+  --accent:#C8A96E;--accent-dim:rgba(200,169,110,0.13);--accent-h:#D8BA80;--accent-p:#A88848;
+  --success:#7B9E87;--error:#C47070;--warning:#D4956A;
+  --r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;--r-full:9999px
+}
+body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:100vh;display:flex;justify-content:center}
+.phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}
+
+.hdr{position:sticky;top:0;z-index:60;background:rgba(8,8,7,0.96);backdrop-filter:blur(20px);border-bottom:1px solid var(--br-sub);padding:16px 20px 14px;display:flex;align-items:center;gap:12px}
+.back-btn{width:44px;height:44px;border-radius:50%;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hdr-title{font-family:'Tenor Sans','Noto Sans TC',sans-serif;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-1)}
+
+.scroll{flex:1;overflow-y:auto;padding:20px 20px 60px}
+.scroll::-webkit-scrollbar{display:none}
+
+.section-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tx-2);margin-bottom:12px}
+.card{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:18px;margin-bottom:16px}
+.empty-hint{font-size:12px;color:var(--tx-3);padding:6px 0}
+
+/* Form */
+.fld{margin-bottom:14px}
+.fld-lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-3);margin-bottom:6px;display:block}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:11px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;color:var(--tx-1);outline:none;transition:border-color .15s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
+.fld textarea{resize:vertical;min-height:64px}
+.fld-row{display:flex;gap:10px}
+.fld-row > .fld{flex:1}
+.chk-row{display:flex;align-items:center;gap:10px;padding:10px 0;cursor:pointer}
+.chk-row input{width:18px;height:18px;accent-color:var(--accent);flex-shrink:0}
+.chk-row .chk-lbl{font-size:13px;color:var(--tx-1)}
+.chk-row .chk-sub{font-size:11px;color:var(--tx-3);margin-top:1px}
+.hidden{display:none}
+.submit-btn{width:100%;background:var(--accent);border:none;border-radius:var(--r-md);padding:14px;color:var(--tx-inv);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.submit-btn:hover{background:var(--accent-h)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
+.form-err{font-size:12px;color:var(--error);margin-top:10px;display:none}
+.form-err.show{display:block}
+
+/* Upcoming class list */
+.class-row{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:12px}
+.class-row.cancelled{opacity:.45}
+.cr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.cr-title{font-size:14px;font-weight:600;color:var(--tx-1)}
+.cr-when{font-size:12px;color:var(--accent);margin-top:3px}
+.cr-meta{font-size:11px;color:var(--tx-3);margin-top:4px;line-height:1.5}
+.cr-badge{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-full);padding:2px 8px;flex-shrink:0}
+.cr-actions{display:flex;gap:8px;margin-top:10px}
+.cr-btn{font-size:11px;border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-family:'DM Sans','Noto Sans TC',sans-serif;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2)}
+.cr-btn:hover{border-color:var(--br-str);color:var(--tx-1)}
+.cr-btn.danger{color:var(--error);border-color:rgba(196,112,112,0.3);background:rgba(196,112,112,0.08)}
+.cr-btn.danger:hover{background:rgba(196,112,112,0.18)}
+
+/* Toast */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg-ov);border:1px solid var(--br-str);color:var(--tx-1);font-size:13px;padding:12px 20px;border-radius:var(--r-full);opacity:0;pointer-events:none;transition:all .25s;z-index:200}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(17,17,16,.3);border-top-color:var(--tx-inv);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="hdr">
+    <button class="back-btn" onclick="window.location.href='index.html'">←</button>
+    <div class="hdr-title">Schedule Classes</div>
+  </div>
+
+  <div class="scroll" id="scroll">
+
+    <div class="card">
+      <div class="section-label">New Class</div>
+
+      <div class="fld">
+        <label class="fld-lbl" for="c-title">Title</label>
+        <input type="text" id="c-title" placeholder="e.g. Morning Vinyasa" maxlength="80">
+      </div>
+
+      <div class="fld">
+        <label class="fld-lbl" for="c-style">Style</label>
+        <input type="text" id="c-style" placeholder="e.g. Vinyasa, Yin, Power" maxlength="40">
+      </div>
+
+      <div class="fld-row">
+        <div class="fld">
+          <label class="fld-lbl" for="c-date">Date</label>
+          <input type="date" id="c-date">
+        </div>
+        <div class="fld">
+          <label class="fld-lbl" for="c-time">Start</label>
+          <input type="time" id="c-time" value="08:00">
+        </div>
+      </div>
+
+      <div class="fld-row">
+        <div class="fld">
+          <label class="fld-lbl" for="c-duration">Duration</label>
+          <select id="c-duration">
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60" selected>60 min</option>
+            <option value="75">75 min</option>
+            <option value="90">90 min</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label class="fld-lbl" for="c-capacity">Capacity</label>
+          <input type="number" id="c-capacity" placeholder="Unlimited" min="1" max="500">
+        </div>
+      </div>
+
+      <div class="fld" id="assign-fld">
+        <label class="fld-lbl" for="c-teacher">Assigned Teacher</label>
+        <select id="c-teacher"></select>
+      </div>
+
+      <div class="fld-row">
+        <div class="fld">
+          <label class="fld-lbl" for="c-room">Room</label>
+          <input type="text" id="c-room" placeholder="e.g. Studio A" maxlength="40">
+        </div>
+      </div>
+
+      <div class="chk-row" onclick="toggleOnline()">
+        <input type="checkbox" id="c-online" onclick="event.stopPropagation();toggleOnline()">
+        <div>
+          <div class="chk-lbl">Online class</div>
+          <div class="chk-sub">Adds a meeting link field</div>
+        </div>
+      </div>
+
+      <div class="fld hidden" id="online-url-fld">
+        <label class="fld-lbl" for="c-url">Meeting URL</label>
+        <input type="url" id="c-url" placeholder="https://…">
+      </div>
+
+      <div class="fld hidden" id="location-fld">
+        <label class="fld-lbl" for="c-location">Location</label>
+        <input type="text" id="c-location" placeholder="e.g. 12 Bethnal Green Rd" maxlength="120">
+      </div>
+
+      <div class="fld">
+        <label class="fld-lbl" for="c-desc">Description</label>
+        <textarea id="c-desc" placeholder="What should students expect?" maxlength="500"></textarea>
+      </div>
+
+      <div class="fld">
+        <label class="fld-lbl" for="c-prereq">Prerequisites</label>
+        <input type="text" id="c-prereq" placeholder="e.g. Comfortable with sun salutations" maxlength="120">
+      </div>
+
+      <div class="chk-row" onclick="document.getElementById('c-featured').click()">
+        <input type="checkbox" id="c-featured" onclick="event.stopPropagation()">
+        <div>
+          <div class="chk-lbl">Feature this class</div>
+          <div class="chk-sub">Shows in the hero banner atop linked students' Classes tab</div>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="submit-btn" onclick="createClass()">Publish Class ✦</button>
+      <div class="form-err" id="form-err"></div>
+    </div>
+
+    <div class="section-label">Upcoming Classes</div>
+    <div id="class-list"></div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null
+let currentRole = null
+let linkedTeachers = []   // studios: teachers bound to this studio
+
+;(async function init() {
+  const { data: { session } } = await db.auth.getSession()
+  if (!session) { window.location.href = 'login.html'; return }
+  currentUser = session.user
+
+  const { data: profile } = await db.from('profiles')
+    .select('role, display_name').eq('id', currentUser.id).single()
+  if (!profile || (profile.role !== 'teacher' && profile.role !== 'studio')) {
+    window.location.href = 'index.html'
+    return
+  }
+  currentRole = profile.role
+
+  // Default date = today (local)
+  const today = new Date()
+  document.getElementById('c-date').value =
+    today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
+
+  await buildTeacherOptions(profile.display_name)
+  await loadClasses()
+  toggleOnline()
+})()
+
+// ── ASSIGNED-TEACHER DROPDOWN ─────────────────────────────
+// A teacher scheduling their own class simply teaches it. A studio
+// can hand the class to one of the teachers who has bound to it
+// (studio_linkages: student_id = the teacher, entity_id = this studio).
+async function buildTeacherOptions(myName) {
+  const sel = document.getElementById('c-teacher')
+  const opts = [{ id: currentUser.id, name: (myName || 'Myself') + ' (you)' }]
+
+  if (currentRole === 'studio') {
+    const { data } = await db.from('studio_linkages')
+      .select('student_id, profiles!studio_linkages_student_id_fkey(display_name, role)')
+      .eq('entity_id', currentUser.id)
+      .eq('status', 'active')
+    linkedTeachers = (data || []).filter(l => l.profiles && l.profiles.role === 'teacher')
+    linkedTeachers.forEach(l => opts.push({ id: l.student_id, name: l.profiles.display_name || 'Teacher' }))
+  }
+
+  sel.innerHTML = opts.map(o => '<option value="' + o.id + '">' + esc(o.name) + '</option>').join('')
+}
+
+function toggleOnline() {
+  const on = document.getElementById('c-online').checked
+  document.getElementById('online-url-fld').classList.toggle('hidden', !on)
+  document.getElementById('location-fld').classList.toggle('hidden', on)
+}
+
+// ── CREATE CLASS ──────────────────────────────────────────
+async function createClass() {
+  const errEl = document.getElementById('form-err')
+  const btn = document.getElementById('submit-btn')
+  errEl.classList.remove('show')
+
+  const title = document.getElementById('c-title').value.trim()
+  const style = document.getElementById('c-style').value.trim()
+  const date  = document.getElementById('c-date').value
+  const time  = document.getElementById('c-time').value
+  const dur   = parseInt(document.getElementById('c-duration').value, 10)
+
+  if (!title)         return showErr('Please enter a class title.')
+  if (!style)         return showErr('Please enter a style.')
+  if (!date || !time) return showErr('Please set a date and start time.')
+
+  // Build local start → ISO; end = start + duration
+  const start = new Date(date + 'T' + time)
+  if (isNaN(start.getTime())) return showErr('That date/time is invalid.')
+  const end = new Date(start.getTime() + dur * 60000)
+
+  const capRaw = document.getElementById('c-capacity').value.trim()
+  const capacity = capRaw ? parseInt(capRaw, 10) : null
+  if (capRaw && (!Number.isFinite(capacity) || capacity < 1)) return showErr('Capacity must be a positive number.')
+
+  const isOnline = document.getElementById('c-online').checked
+  const assigned = document.getElementById('c-teacher').value
+
+  const row = {
+    teacher_id:          currentUser.id,
+    assigned_teacher_id: assigned || currentUser.id,
+    title,
+    style_name:          style,
+    description:         document.getElementById('c-desc').value.trim() || null,
+    start_time:          start.toISOString(),
+    end_time:            end.toISOString(),
+    capacity,
+    is_online:           isOnline,
+    meeting_url:         isOnline ? (document.getElementById('c-url').value.trim() || null) : null,
+    location:            isOnline ? null : (document.getElementById('c-location').value.trim() || null),
+    room:                document.getElementById('c-room').value.trim() || null,
+    prerequisites:       document.getElementById('c-prereq').value.trim() || null,
+    is_featured:         document.getElementById('c-featured').checked,
+    status:              'published',
+  }
+
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div> Publishing…'
+
+  const { error } = await db.from('classes').insert(row)
+
+  btn.disabled = false
+  btn.innerHTML = 'Publish Class ✦'
+
+  if (error) { console.error('Create class failed:', error); return showErr('Could not publish — please try again.') }
+
+  // Reset the volatile fields, keep date/duration for quick repeat entry
+  document.getElementById('c-title').value = ''
+  document.getElementById('c-desc').value = ''
+  document.getElementById('c-prereq').value = ''
+  document.getElementById('c-featured').checked = false
+  showToast('Class published ✓')
+  await loadClasses()
+}
+
+function showErr(msg) {
+  const errEl = document.getElementById('form-err')
+  errEl.textContent = msg
+  errEl.classList.add('show')
+}
+
+// ── UPCOMING CLASS LIST (owned or assigned to me) ─────────
+async function loadClasses() {
+  const nowISO = new Date().toISOString()
+  const { data } = await db.from('classes')
+    .select('id, title, style_name, start_time, end_time, capacity, room, location, is_online, is_featured, status, teacher_id, assigned_teacher_id')
+    .or('teacher_id.eq.' + currentUser.id + ',assigned_teacher_id.eq.' + currentUser.id)
+    .gte('start_time', nowISO)
+    .order('start_time', { ascending: true })
+
+  const el = document.getElementById('class-list')
+  el.innerHTML = ''
+  if (!data || !data.length) {
+    el.innerHTML = '<div class="empty-hint">No upcoming classes yet. Publish one above.</div>'
+    return
+  }
+
+  data.forEach(c => {
+    const owned = c.teacher_id === currentUser.id
+    const row = document.createElement('div')
+    row.className = 'class-row' + (c.status === 'cancelled' ? ' cancelled' : '')
+    const where = c.is_online ? 'Online' : (c.room || c.location || '—')
+    const cap = c.capacity ? (c.capacity + ' spots') : 'Unlimited'
+    row.innerHTML =
+      '<div class="cr-top">' +
+        '<div>' +
+          '<div class="cr-title">' + esc(c.title) + '</div>' +
+          '<div class="cr-when">' + fmtWhen(c.start_time, c.end_time) + '</div>' +
+          '<div class="cr-meta">' + esc(c.style_name) + ' · ' + esc(where) + ' · ' + cap +
+            (c.status === 'cancelled' ? ' · <span style="color:var(--error)">Cancelled</span>' : '') +
+            (!owned ? ' · <span style="color:var(--tx-2)">Assigned to you</span>' : '') +
+          '</div>' +
+        '</div>' +
+        (c.is_featured ? '<span class="cr-badge">Featured</span>' : '') +
+      '</div>' +
+      (owned && c.status !== 'cancelled'
+        ? '<div class="cr-actions">' +
+            '<button class="cr-btn danger" onclick="cancelClass(\'' + c.id + '\')">Cancel class</button>' +
+          '</div>'
+        : '')
+    el.appendChild(row)
+  })
+}
+
+async function cancelClass(id) {
+  const { error } = await db.from('classes')
+    .update({ status: 'cancelled' })
+    .eq('id', id)
+    .eq('teacher_id', currentUser.id)
+  if (error) { console.error('Cancel failed:', error); showToast('Could not cancel'); return }
+  showToast('Class cancelled')
+  await loadClasses()
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function fmtWhen(startISO, endISO) {
+  const s = new Date(startISO), e = new Date(endISO)
+  const day = s.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+  const t = (d) => d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  return day + ' · ' + t(s) + '–' + t(e)
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+}
+
+let toastTimer = null
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200)
+}
+</script>
+</body>
+</html>

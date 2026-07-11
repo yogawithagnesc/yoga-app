@@ -16,7 +16,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M2 | Dynamic categorization engine | §3.2.1–3.2.2 | ✅ Done (pending migration run + live test) | Sonnet 5 |
 | M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done (verified live) | Sonnet 5 |
 | M3a | Advanced anatomical illustration redesign | §3.2.3 | ✅ Done | Sonnet 5 |
-| M4 | Class scheduling & booking framework | §3.5, §8 | Not started | Sonnet 5 (+ Opus 4.8 design pass) |
+| M4 | Class scheduling & booking framework | §3.5, §8 | 🚧 Phase A done (federated view + provisioning); Phase B (filters + DnD) pending | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | Not started | Haiku 4.5 / Sonnet 5 |
@@ -169,6 +169,22 @@ The largest milestone. The `classes` and `bookings` tables plus capacity trigger
 **Model note:** run an Opus 4.8 (or stronger) planning pass first for the DnD calendar architecture and the federated query/RLS design, then implement with Sonnet 5.
 
 **Acceptance:** studio creates a class; linked student sees it within the 14-day window with studio branding; dragging the class to a new slot updates every viewer without reload.
+
+### M4 Phase A — ✅ Done (Opus 4.8 planning pass 2026-07-11)
+
+Session A shipped. Two architecture decisions were confirmed with the user before implementation: (1) add `assigned_teacher_id` so a Studio can schedule a class and assign it to one of its linked Teachers; (2) extend `redeem_join_code` to allow Teacher→Studio binding rather than a separate flow.
+
+**Delivered:**
+- `schema_phase11_classes_meta.sql` (idempotent) — adds `room`, `prerequisites`, `is_featured`, `assigned_teacher_id` to `classes`; a partial `classes_featured_idx`; SELECT-only RLS so an assigned teacher can read the class + roster a Studio owns; and a relaxed `redeem_join_code` (student→teacher/studio unchanged; **teacher→studio new**; studio→nothing; no self-link). **Action required: run in Supabase SQL Editor after phases 1–10.**
+- `classes.html` (new) — teacher/studio-only provisioning form (title, style, date/time + duration→end, capacity, assigned teacher, room, online/location toggle, description, prerequisites, featured flag) + upcoming-class list (owned or assigned) with cancel. Studios get a dropdown of their bound teachers; teachers default to self.
+- `index.html` — hardcoded `#page-courses` replaced with the federated Classes tab: role-adaptive header strip (student = today's bookings; teacher/studio = today's teaching), Featured hero banner (soonest featured class from linked studios), 14-day forward list grouped by day with **studio-branded left borders** (deterministic colour from the owner id — a real brand colour can arrive in M6), and a **gated booking modal** (Book button disabled + `[Next Stage Development — Gated Booking Engine]` tag). Empty state links to `profile.html` when the student has no linkages. Loaded lazily on first `switchTab('courses')`.
+- `profile.html` — teachers now get a "Bind to a Studio" card (reusing the join-code UI, role-adjusted copy) + a "My Studios" list with unbind. `submitJoinCode`/`unlink` are role-aware.
+
+**Federation is a query concern, not RLS:** RLS already exposes every published class to all authenticated users, so the student view fetches its active `studio_linkages.entity_id` set and filters `classes.teacher_id IN (…)` client-side over the 14-day horizon. No new read-broadening policy was needed.
+
+**Verified:** `tools/classes/verify_m4.js` (Playwright, stubbed Supabase) — 23/23 checks: student view shows only linked-studio classes, excludes a non-linked studio and a >14-day class, hides the provisioning CTA, renders the featured hero + booked-today strip, opens the booking modal with the gated tag and correct studio name, no JS errors; teacher view shows the CTA + owned/assigned classes + today's teaching strip; the provisioning form inserts a correct `classes` row (title/style/capacity/featured/owner/assigned/end=start+duration/status). Visual screenshot confirms the day-grouped, two-studio-branded layout.
+
+**Deferred to Phase B:** filter overlay + saved-filter chips and the §8.2 drag-and-drop schedule mutator (the piece most warranting its own Opus pass).
 
 ---
 

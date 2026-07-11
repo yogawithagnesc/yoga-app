@@ -414,6 +414,48 @@
     75% { opacity:1; }
     100% { opacity:0; transform: translateX(-50%) translateY(-6px); }
   }
+
+  /* ── M4: Federated Classes tab ── */
+  .cls-cta { margin: 0 28px 20px; display:flex; align-items:center; justify-content:center; gap:8px;
+    background: var(--accent-dim); border:1px solid var(--accent); color: var(--accent);
+    border-radius: var(--r-lg); padding: 13px; font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans','Noto Sans TC',sans-serif; }
+  .cls-cta:hover { background: rgba(200,169,110,0.2); }
+  /* Adaptive header strip — today's schedule, horizontal scroll */
+  .today-strip { display:flex; gap:10px; overflow-x:auto; padding:0 28px 4px; margin-bottom:22px; scrollbar-width:none; }
+  .today-strip::-webkit-scrollbar { display:none; }
+  .today-chip { flex:0 0 auto; background: var(--bg-el); border:1px solid var(--br-def);
+    border-radius: var(--r-md); padding:10px 14px; min-width:120px; }
+  .today-chip .tc-time { font-size:12px; color: var(--accent); font-weight:600; }
+  .today-chip .tc-title { font-size:13px; color: var(--tx-1); margin-top:3px; }
+  .today-chip .tc-sub { font-size:11px; color: var(--tx-3); margin-top:2px; }
+  /* Featured hero banner */
+  .featured-hero { margin:0 28px 24px; border-radius: var(--r-lg); overflow:hidden;
+    border:1px solid var(--accent); background: linear-gradient(135deg, rgba(200,169,110,0.16), rgba(200,169,110,0.04)); }
+  .fh-inner { padding:18px 20px; cursor:pointer; }
+  .fh-tag { font-size:9px; letter-spacing:.14em; text-transform:uppercase; color: var(--accent); font-weight:600; }
+  .fh-title { font-family:'Cormorant Garamond','Noto Serif TC',serif; font-size:22px; color: var(--tx-1); margin-top:6px; }
+  .fh-meta { font-size:12px; color: var(--tx-2); margin-top:6px; }
+  /* Day-grouped federated list */
+  .cls-daygroup { padding:0 28px; margin-bottom:20px; }
+  .cls-dayhdr { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color: var(--tx-2); margin-bottom:10px; }
+  .cls-card { display:flex; gap:12px; background: var(--bg-el); border:1px solid var(--br-def);
+    border-left-width:3px; border-radius: var(--r-md); padding:13px 15px; margin-bottom:10px; cursor:pointer; transition: border-color .15s; }
+  .cls-card:hover { border-color: var(--br-str); }
+  .cls-card .cc-time { flex:0 0 54px; font-size:12px; color: var(--accent); font-weight:600; line-height:1.4; }
+  .cls-card .cc-title { font-size:14px; color: var(--tx-1); font-weight:500; }
+  .cls-card .cc-studio { font-size:11px; margin-top:3px; }
+  .cls-card .cc-meta { font-size:11px; color: var(--tx-3); margin-top:4px; }
+  .cls-empty { text-align:center; color: var(--tx-3); font-size:13px; padding:30px 28px; line-height:1.6; }
+  .cls-empty a { color: var(--accent); text-decoration:none; }
+  /* Booking modal specifics */
+  .bm-meta-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--br-sub); font-size:13px; }
+  .bm-meta-row .bm-k { color: var(--tx-3); }
+  .bm-meta-row .bm-v { color: var(--tx-1); text-align:right; max-width:60%; }
+  .book-btn-disabled { width:100%; margin-top:20px; background: var(--bg-ov); color: var(--tx-3);
+    border:1px dashed var(--br-str); border-radius: var(--r-lg); padding:16px 12px; font-size:13px;
+    font-family:'DM Sans','Noto Sans TC',sans-serif; cursor:not-allowed; text-align:center; }
+  .book-btn-disabled .bb-tag { display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color: var(--tx-3); margin-top:4px; }
 </style>
 
 <!-- ═══════════════════════════════════════
@@ -505,24 +547,24 @@
     <!-- ─── COURSES PAGE ─── -->
     <div class="page" id="page-courses">
       <div class="header">
-        <div class="greeting">Explore</div>
-        <div class="title">Find your <em>flow</em></div>
+        <div class="greeting" id="cls-greeting">Schedule</div>
+        <div class="title" id="cls-title">Your <em>classes</em></div>
       </div>
-      <div class="section-label" style="padding:0 28px;margin-bottom:14px">Featured Classes</div>
-      <div class="courses-scroll">
-        <div class="course-card c1"><div class="course-icon">🌅</div><div class="course-name">Morning Flow</div><div class="course-meta">20 min · Beginner</div><div class="course-play">▶</div></div>
-        <div class="course-card c2"><div class="course-icon">🌿</div><div class="course-name">Yin &amp; Restore</div><div class="course-meta">45 min · All levels</div><div class="course-play">▶</div></div>
-        <div class="course-card c3"><div class="course-icon">⚡</div><div class="course-name">Power Vinyasa</div><div class="course-meta">30 min · Intermediate</div><div class="course-play">▶</div></div>
-        <div class="course-card c4"><div class="course-icon">🌙</div><div class="course-name">Evening Wind Down</div><div class="course-meta">25 min · Beginner</div><div class="course-play">▶</div></div>
-      </div>
-      <div class="section-label" style="padding:0 28px;margin-bottom:14px">All Classes</div>
-      <div class="all-courses">
-        <div class="course-row"><div class="cr-icon">🌅</div><div><div class="cr-name">Morning Flow</div><div class="cr-meta">20 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🌿</div><div><div class="cr-name">Yin &amp; Restore</div><div class="cr-meta">45 min · All levels</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">⚡</div><div><div class="cr-name">Power Vinyasa</div><div class="cr-meta">30 min · Intermediate</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🌙</div><div><div class="cr-name">Evening Wind Down</div><div class="cr-meta">25 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🧘</div><div><div class="cr-name">Deep Stretch</div><div class="cr-meta">40 min · All levels</div></div><div class="cr-arrow">▶</div></div>
-        <div class="course-row"><div class="cr-icon">🌬️</div><div><div class="cr-name">Breathwork &amp; Meditation</div><div class="cr-meta">15 min · Beginner</div></div><div class="cr-arrow">▶</div></div>
+
+      <!-- Teacher/Studio provisioning entry (shown only for those roles) -->
+      <div class="cls-cta" id="cls-cta" style="display:none" onclick="window.location.href='classes.html'">＋ Schedule a Class</div>
+
+      <!-- Role-adaptive header strip: today's schedule -->
+      <div class="section-label" id="today-label" style="padding:0 28px;margin-bottom:12px;display:none">Today</div>
+      <div class="today-strip" id="today-strip" style="display:none"></div>
+
+      <!-- Featured hero banner (linked studios' featured classes) -->
+      <div id="featured-hero-wrap"></div>
+
+      <!-- 14-day federated list -->
+      <div class="section-label" id="upcoming-label" style="padding:0 28px;margin-bottom:14px">Next 14 Days</div>
+      <div id="cls-list">
+        <div class="cls-empty">Tap Classes to load your schedule.</div>
       </div>
     </div>
 
@@ -568,6 +610,20 @@
     <div class="modal-title" id="day-modal-title"></div>
     <div id="day-log-list"></div>
     <button class="save-btn" style="margin-top:16px;background:var(--br-def);color:var(--tx-1)" onclick="closeDayModal()">Close</button>
+  </div>
+</div>
+
+<!-- Class Booking Modal (M4 — booking engine gated to a later phase) -->
+<div class="overlay" id="booking-modal" style="display:none" onclick="if(event.target===this)closeBooking()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="bm-title"></div>
+    <div id="bm-meta"></div>
+    <div class="book-btn-disabled" aria-disabled="true">
+      Book Class
+      <span class="bb-tag">Next Stage Development — Gated Booking Engine</span>
+    </div>
+    <button class="save-btn" style="margin-top:12px;background:var(--br-def);color:var(--tx-1)" onclick="closeBooking()">Close</button>
   </div>
 </div>
 
@@ -1520,6 +1576,272 @@ function switchTab(tab) {
 
   // Lazy-load community content on first visit
   if (tab === 'community') loadCommunity();
+  if (tab === 'courses') loadClassesTab();
+}
+
+
+/* ─────────────────────────────────────────
+   7b. M4 — FEDERATED CLASSES TAB
+───────────────────────────────────────── */
+let CLS_LOADED = false;
+
+// Deterministic studio-branding colour derived from the owner id, so
+// each studio's cards read consistently without a stored brand colour
+// (a real brand colour can arrive in M6). Palette stays within the
+// warm/sage/amber family of the design tokens.
+const STUDIO_PALETTE = ['#C8A96E','#7B9E87','#D4956A','#A88848','#9A9080','#C47070','#B08D57','#8FA98E'];
+function studioColor(id) {
+  var h = 0, s = String(id || '');
+  for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+  return STUDIO_PALETTE[h % STUDIO_PALETTE.length];
+}
+
+async function loadClassesTab() {
+  // Role-adaptive chrome
+  var isTeacher = currentUserRole === 'teacher' || currentUserRole === 'studio';
+  document.getElementById('cls-cta').style.display = isTeacher ? 'flex' : 'none';
+  document.getElementById('cls-greeting').textContent = isTeacher ? 'Schedule' : 'Explore';
+  document.getElementById('cls-title').innerHTML = isTeacher ? 'Your <em>classes</em>' : 'Find your <em>flow</em>';
+
+  if (CLS_LOADED) return;   // one-time network load; realtime not needed for Phase A
+  CLS_LOADED = true;
+
+  try {
+    if (isTeacher) {
+      await renderTeacherSchedule();
+    } else {
+      await renderStudentFederated();
+    }
+  } catch (err) {
+    console.error('Classes tab load failed:', err);
+    document.getElementById('cls-list').innerHTML =
+      '<div class="cls-empty">Could not load classes. Pull to refresh.</div>';
+  }
+}
+
+// Student: merge published classes from every linked studio/teacher,
+// 14-day forward horizon, grouped by day, studio-branded.
+async function renderStudentFederated() {
+  var listEl = document.getElementById('cls-list');
+
+  var links = await db.from('studio_linkages')
+    .select('entity_id')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'active');
+  var entityIds = (links.data || []).map(function(l) { return l.entity_id; });
+
+  if (!entityIds.length) {
+    document.getElementById('upcoming-label').style.display = 'none';
+    listEl.innerHTML =
+      '<div class="cls-empty">You\'re not linked to a studio yet.<br>' +
+      '<a href="profile.html">Connect with a join code →</a></div>';
+    return;
+  }
+
+  var now = new Date();
+  var horizon = new Date(now.getTime() + 14 * 86400000);
+  var res = await db.from('classes')
+    .select('id, title, style_name, description, start_time, end_time, capacity, room, location, is_online, meeting_url, prerequisites, is_featured, teacher_id, assigned_teacher_id')
+    .in('teacher_id', entityIds)
+    .eq('status', 'published')
+    .gte('start_time', now.toISOString())
+    .lte('start_time', horizon.toISOString())
+    .order('start_time', { ascending: true });
+  var classes = res.data || [];
+
+  // Resolve display names (studios/teachers + assigned teachers) in one pass
+  var nameIds = {};
+  classes.forEach(function(c) { nameIds[c.teacher_id] = 1; if (c.assigned_teacher_id) nameIds[c.assigned_teacher_id] = 1; });
+  var names = await fetchNames(Object.keys(nameIds));
+
+  // Featured hero (soonest featured class)
+  renderFeaturedHero(classes.filter(function(c){ return c.is_featured; }), names);
+
+  // Today strip = student's booked classes today
+  await renderStudentTodayStrip(names);
+
+  if (!classes.length) {
+    document.getElementById('upcoming-label').style.display = 'block';
+    listEl.innerHTML = '<div class="cls-empty">No classes scheduled in the next 14 days.</div>';
+    return;
+  }
+
+  document.getElementById('upcoming-label').style.display = 'block';
+  listEl.innerHTML = renderDayGroups(classes, names);
+  CLS_CACHE = {}; classes.forEach(function(c){ CLS_CACHE[c.id] = c; });
+  CLS_NAMES = names;
+}
+
+// Teacher/Studio: their own teaching schedule (owned or assigned).
+async function renderTeacherSchedule() {
+  var listEl = document.getElementById('cls-list');
+  var now = new Date();
+  var horizon = new Date(now.getTime() + 14 * 86400000);
+
+  var res = await db.from('classes')
+    .select('id, title, style_name, description, start_time, end_time, capacity, room, location, is_online, meeting_url, prerequisites, is_featured, teacher_id, assigned_teacher_id, status')
+    .or('teacher_id.eq.' + currentUser.id + ',assigned_teacher_id.eq.' + currentUser.id)
+    .neq('status', 'cancelled')
+    .gte('start_time', now.toISOString())
+    .lte('start_time', horizon.toISOString())
+    .order('start_time', { ascending: true });
+  var classes = res.data || [];
+
+  var nameIds = {};
+  classes.forEach(function(c) { nameIds[c.teacher_id] = 1; if (c.assigned_teacher_id) nameIds[c.assigned_teacher_id] = 1; });
+  var names = await fetchNames(Object.keys(nameIds));
+
+  // Today strip = classes I teach today
+  var todayKey = dayKey(now);
+  var todays = classes.filter(function(c){ return dayKey(new Date(c.start_time)) === todayKey; });
+  renderTodayStrip(todays, names, 'You\'re teaching');
+
+  document.getElementById('featured-hero-wrap').innerHTML = '';
+
+  if (!classes.length) {
+    document.getElementById('upcoming-label').style.display = 'block';
+    listEl.innerHTML = '<div class="cls-empty">No upcoming classes. Tap “Schedule a Class” to add one.</div>';
+    return;
+  }
+  document.getElementById('upcoming-label').style.display = 'block';
+  listEl.innerHTML = renderDayGroups(classes, names);
+  CLS_CACHE = {}; classes.forEach(function(c){ CLS_CACHE[c.id] = c; });
+  CLS_NAMES = names;
+}
+
+var CLS_CACHE = {};
+var CLS_NAMES = {};
+
+async function fetchNames(ids) {
+  var map = {};
+  if (!ids.length) return map;
+  var res = await db.from('profiles').select('id, display_name').in('id', ids);
+  (res.data || []).forEach(function(p) { map[p.id] = p.display_name || 'Studio'; });
+  return map;
+}
+
+function renderDayGroups(classes, names) {
+  var groups = {};
+  var order = [];
+  classes.forEach(function(c) {
+    var k = dayKey(new Date(c.start_time));
+    if (!groups[k]) { groups[k] = []; order.push(k); }
+    groups[k].push(c);
+  });
+  return order.map(function(k) {
+    var d = new Date(k + 'T00:00:00');
+    var label = d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    var cards = groups[k].map(function(c) { return classCard(c, names); }).join('');
+    return '<div class="cls-daygroup"><div class="cls-dayhdr">' + label + '</div>' + cards + '</div>';
+  }).join('');
+}
+
+function classCard(c, names) {
+  var color = studioColor(c.teacher_id);
+  var studio = names[c.teacher_id] || 'Studio';
+  var instructor = c.assigned_teacher_id && names[c.assigned_teacher_id] ? names[c.assigned_teacher_id] : null;
+  var where = c.is_online ? 'Online' : (c.room || c.location || '');
+  var metaBits = [esc(c.style_name)];
+  if (instructor && c.assigned_teacher_id !== c.teacher_id) metaBits.push('w/ ' + esc(instructor));
+  if (where) metaBits.push(esc(where));
+  return '<div class="cls-card" style="border-left-color:' + color + '" onclick="openBooking(\'' + c.id + '\')">' +
+    '<div class="cc-time">' + fmtTime(c.start_time) + '</div>' +
+    '<div style="flex:1">' +
+      '<div class="cc-title">' + esc(c.title) + '</div>' +
+      '<div class="cc-studio" style="color:' + color + '">' + esc(studio) + '</div>' +
+      '<div class="cc-meta">' + metaBits.join(' · ') + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderFeaturedHero(featured, names) {
+  var wrap = document.getElementById('featured-hero-wrap');
+  if (!featured || !featured.length) { wrap.innerHTML = ''; return; }
+  var c = featured[0];
+  var studio = names[c.teacher_id] || 'Studio';
+  wrap.innerHTML =
+    '<div class="featured-hero"><div class="fh-inner" onclick="openBooking(\'' + c.id + '\')">' +
+      '<div class="fh-tag">✦ Featured · ' + esc(studio) + '</div>' +
+      '<div class="fh-title">' + esc(c.title) + '</div>' +
+      '<div class="fh-meta">' + fmtWhenShort(c.start_time) + ' · ' + esc(c.style_name) + '</div>' +
+    '</div></div>';
+}
+
+async function renderStudentTodayStrip(names) {
+  var now = new Date();
+  var bookings = await db.from('bookings')
+    .select('class_id, classes(id, title, start_time, end_time, teacher_id, room, location, is_online)')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'confirmed');
+  var todayKey = dayKey(now);
+  var rows = (bookings.data || [])
+    .map(function(b) { return b.classes; })
+    .filter(function(c) { return c && dayKey(new Date(c.start_time)) === todayKey; })
+    .sort(function(a, b) { return new Date(a.start_time) - new Date(b.start_time); });
+  renderTodayStrip(rows, names, 'Today\'s bookings');
+}
+
+function renderTodayStrip(rows, names, label) {
+  var stripEl = document.getElementById('today-strip');
+  var labelEl = document.getElementById('today-label');
+  if (!rows || !rows.length) { stripEl.style.display = 'none'; labelEl.style.display = 'none'; return; }
+  labelEl.textContent = label;
+  labelEl.style.display = 'block';
+  stripEl.style.display = 'flex';
+  stripEl.innerHTML = rows.map(function(c) {
+    var where = c.is_online ? 'Online' : (c.room || c.location || '');
+    return '<div class="today-chip">' +
+      '<div class="tc-time">' + fmtTime(c.start_time) + '</div>' +
+      '<div class="tc-title">' + esc(c.title) + '</div>' +
+      (where ? '<div class="tc-sub">' + esc(where) + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function openBooking(id) {
+  var c = CLS_CACHE[id];
+  if (!c) return;
+  var studio = CLS_NAMES[c.teacher_id] || 'Studio';
+  var instructor = c.assigned_teacher_id && CLS_NAMES[c.assigned_teacher_id] ? CLS_NAMES[c.assigned_teacher_id] : studio;
+  var where = c.is_online ? 'Online' : (c.room || c.location || '—');
+  document.getElementById('bm-title').textContent = c.title;
+  var rows = [
+    ['When', fmtWhenShort(c.start_time) + '–' + fmtTime(c.end_time)],
+    ['Studio', studio],
+    ['Instructor', instructor],
+    ['Style', c.style_name],
+    ['Where', where],
+    ['Capacity', c.capacity ? (c.capacity + ' spots') : 'Unlimited'],
+  ];
+  if (c.prerequisites) rows.push(['Prerequisites', c.prerequisites]);
+  if (c.description) rows.push(['About', c.description]);
+  document.getElementById('bm-meta').innerHTML = rows.map(function(r) {
+    return '<div class="bm-meta-row"><span class="bm-k">' + r[0] + '</span><span class="bm-v">' + esc(r[1]) + '</span></div>';
+  }).join('');
+  document.getElementById('booking-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBooking() {
+  document.getElementById('booking-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Date/time helpers
+function dayKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+function fmtWhenShort(iso) {
+  var d = new Date(iso);
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + fmtTime(iso);
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(ch) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+  });
 }
 
 
