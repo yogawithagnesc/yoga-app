@@ -14,7 +14,8 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M0 | Feed-likes fix + housekeeping | §3.6 (feed) | ✅ Done | Haiku 4.5 |
 | M1 | Finish P1 verification | §3.1–3.4 | ✅ Done | Haiku 4.5 |
 | M2 | Dynamic categorization engine | §3.2.1–3.2.2 | ✅ Done (pending migration run + live test) | Sonnet 5 |
-| M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done | Sonnet 5 |
+| M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done (verified live) | Sonnet 5 |
+| M3a | Advanced anatomical illustration redesign | §3.2.3 | ✅ Done | Sonnet 5 |
 | M4 | Class scheduling & booking framework | §3.5, §8 | Not started | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
@@ -91,6 +92,23 @@ Close out the remaining P1 checklist items. Mostly manual QA plus small fixes.
 - Perspective toggle support (yoga-only or global view) integrated with rest engine
 
 **Acceptance:** log screen loads instantly; marking 3+ sore/pain/injured states on a muscle across 14 days produces the rest suggestion card on the dashboard with contextual restoration practice recommendations.
+
+**Post-M3 enhancements (verified live):** Body Status scoring updated to the 7-state feeling weights (single Sore/Pain now correctly reads Watch/Fatigued); historic practice log editing via `?edit=<id>` on the log page with Edit links in the dashboard day-log modal.
+
+---
+
+## M3a — Advanced Anatomical Illustration Redesign ✅ Done
+
+Visual-only upgrade of the M3 body map from flat terracotta capsules to a medically-styled anatomical illustration. Zero behavioral change: same 91 zones, `data-z` names, tap/pick flow, and front/back toggle.
+
+**Delivered:**
+- **Material:** crimson/burgundy muscle bellies via per-muscle radial gradient (`#muscleGrad`); silver-gray fascia/tendon material (`#fasciaGrad`)
+- **Fascia layer** (non-interactive, `pointer-events:none`): thoracolumbar fascia diamond, linea alba + tendinous intersections (six-pack seams), inguinal ligaments, patellar tendons, triceps tendon flats; IT band and Achilles zones re-materialed as tendon (`svgm-t` class) while staying tappable
+- **Striation texture:** 67 fiber-line overlays running along each muscle's contraction axis (fanning pec/trap/lat/glute fibers, vertical rectus/erector fibers, spindle-bowed limb fibers)
+- **Rim lighting:** shared `#chisel` specular-lighting filter (top-left light) chisels every muscle's contour; hover/picking brightness composes with it
+- **Toolkit** checked into `tools/bodymap/` (generators, build scripts, integration splicer, Playwright verification) — regenerate there, never hand-edit the inline SVG
+
+**Verified:** all 91 zones pass multi-point tappability sampling; feeling override/clear restores the correct base material (muscle vs tendon); end-to-end tap → highlight → pick → view-toggle in the real page with stubbed auth; view-toggle render ~38ms (filter cost negligible).
 
 ---
 
