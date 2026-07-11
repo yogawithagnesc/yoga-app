@@ -23,8 +23,8 @@ RETURNS table(available boolean, id uuid) AS $$
 BEGIN
   RETURN QUERY
   SELECT
-    NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = p_username) as available,
-    COALESCE((SELECT public.profiles.id FROM public.profiles WHERE username = p_username LIMIT 1), NULL::uuid) as id;
+    NOT EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(username) = LOWER(p_username)) as available,
+    COALESCE((SELECT public.profiles.id FROM public.profiles WHERE LOWER(username) = LOWER(p_username) LIMIT 1), NULL::uuid) as id;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 

@@ -1862,7 +1862,7 @@ async function sendFollowRequest() {
       // Username exists, fetch the profile
       var { data: profile, error: profileErr } = await db.from('profiles')
         .select('id')
-        .eq('username', query)
+        .ilike('username', query)
         .single();
       if (!profileErr && profile) {
         target = profile;

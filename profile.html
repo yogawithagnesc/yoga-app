@@ -246,7 +246,7 @@ let currentUserRole = null
 let usernameCheckTimeout
 async function debounceUsernameCheck(e) {
   clearTimeout(usernameCheckTimeout)
-  const username = (e.target.value || '').trim()
+  const username = (e.target.value || '').trim().toLowerCase()
   const checkEl = document.getElementById('username-check')
 
   if (!username || username.length < 3) {
@@ -297,7 +297,8 @@ async function saveUsername(username) {
 
 async function saveUsernameExplicit() {
   const input = document.getElementById('username-input')
-  const username = (input.value || '').trim()
+  const username = (input.value || '').trim().toLowerCase()
+  input.value = username
   const checkEl = document.getElementById('username-check')
 
   if (!username || username.length < 3) {
