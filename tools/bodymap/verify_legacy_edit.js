@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
       start_time: '07:00', mood: 'Calm', notes: 'old session',
       intensity: 3, duration_minutes: 45, is_private: true,
       focus_area_ids: [],
-      // Retired M3a-era zone names no longer rendered by M3b's split geometry.
+      // Retired M3a-era zone names no longer rendered by the current body map.
       muscle_feelings: [
         { zone: 'L Biceps', feeling: 'sore' },
         { zone: 'L Deltoid', feeling: 'tight' },
@@ -45,9 +45,21 @@ const { chromium } = require('playwright');
   const state = await page.evaluate(() => ({
     feelings: window.getMuscleFeelings(),
     ctaText: document.querySelector('.cta-btn[onclick="savePractice()"]')?.textContent,
-    otherZonesStillTappable: !!document.querySelector('#svg-body [data-z="L Deltoid Anterior Head"]'),
   }));
   console.log('legacy edit state:', JSON.stringify(state, null, 1));
+
+  // Confirm the click-list UI still works normally alongside the orphaned
+  // legacy entries — open the modal and mark a current (non-legacy) muscle.
+  await page.click('button[onclick="openFullAnatomy()"]');
+  await page.waitForTimeout(300);
+  const otherRowClickable = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('#muscle-list .ml-row')];
+    const row = rows.find(r => r.querySelector('.ml-name')?.textContent === 'Trapezius');
+    if (!row) return false;
+    row.querySelector('.ml-name').click();
+    return document.getElementById('feel-pick-full').classList.contains('show');
+  });
+  console.log('current-generation muscle still clickable after legacy edit load:', otherRowClickable);
 
   // Confirm a re-save still includes the orphaned legacy entries (no data loss)
   await browser.close();

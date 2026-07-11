@@ -1,54 +1,41 @@
-# Body Map Generator Toolkit (M3/M3a/M3b)
+# Body Map (M3 → M3a → M3b → M3c)
 
-Generates the anatomical SVG body map embedded in `lumen-log-practice-3d.html`:
-- **Compact widget** (`#svg-body`, `COMPACT_MARKUP`) — small, unlabeled, in the
-  log-practice form.
-- **Full-screen modal** (`#svg-body-full`, `FULL_MARKUP`) — expanded canvas
-  with the header/sub-muscle/leader-line label overlay (opened via
-  "🔍 View Full Anatomy").
+## Current design (M3c) — reference photo + clickable muscle-name list
 
-Both render the SAME ~123 tap zones (63 front + 60 back) from one geometry
-definition, so a mark made in either instantly shows in the other.
-**Never hand-edit the inline SVG paths in the page** — change the
-zone/fascia/fiber/label definitions here and regenerate.
+As of M3c, the body map in `lumen-log-practice-3d.html` is **not** SVG-based.
+It displays the user-supplied reference photos (`assets/bodymap-front.png`,
+`assets/bodymap-back.png`) as a decorative image, and interaction happens by
+clicking a real, plain-text muscle name in a grouped list rendered alongside
+the photo — not by tapping a region of the image. This was a deliberate pivot
+away from the M3a/M3b SVG illustration approach (see below) after the user
+asked for the exact reference photo look, which hand-authored SVG cannot
+reproduce, and suggested the click-the-name interaction model, which also
+removes the need for pixel-accurate hit-regions entirely.
 
-## Files
-- `gen2.js` — shape primitives (capsule, spindle, teardrop), striation-fiber
-  generators, joint-tendon radial burst generator, and vertical-axis path
-  mirroring (L → R zones)
-- `taxonomy.js` — label overlay source of truth: header groups, sub-muscle
-  text, region tag, and leader-line anchor point per header, for front + back.
-  The label *list* may be denser than the tap-zone *geometry* (e.g. seven
-  named forearm muscles grouped onto 2 physical hitboxes) — see the M3b
-  design note at the top of the file.
-- `render.js` — shared `<defs>` (6 body-region material gradients, silver
-  fascia gradient, chisel rim-light filter), zone/fascia/joint expansion,
-  the `labels()` header/leader-line/dot assembly, and `write()` (compact) /
-  `writeLabeled()` (full-screen) output writers
-- `build_front2.js` / `build_back2.js` — the 63 front / 60 back zone
-  definitions (region-tagged), fascia shapes, joint tendon points, and
-  per-muscle fiber specs
-- `integrate.js` — injects the regenerated `COMPACT_MARKUP`/`FULL_MARKUP`
-  data objects into `lumen-log-practice-3d.html`. The surrounding CSS, modal
-  HTML, and interaction JS (`buildSvg`/`attachSvgHandlers`/`svgTap`/
-  `applyFeeling`/etc., which share `svgBodyStates` across both containers)
-  are hand-authored in the page directly and are not touched by this script.
-- `verify_m3a.js` — Playwright: multi-point interior sampling proves every
-  zone keeps exposed tappable surface; paint override/clear check
-- `verify_page.js` — Playwright: end-to-end in the real page with a stubbed
-  Supabase session (tap → highlight → pick feeling in both containers →
-  toggle views → confirm state sync between compact and full-screen)
-- `verify_legacy_edit.js` — Playwright: opens the edit flow with a log
-  referencing zone names retired by M3b's muscle-head splits, confirms no
-  crash and the orphaned entries survive a resave (documented limitation:
-  they're no longer visually re-tappable under the old name, but not lost)
-- `verify_perf.js` — Playwright: render-time check for view toggles in both
-  containers with the full zone count + chisel filter + label overlay
+**Where it lives (all inline in `lumen-log-practice-3d.html`):**
+- `MUSCLE_LIST` — the data: `front`/`back` arrays of `{ header, items: [{ label, zone, bilateral }] }`. `label` mirrors the reference photo's wording; `zone` is the clean canonical key stored in `practice_logs.muscle_feelings` and read by `index.html`'s `BODY_ZONE_MAP` for the 14-day rest engine. Bilateral items render L/R chip buttons and store under `"L <zone>"`/`"R <zone>"`; non-bilateral (midline) items are a single clickable row.
+- `renderMuscleList(view)` — builds the grouped list DOM, marking rows/chips whose zone has a stored feeling.
+- `muscleTap()` / `applyFeeling()` — open the existing 7-state feeling picker and commit the choice into `muscleStates` (zone → feeling), shared by the compact widget's summary and the full-screen modal's list.
+- Compact widget (`#svg-fallback`): front/back toggle + photo + "🔍 Tap to Mark Muscles" button. No direct interaction here — just a preview and an entry point.
+- Full-screen modal (`#anatomy-modal`): the actual interactive surface — photo + the full clickable list + feeling picker + footer hint.
 
-## Regenerate
-```
-node build_front2.js && node build_back2.js   # writes *_markup.txt + previews
-node integrate.js                              # splices into the page
-NODE_PATH=<path-with-playwright> node verify_m3a.js && node verify_page.js \
-  && node verify_legacy_edit.js && node verify_perf.js
-```
+**To add/rename a muscle:** edit `MUSCLE_LIST` directly in the page. If it's a
+genuinely new zone (not a rename), add it to `BODY_ZONE_MAP` in `index.html`
+too, so it contributes to the rest engine.
+
+**Verification:**
+- `verify_m3c.js` — Playwright: page load, list render (both views), click → picker → multi-select, front/back toggle rebuilds the list, compact ↔ full-screen state sync
+- `verify_legacy_edit.js` — Playwright: editing a pre-M3c log (zone names from a retired SVG-era split) doesn't crash and the current list stays fully functional
+- `verify_save_roundtrip.js` — Playwright: `savePractice()` inserts the correct `muscle_feelings` payload for both bilateral and midline marks
+
+## Retired: M3/M3a/M3b SVG illustration toolkit
+
+Everything else in this directory (`gen2.js`, `render.js`, `taxonomy.js`,
+`build_front2.js`, `build_back2.js`, `integrate.js`) generated a hand-authored
+SVG anatomical illustration (91 → 123 tappable shape zones, region material
+palette, striation fibers, chisel rim-lighting) that was directly tappable.
+**It is no longer wired into the live page as of M3c** — kept here for
+historical reference only (e.g. `taxonomy.js`'s canonical zone names/regions
+were reused as the source for M3c's `MUSCLE_LIST` zone keys). Do not run
+`integrate.js` — it splices markup into DOM elements (`#svg-body`,
+`COMPACT_MARKUP`, etc.) that no longer exist in the page.

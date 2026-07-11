@@ -128,6 +128,22 @@ Pushed the M3a vector illustration much further to approach a professional medic
 
 ---
 
+## M3c — Reference Photo + Clickable Muscle-Name List ✅ Done (supersedes M3a/M3b's SVG illustration)
+
+The user supplied the actual reference photos (front/back) used to spec M3b and asked for the exact photo look, plus proposed a different interaction model: click a muscle's *name* in a list next to the photo, rather than tap a region of the image. Assessed feasibility first: true pixel-for-pixel use of "these exact photos" required the actual image files (not achievable from M3b's hand-authored SVG, and pasted chat images aren't retrievable as files) — resolved once the user pushed the two PNGs to the repo (`Lumen - Body map (Front/Back) (V1).png` on `main`), now stored as `assets/bodymap-front.png` / `assets/bodymap-back.png`. The click-list model turned out to be a net simplification: it removes the need for pixel-accurate hit-regions entirely, so it was implemented directly rather than treated as a fallback.
+
+**Delivered:**
+- **Photo is the visual, list is the interaction:** the body map now displays the exact reference PNGs (decorative, non-interactive) with a grouped, real-DOM list of clickable muscle names below/alongside it — headers matching the reference (Neck, Chest, Shoulders, Biceps, Forearms, Abs, Quadriceps, Thighs, Hamstrings, Calves front; Neck & Upper Back, Shoulders, Mid-Back, Arms (Triceps), Forearms, Lower Back & Core, Glutes, Hamstrings, Calves back).
+- **Full individual muscle granularity:** since rows are just text (not spatial polygons), every named muscle from the reference gets its own row — including the small forearm/wrist muscles (Palmaris Longus, Extensor Carpi Ulnaris, Abductor Pollicis Longus, etc.) that M3b had to group onto shared tap targets for touch-target-size reasons. Data source: `MUSCLE_LIST` in `lumen-log-practice-3d.html`.
+- **Bilateral L/R chips:** paired muscles (most of them) render two small chip buttons; midline structures (Trapezius, Erector Spinae, Rectus Abdominis, etc.) are a single clickable row. Multi-select across as many muscles as needed, one feeling per muscle via the existing 7-state picker.
+- **Compact widget + full-screen modal:** the in-form widget shows the photo + a "🔍 Tap to Mark Muscles" button (kept small — the full list doesn't fit at ~260px wide); the full-screen modal is the primary interactive surface (photo + complete clickable list + picker + footer hint), reusing the modal shell built in M3b.
+- **Legacy-safe canonical zones:** display labels mirror the reference photo's wording, but each stores under a clean canonical `zone` key reused from M3b's taxonomy (typos/duplicates in the AI-generated reference text, e.g. "Sarotorius", "Biceos Femoris", "Perenous Lingus", were not carried into the data model — only into nothing, since display text was normalized to the canonical spelling throughout). `BODY_ZONE_MAP` (`index.html`) additively extended for the newly-individually-tracked muscles (Omohyoid, Sternohyoid, the wrist muscles, Rectus Abdominis, Extensor Digitorum Longus).
+- **`tools/bodymap/`'s SVG generation toolkit (gen2.js/render.js/build_front2.js/build_back2.js/integrate.js) is retired** — no longer wired into the live page, kept for historical reference only (its canonical zone names seeded `MUSCLE_LIST`'s `zone` keys).
+
+**Verified:** page loads with no JS errors; both views render the correct photo + list (10 header groups / 42 rows front, matching back); click → picker → multi-select confirmed across bilateral and midline muscles; front/back toggle rebuilds the list correctly; compact widget and full-screen modal stay in sync on open/close; `savePractice()` inserts the correct `muscle_feelings` payload; editing a pre-M3c log with retired SVG-era zone names causes no crash and the current list stays fully functional (same accepted limitation as M3b: orphaned old names survive round-trip but aren't visually re-selectable under their old name).
+
+---
+
 ## M4 — Class Scheduling & Booking Framework (PRD §3.5 + §8)
 
 The largest milestone. The `classes` and `bookings` tables plus capacity trigger already exist in `schema.sql` — this is primarily frontend plus a few schema additions.
