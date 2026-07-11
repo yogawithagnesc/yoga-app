@@ -1311,19 +1311,21 @@ function attachTypeDragHandlers(card, category) {
 
   card.addEventListener('pointerdown', (e) => {
     if (e.button !== undefined && e.button !== 0) return;
-    // Don't hijack pointer capture when the interaction starts on the
-    // renameable name text — setPointerCapture() here would redirect the
-    // subsequent mousedown/click/dblclick compat events (for this same
-    // interaction) to `card`, silently breaking rename regardless of what
-    // listeners are attached to the name element.
-    if (e.target.closest('.type-name')) return;
     startX = e.clientX; startY = e.clientY; dragging = false;
-    card.setPointerCapture(e.pointerId);
+    const pointerId = e.pointerId;
+    // Deliberately do NOT call setPointerCapture() here. Capturing before a
+    // drag is confirmed retargets every subsequent event for this pointer —
+    // including the mousedown/click/dblclick compat events for this same
+    // click — to `card`, which silently breaks click/dblclick on any child
+    // (like the renameable name text) regardless of what listeners are
+    // attached to it. Capture is acquired below, only once real dragging
+    // (movement past the threshold) is confirmed.
 
     const onMove = (mv) => {
       const dx = mv.clientX - startX, dy = mv.clientY - startY;
       if (!dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
         dragging = true;
+        card.setPointerCapture(pointerId);
         card.classList.add('dragging');
         ghost = card.cloneNode(true);
         ghost.classList.add('drag-ghost');
