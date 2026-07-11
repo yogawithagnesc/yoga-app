@@ -932,16 +932,55 @@ async function loadContinueWatching() {
 ───────────────────────────────────────── */
 var BODY_CATEGORIES  = ['Shoulders', 'Lower Back', 'Hamstrings', 'Hips', 'Knees', 'Core'];
 var BODY_ZONE_MAP     = {
-  'Shoulder (Front)': 'Shoulders',
-  'Rear Deltoid':     'Shoulders',
-  'Lower Back':       'Lower Back',
-  'Hamstring':        'Hamstrings',
-  'Hip Flexor':       'Hips',
-  'Glute':            'Hips',
+  // Shoulders / Upper Back
+  'Deltoid':          'Shoulders',
+  'Trapezius':        'Shoulders',
+  'Infraspinatus':    'Shoulders',
+  'Teres Major':      'Shoulders',
+  'Sternocleidomastoid': 'Shoulders',
+  'Pectoralis Major': 'Shoulders',
+  // Lower Back
+  'Erector Spinae':   'Lower Back',
+  'Latissimus Dorsi': 'Lower Back',
+  // Hamstrings
+  'Biceps Femoris':   'Hamstrings',
+  'Semitendinosus':   'Hamstrings',
+  'Iliotibial Band':  'Hamstrings',
+  // Hips / Glutes
+  'Gluteus Maximus':  'Hips',
+  'Gluteus Medius':   'Hips',
+  'Tensor Fasciae Latae': 'Hips',
+  // Knees / Quads
   'Knee':             'Knees',
-  'Abs / Core':       'Core',
+  'Vastus Lateralis': 'Knees',
+  'Vastus Medialis':  'Knees',
+  'Rectus Femoris':   'Knees',
+  // Core
+  'Upper Abs':        'Core',
   'Lower Abs':        'Core',
-  'Oblique':          'Core',
+  'External Oblique': 'Core',
+  'Serratus Anterior':'Core',
+  // Arms (mapped to Shoulders for simplicity)
+  'Biceps':           'Shoulders',
+  'Brachialis':       'Shoulders',
+  'Triceps Long Head':'Shoulders',
+  'Triceps Lateral Head':'Shoulders',
+  'Forearm Flexors':  'Shoulders',
+  'Forearm Extensors':'Shoulders',
+  'Brachioradialis':  'Shoulders',
+  // Legs
+  'Tibialis Anterior':'Knees',
+  'Gastrocnemius':    'Knees',
+  'Soleus':           'Knees',
+  'Sartorius':        'Knees',
+  // Other
+  'Head':             'Shoulders',
+  'Neck':             'Shoulders',
+  'Hand':             'Shoulders',
+  'Foot':             'Knees',
+  'Ankle':            'Knees',
+  'Achilles':         'Knees',
+  'Adductors':        'Hips',
 };
 var BODY_FEELING_WEIGHT = { sore: 3, tight: 2, worked: 1, strong: -1 };
 var BODY_LEVELS = {
@@ -1006,6 +1045,68 @@ function levelForScore(score) {
   return BODY_LEVELS.ok;
 }
 
+// Count serious feelings (sore/pain/injured) per muscle in 14 days
+function computeRestNeeds() {
+  var muscleCounts = {}; // zone -> count of sore/pain/injured flags
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var yogaOnly = STATE.perspective === 'yoga';
+
+  STATE.bodyRaw.forEach(function(log) {
+    if (yogaOnly && !(log.practice_categories && log.practice_categories.category_type === 'yoga')) return;
+
+    var logDate = new Date(log.practice_date + 'T00:00:00');
+    var daysAgo = Math.round((today - logDate) / 86400000);
+    if (daysAgo < 0 || daysAgo > 13) return;
+
+    (log.muscle_feelings || []).forEach(function(mf) {
+      // Count only serious feelings: sore, pain, injured (lowercase)
+      if (['sore', 'pain', 'injured'].indexOf(mf.feeling) >= 0) {
+        var zone = mf.zone || '';
+        muscleCounts[zone] = (muscleCounts[zone] || 0) + 1;
+      }
+    });
+  });
+
+  // Return muscles with 3+ serious feelings in 14 days
+  var needsRest = [];
+  Object.keys(muscleCounts).forEach(function(zone) {
+    if (muscleCounts[zone] >= 3) {
+      needsRest.push({ zone: zone, count: muscleCounts[zone] });
+    }
+  });
+
+  return needsRest.sort(function(a, b) { return b.count - a.count; });
+}
+
+// Suggest restoration practices based on affected areas
+function getRestSuggestion(restNeeds) {
+  if (!restNeeds || !restNeeds.length) return null;
+
+  // Count affected areas
+  var affectedAreas = {};
+  restNeeds.forEach(function(item) {
+    var base = (item.zone || '').replace(/^[LR] /, '');
+    var cat = BODY_ZONE_MAP[base];
+    if (cat) affectedAreas[cat] = (affectedAreas[cat] || 0) + 1;
+  });
+
+  // Recommend Yin for lower body, Mindfulness for upper body
+  var hasLowerBody = affectedAreas['Hamstrings'] || affectedAreas['Hips'] || affectedAreas['Knees'];
+  var hasUpperBody = affectedAreas['Shoulders'] || affectedAreas['Core'];
+
+  var suggestion = '';
+  if (hasLowerBody && !hasUpperBody) {
+    suggestion = '🧘 Consider a Yin or Restorative yoga session to support recovery.';
+  } else if (hasUpperBody && !hasLowerBody) {
+    suggestion = '🧘 Consider a Mindfulness or gentle stretching session.';
+  } else {
+    suggestion = '🧘 Consider a gentle, restorative practice to support full-body recovery.';
+  }
+
+  return suggestion;
+}
+
 function renderBodyStatus() {
   var el = document.getElementById('body-status-rows');
   if (!el) return;
@@ -1018,6 +1119,27 @@ function renderBodyStatus() {
 
   var scores = computeBodyStatus();
   el.innerHTML = '';
+
+  // First, check for rest needs and show rest suggestion if applicable
+  var restNeeds = computeRestNeeds();
+  if (restNeeds && restNeeds.length > 0) {
+    var suggestion = getRestSuggestion(restNeeds);
+    if (suggestion) {
+      var restCard = document.createElement('div');
+      restCard.className = 'body-status-row';
+      restCard.innerHTML =
+        '<div style="width:100%;text-align:center;color:var(--warning);font-size:13px;padding:10px;background:rgba(212,149,106,0.08);border-radius:6px;border-left:3px solid var(--warning)">' +
+        suggestion +
+        '</div>';
+      el.appendChild(restCard);
+
+      // Add separator
+      var sep = document.createElement('div');
+      sep.style.height = '8px';
+      el.appendChild(sep);
+    }
+  }
+
   BODY_CATEGORIES.forEach(function(cat) {
     var lvl = levelForScore(scores[cat]);
     var row = document.createElement('div');
