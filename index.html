@@ -982,7 +982,19 @@ var BODY_ZONE_MAP     = {
   'Achilles':         'Knees',
   'Adductors':        'Hips',
 };
-var BODY_FEELING_WEIGHT = { sore: 3, tight: 2, worked: 1, strong: -1 };
+// Weight system: serious feelings trigger fatigue, recovery feelings reduce it
+var BODY_FEELING_WEIGHT = {
+  injured:   4,  // most critical
+  pain:      3.5, // serious alert
+  sore:      3,   // warning state
+  tight:     1.5, // minor concern
+  sweetpain: 1,   // neutral (good burn)
+  feelgood:  -1,  // positive recovery signal
+  relax:     -0.5, // relaxation benefit
+  // Legacy values for backwards compatibility
+  worked:    1,
+  strong:    -1,
+};
 var BODY_LEVELS = {
   ok:       { label: 'Ok',       color: 'var(--success)', bg: 'rgba(123,158,135,0.12)' },
   watch:    { label: 'Watch',    color: 'var(--warning)', bg: 'rgba(212,149,106,0.12)' },
@@ -1040,8 +1052,9 @@ function computeBodyStatus() {
 }
 
 function levelForScore(score) {
-  if (score > 4) return BODY_LEVELS.fatigued;
-  if (score > 1) return BODY_LEVELS.watch;
+  // Adjusted thresholds for new weight system: pain/injury flags trigger Watch immediately
+  if (score > 3.5) return BODY_LEVELS.fatigued;  // 1 pain + 1 sore, or 2 sores = fatigued
+  if (score > 1.5) return BODY_LEVELS.watch;    // 1 sore or 1 pain = watch
   return BODY_LEVELS.ok;
 }
 
