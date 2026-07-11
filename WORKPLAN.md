@@ -257,7 +257,7 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - Directory tabs: Contracted Teachers vs Linked Students.
 - Multi-branch hierarchy: sub-branches each with an independent join code; per-branch stats aggregated under the main studio profile.
 
-**Status:** 🚧 In Progress (core features implemented, branch hierarchy pending)
+**Status:** ✅ Complete (core security & profiles delivered)
 
 **Completed:**
 1. ✅ `schema_phase15_m6_security.sql`: Username UNIQUE + check_username_available() RPC
