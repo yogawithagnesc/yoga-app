@@ -843,6 +843,11 @@
 /* ─────────────────────────────────────────
    1. AUTH — Check session, redirect if needed
 ───────────────────────────────────────── */
+// Local-date formatter: avoids toISOString()'s UTC conversion, which shifts
+// the date backward by a day for any timezone ahead of UTC (e.g. UTC+8).
+function localDateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
 let currentUser     = null;
 let currentUserRole = null;
 
@@ -1076,8 +1081,8 @@ function buildCalendar() {
 async function loadMonthLogs() {
   if (!currentUser) return;
   var now   = new Date();
-  var start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-  var end   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  var start = localDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+  var end   = localDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
   var result = await db
     .from('practice_logs')
@@ -1336,8 +1341,8 @@ function zoneToBodyCategory(rawZone) {
 async function loadBodyStatus() {
   if (!currentUser) return;
   var now   = new Date();
-  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 13).toISOString().split('T')[0];
-  var end   = now.toISOString().split('T')[0];
+  var start = localDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 13));
+  var end   = localDateStr(now);
 
   var result = await db
     .from('practice_logs')
@@ -1374,7 +1379,7 @@ async function loadFatigueTrend() {
   for (var i = 29; i >= 0; i--) {
     var d = new Date();
     d.setDate(d.getDate() - i);
-    var key = d.toISOString().split('T')[0];
+    var key = localDateStr(d);
     var count = byDate[key] || 0;
     var heightPct = Math.max(4, Math.round((count / maxCount) * 100));
     var bar = document.createElement('div');

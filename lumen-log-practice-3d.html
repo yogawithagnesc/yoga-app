@@ -475,6 +475,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 ══════════════════════════════════════ -->
 <script>
 // ─── AUTH + DATA INIT ───
+// Local-date formatter: avoids toISOString()'s UTC conversion, which shifts
+// the date backward by a day for any timezone ahead of UTC (e.g. UTC+8).
+function localDateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
 let currentUser = null;
 let currentUserRole = 'student';
 let CATEGORIES = [];    // practice_categories rows visible to this user (system + own + linked)
@@ -626,8 +631,8 @@ async function refreshLoggedDays() {
   LOGGED_DAYS = new Set();
   if (!currentUser) return;
   const y = calDate.getFullYear(), m = calDate.getMonth();
-  const start = new Date(y, m, 1).toISOString().split('T')[0];
-  const end   = new Date(y, m + 1, 0).toISOString().split('T')[0];
+  const start = localDateStr(new Date(y, m, 1));
+  const end   = localDateStr(new Date(y, m + 1, 0));
   const { data } = await db.from('practice_logs')
     .select('practice_date')
     .eq('user_id', currentUser.id)
@@ -1247,7 +1252,7 @@ async function savePractice() {
     style_name:       category.name,
     is_custom:        !category.is_system,
     duration_minutes: Math.max(1, durationVal),
-    practice_date:    selDate.toISOString().split('T')[0],
+    practice_date:    localDateStr(selDate),
     start_time:       document.getElementById('start-time').value || null,
     mood:             document.querySelector('.mood-btn.sel .mood-lbl')?.textContent || null,
     notes:            document.getElementById('notes').value || null,
