@@ -24,7 +24,7 @@ BEGIN
   RETURN QUERY
   SELECT
     NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = p_username) as available,
-    (SELECT id FROM public.profiles WHERE username = p_username LIMIT 1) as id;
+    COALESCE((SELECT public.profiles.id FROM public.profiles WHERE username = p_username LIMIT 1), NULL::uuid) as id;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public;
 
