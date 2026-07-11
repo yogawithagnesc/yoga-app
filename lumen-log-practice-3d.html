@@ -112,28 +112,8 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .custom-focus-form{display:flex;gap:8px;margin-top:10px}
 .custom-focus-form input{flex:1}
 
-/* ══ 3D BODY MAP (M3: retired) ══ */
-.body3d-wrap{display:none}
-#body3d-canvas{width:100%!important;display:block;cursor:grab;touch-action:none}
-#body3d-canvas:active{cursor:grabbing}
-
-/* Loading overlay */
-.body3d-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-el);gap:12px;z-index:5;transition:opacity .4s}
-.body3d-loading.hidden{opacity:0;pointer-events:none}
-.load-spinner{width:32px;height:32px;border:2px solid var(--br-str);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.load-txt{font-size:12px;color:var(--tx-3);letter-spacing:.08em}
-.load-pct{font-size:20px;font-family:'Cormorant Garamond','Noto Serif TC',serif;color:var(--accent)}
-
-/* Hint bar above canvas */
-.body3d-controls{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--br-sub)}
-.view-btns{display:flex;gap:6px}
-.view-btn{padding:5px 12px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:none;color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
-.view-btn:hover,.view-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
-.hint-txt{font-size:10px;color:var(--tx-3);letter-spacing:.05em}
-
-/* Tap hint overlay */
-.tap-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);backdrop-filter:blur(6px);border:1px solid var(--br-str);border-radius:var(--r-full);padding:6px 16px;font-size:11px;color:var(--tx-2);white-space:nowrap;pointer-events:none;transition:opacity .5s;z-index:4}
+/* Tap hint */
+.tap-hint{background:rgba(0,0,0,.65);backdrop-filter:blur(6px);border:1px solid var(--br-str);border-radius:var(--r-full);padding:6px 16px;font-size:11px;color:var(--tx-2);white-space:nowrap;pointer-events:none;transition:opacity .5s}
 .tap-hint.hidden{opacity:0}
 
 /* Feeling picker */
@@ -334,44 +314,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="sec" id="sec-3">
     <div class="sec-hdr"><div class="sec-num">4</div><div class="sec-title">Body Map</div></div>
     <div style="font-size:12px;color:var(--tx-2);margin-bottom:12px;line-height:1.6">
-      Rotate the model, then tap a muscle group to mark how it feels. Data is used to track injury patterns over time.
-    </div>
-
-    <!-- 3D VIEWER -->
-    <div class="body3d-wrap" id="body3d-wrap">
-      <!-- Controls bar -->
-      <div class="body3d-controls">
-        <div class="view-btns">
-          <button class="view-btn active" id="vbtn-front" onclick="setView('front')">Front</button>
-          <button class="view-btn" id="vbtn-back" onclick="setView('back')">Back</button>
-          <button class="view-btn" id="vbtn-side" onclick="setView('side')">Side</button>
-          <button class="view-btn" id="vbtn-reset" onclick="setView('reset')">⟳ Reset</button>
-        </div>
-        <div class="hint-txt">Drag to rotate</div>
-      </div>
-
-      <!-- Canvas -->
-      <canvas id="body3d-canvas" height="320"></canvas>
-
-      <!-- Loading -->
-      <div class="body3d-loading" id="body3d-loading">
-        <div class="load-spinner"></div>
-        <div class="load-pct" id="load-pct">0%</div>
-        <div class="load-txt">Loading anatomy model…</div>
-      </div>
-
-      <!-- Tap hint -->
-      <div class="tap-hint" id="tap-hint">👆 Tap a muscle to mark</div>
-
-      <!-- Feeling picker (shown after tap) — M3: Sore/Pain only -->
-      <div class="feel-pick" id="feel-pick">
-        <div class="fp-title" id="fp-muscle-name">—</div>
-        <div class="fp-row">
-          <button class="fp-btn" onclick="applyFeeling('sore')" style="background:rgba(196,112,112,0.15);border-color:#C47070;color:#C47070">🟠 Sore</button>
-          <button class="fp-btn" onclick="applyFeeling('pain')" style="background:rgba(196,112,112,0.15);border-color:#C47070;color:#C47070">🔴 Pain</button>
-          <button class="fp-btn fp-clear" onclick="applyFeeling(null)">✕ Clear</button>
-        </div>
-      </div>
+      Toggle front/back, then tap a muscle group to mark it Sore or in Pain. Data is used to track injury patterns over time.
     </div>
 
     <!-- SVG BODY MAP (M3: primary) -->
@@ -381,6 +324,19 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <button class="svg-toggle-btn" data-view="back">Back</button>
       </div>
       <svg id="svg-body" viewBox="0 0 200 420" style="width:180px;height:auto"></svg>
+
+      <!-- Tap hint -->
+      <div class="tap-hint" id="tap-hint" style="position:static;transform:none;margin-top:4px">👆 Tap a muscle to mark</div>
+
+      <!-- Feeling picker (shown after tap) — M3: Sore/Pain only -->
+      <div class="feel-pick" id="feel-pick" style="width:100%">
+        <div class="fp-title" id="fp-muscle-name">—</div>
+        <div class="fp-row">
+          <button class="fp-btn" onclick="applyFeeling('sore')" style="background:rgba(196,112,112,0.15);border-color:#C47070;color:#C47070">🟠 Sore</button>
+          <button class="fp-btn" onclick="applyFeeling('pain')" style="background:rgba(196,112,112,0.15);border-color:#C47070;color:#C47070">🔴 Pain</button>
+          <button class="fp-btn fp-clear" onclick="applyFeeling(null)">✕ Clear</button>
+        </div>
+      </div>
     </div>
 
     <!-- LEGEND -->
