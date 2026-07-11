@@ -127,6 +127,7 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 
 /* Legend + area tags */
 .body-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.leg-item{font-size:10px}
 .leg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r-md);background:var(--bg-el);border:1px solid var(--br-sub);font-size:11px;color:var(--tx-2)}
 .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .areas-lbl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-3);margin-bottom:8px}
@@ -314,7 +315,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="sec" id="sec-3">
     <div class="sec-hdr"><div class="sec-num">4</div><div class="sec-title">Body Map</div></div>
     <div style="font-size:12px;color:var(--tx-2);margin-bottom:12px;line-height:1.6">
-      Toggle front/back, then tap a muscle group to mark it Sore or in Pain. Data is used to track injury patterns over time.
+      Toggle front/back, then tap a muscle to log how it feels — from Relax to Injured. Data is used to track injury patterns over time.
     </div>
 
     <!-- SVG BODY MAP (M3: primary) -->
@@ -323,29 +324,20 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <button class="svg-toggle-btn active" data-view="front">Front</button>
         <button class="svg-toggle-btn" data-view="back">Back</button>
       </div>
-      <svg id="svg-body" viewBox="0 0 200 420" style="width:180px;height:auto"></svg>
+      <svg id="svg-body" viewBox="0 0 240 580" style="width:210px;height:auto"></svg>
 
       <!-- Tap hint -->
       <div class="tap-hint" id="tap-hint" style="position:static;transform:none;margin-top:4px">👆 Tap a muscle to mark</div>
 
-      <!-- Feeling picker (shown after tap) — M3: Sore/Pain only -->
+      <!-- Feeling picker (shown after tap) — M3: 7-state feeling scale -->
       <div class="feel-pick" id="feel-pick" style="width:100%">
         <div class="fp-title" id="fp-muscle-name">—</div>
-        <div class="fp-row">
-          <button class="fp-btn" onclick="applyFeeling('sore')" style="background:rgba(196,112,112,0.15);border-color:#C47070;color:#C47070">🟠 Sore</button>
-          <button class="fp-btn" onclick="applyFeeling('pain')" style="background:rgba(196,112,112,0.15);border-color:#C47070;color:#C47070">🔴 Pain</button>
-          <button class="fp-btn fp-clear" onclick="applyFeeling(null)">✕ Clear</button>
-        </div>
+        <div class="fp-row" id="fp-row"></div>
       </div>
     </div>
 
     <!-- LEGEND -->
-    <div class="body-legend" id="body-legend" style="margin-top:12px">
-      <div class="leg-item"><div class="leg-dot" style="background:rgba(200,169,110,0.8)"></div>🎯 Worked</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#D4956A"></div>⚡ Tight</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#C47070"></div>🔴 Sore/Pain</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#7B9E87"></div>💪 Strong</div>
-    </div>
+    <div class="body-legend" id="body-legend" style="margin-top:12px"></div>
 
     <!-- SELECTED AREAS -->
     <div class="areas-lbl mt10">Marked Areas</div>
@@ -1195,6 +1187,10 @@ function buildSVGFallback() {
   const svg = document.getElementById('svg-body');
   svg.innerHTML = getSVGMarkup(svgCurrentView);
   attachSvgHandlers();
+  // Re-apply any already-marked feelings to the newly rendered zones (front/back toggle persistence)
+  document.querySelectorAll('#svg-body .svgm').forEach(updateSvgMuscleColor);
+  buildFeelPickerButtons();
+  buildBodyLegend();
 }
 
 function getSVGMarkup(view) {
@@ -1202,55 +1198,74 @@ function getSVGMarkup(view) {
 
   if (view === 'front') {
     return grad + `
-      <ellipse cx="100" cy="34" rx="24" ry="30" fill="url(#fg1)" class="svgm" data-z="Head"/>
-      <rect x="89" y="60" width="22" height="16" rx="4" fill="url(#fg1)" class="svgm" data-z="Neck"/>
-      <path d="M80,96 C68,108 62,128 64,150 C66,162 76,168 92,166 L110,166 L128,166 C144,168 154,162 156,150 C158,128 152,108 140,96 L110,92 Z" fill="url(#fg1)" class="svgm" data-z="Chest"/>
-      <path d="M60,90 C44,96 36,112 38,130 C40,144 50,154 62,150 C72,146 78,130 76,112 C74,100 68,90 60,90 Z" fill="url(#fg1)" class="svgm" data-z="L Shoulder"/>
-      <path d="M160,90 C176,96 184,112 182,130 C180,144 170,154 158,150 C148,146 142,130 144,112 C146,100 152,90 160,90 Z" fill="url(#fg1)" class="svgm" data-z="R Shoulder"/>
-      <path d="M38,110 C28,118 22,140 24,158 C26,172 36,182 50,180 C64,178 72,162 72,142 C72,120 60,105 48,105 Z" fill="url(#fg1)" class="svgm" data-z="L Tricep"/>
-      <path d="M162,110 C172,118 178,140 176,158 C174,172 164,182 150,180 C136,178 128,162 128,142 C128,120 140,105 152,105 Z" fill="url(#fg1)" class="svgm" data-z="R Tricep"/>
-      <path d="M38,132 C30,142 28,164 32,178 C36,190 46,196 56,192 C66,188 72,176 72,160 C72,144 66,130 58,128 Z" fill="url(#fg1)" class="svgm" data-z="L Bicep"/>
-      <path d="M182,132 C190,142 192,164 188,178 C184,190 174,196 164,192 C154,188 148,176 148,160 C148,144 154,130 162,128 Z" fill="url(#fg1)" class="svgm" data-z="R Bicep"/>
-      <path d="M56,180 C48,188 46,206 48,218 C50,228 58,234 68,234 C78,234 84,228 84,218 L84,184 Z" fill="url(#fg1)" class="svgm" data-z="L Forearm"/>
-      <path d="M144,180 C152,188 154,206 152,218 C150,228 142,234 132,234 C122,234 116,228 116,218 L116,184 Z" fill="url(#fg1)" class="svgm" data-z="R Forearm"/>
-      <path d="M84,164 C70,172 64,192 64,210 C64,224 72,232 84,232 C96,232 102,224 102,210 L102,168 Z" fill="url(#fg1)" class="svgm" data-z="L Oblique"/>
-      <path d="M136,164 C150,172 156,192 156,210 C156,224 148,232 136,232 C124,232 118,224 118,210 L118,168 Z" fill="url(#fg1)" class="svgm" data-z="R Oblique"/>
-      <rect x="98" y="162" width="24" height="70" rx="4" fill="url(#fg1)" class="svgm" data-z="Core / Abs"/>
-      <path d="M68,162 C60,168 56,188 58,206 C60,218 68,226 78,224 C88,222 92,208 90,190 L90,166 Z" fill="url(#fg1)" class="svgm" data-z="L Hip Flexor"/>
-      <path d="M132,162 C140,168 144,188 142,206 C140,218 132,226 122,224 C112,222 108,208 110,190 L110,166 Z" fill="url(#fg1)" class="svgm" data-z="R Hip Flexor"/>
-      <rect x="76" y="232" width="28" height="80" rx="12" fill="url(#fg1)" class="svgm" data-z="L Quad"/>
-      <rect x="116" y="232" width="28" height="80" rx="12" fill="url(#fg1)" class="svgm" data-z="R Quad"/>
-      <ellipse cx="90" cy="320" rx="14" ry="11" fill="#A87058" class="svgm" data-z="L Knee"/>
-      <ellipse cx="130" cy="320" rx="14" ry="11" fill="#A87058" class="svgm" data-z="R Knee"/>
-      <rect x="78" y="332" width="22" height="64" rx="10" fill="url(#fg1)" class="svgm" data-z="L Shin"/>
-      <rect x="120" y="332" width="22" height="64" rx="10" fill="url(#fg1)" class="svgm" data-z="R Shin"/>
-      <ellipse cx="90" cy="402" rx="16" ry="12" fill="#A87058" class="svgm" data-z="L Ankle"/>
-      <ellipse cx="130" cy="402" rx="16" ry="12" fill="#A87058" class="svgm" data-z="R Ankle"/>
+      <ellipse cx="120" cy="42" rx="27" ry="33" class="svgm" data-z="Head"/>
+      <path d="M109.2,68.0 L105.3,89.3 A15,15 0 0 0 134.7,89.3 L130.8,68.0 A11,11 0 0 0 109.2,68.0 Z" class="svgm" data-z="Neck"/>
+      <path d="M92,94 C100,88 140,88 148,94 C150,100 148,108 140,110 C130,106 110,106 100,110 C92,108 90,100 92,94 Z" class="svgm" data-z="Trapezius"/>
+      <path d="M120,102 L94,100 C82,102 74,114 73,130 C72,146 78,160 96,164 L120,164 Z" class="svgm" data-z="L Pectoralis"/>
+      <path d="M 120.0,102L 146.0,100C 158.0,102 166.0,114 167.0,130C 168.0,146 162.0,160 144.0,164L 120.0,164Z" class="svgm" data-z="R Pectoralis"/>
+      <path d="M51.1,118.1 L42.1,206.7 A13,13 0 0 0 67.6,211.0 L88.5,124.4 A19,19 0 0 0 51.1,118.1 Z" class="svgm" data-z="L Biceps"/>
+      <path d="M151.5,124.4 L172.4,211.0 A13,13 0 0 0 197.9,206.7 L188.9,118.1 A19,19 0 0 0 151.5,124.4 Z" class="svgm" data-z="R Biceps"/>
+      <path d="M96,100 C80,98 62,104 54,120 C48,132 50,148 62,154 C74,158 86,150 90,136 C93,124 94,110 96,100 Z" class="svgm" data-z="L Deltoid"/>
+      <path d="M 144.0,100C 160.0,98 178.0,104 186.0,120C 192.0,132 190.0,148 178.0,154C 166.0,158 154.0,150 150.0,136C 147.0,124 146.0,110 144.0,100Z" class="svgm" data-z="R Deltoid"/>
+      <path d="M42.0,207.9 L41.0,299.9 A9,9 0 0 0 59.0,300.9 L67.9,209.3 A13,13 0 0 0 42.0,207.9 Z" class="svgm" data-z="L Forearm"/>
+      <path d="M172.1,209.3 L181.0,300.9 A9,9 0 0 0 199.0,299.9 L198.0,207.9 A13,13 0 0 0 172.1,209.3 Z" class="svgm" data-z="R Forearm"/>
+      <path d="M42,292 C36,296 34,312 38,328 C41,338 50,340 55,332 C58,322 57,306 54,294 C51,290 46,290 42,292 Z" class="svgm" data-z="L Hand"/>
+      <path d="M 198.0,292C 204.0,296 206.0,312 202.0,328C 199.0,338 190.0,340 185.0,332C 182.0,322 183.0,306 186.0,294C 189.0,290 194.0,290 198.0,292Z" class="svgm" data-z="R Hand"/>
+      <ellipse cx="83" cy="162" rx="7" ry="15" class="svgm" data-z="L Serratus"/>
+      <ellipse cx="157" cy="162" rx="7" ry="15" class="svgm" data-z="R Serratus"/>
+      <path d="M104,164 L136,164 C140,180 140,206 136,232 C132,246 128,252 120,252 C112,252 108,246 104,232 C100,206 100,180 104,164 Z" class="svgm" data-z="Rectus Abdominis"/>
+      <path d="M92,178 C88,192 88,212 92,228 C95,238 100,244 104,240 C102,218 102,192 104,168 C98,170 94,174 92,178 Z" class="svgm" data-z="L Obliques"/>
+      <path d="M 148.0,178C 152.0,192 152.0,212 148.0,228C 145.0,238 140.0,244 136.0,240C 138.0,218 138.0,192 136.0,168C 142.0,170 146.0,174 148.0,178Z" class="svgm" data-z="R Obliques"/>
+      <path d="M74.0,282.2 L75.0,404.1 A18,18 0 0 0 110.9,406.2 L125.8,285.2 A26,26 0 0 0 74.0,282.2 Z" class="svgm" data-z="L Quadriceps"/>
+      <path d="M114.2,285.2 L129.1,406.2 A18,18 0 0 0 165.0,404.1 L166.0,282.2 A26,26 0 0 0 114.2,285.2 Z" class="svgm" data-z="R Quadriceps"/>
+      <path d="M90,244 C86,252 85,262 87,272 C90,278 98,280 106,276 C110,268 110,256 106,248 C102,242 96,240 90,244 Z" class="svgm" data-z="L Hip Flexor"/>
+      <path d="M 150.0,244C 154.0,252 155.0,262 153.0,272C 150.0,278 142.0,280 134.0,276C 130.0,268 130.0,256 134.0,248C 138.0,242 144.0,240 150.0,244Z" class="svgm" data-z="R Hip Flexor"/>
+      <path d="M114,278 C111,292 111,308 114,322 C116,330 118,332 120,330 L120,276 C118,275 115,276 114,278 Z" class="svgm" data-z="L Adductors"/>
+      <path d="M 126.0,278C 129.0,292 129.0,308 126.0,322C 124.0,330 122.0,332 120.0,330L 120.0,276C 122.0,275 125.0,276 126.0,278Z" class="svgm" data-z="R Adductors"/>
+      <path d="M78.0,412.3 L80.0,528.2 A10,10 0 0 0 100.0,528.7 L108.0,413.0 A15,15 0 0 0 78.0,412.3 Z" class="svgm" data-z="L Tibialis Anterior"/>
+      <path d="M132.0,413.0 L140.0,528.7 A10,10 0 0 0 160.0,528.2 L162.0,412.3 A15,15 0 0 0 132.0,413.0 Z" class="svgm" data-z="R Tibialis Anterior"/>
+      <ellipse cx="93" cy="404" rx="15" ry="12" class="svgm" data-z="L Knee"/>
+      <ellipse cx="147" cy="404" rx="15" ry="12" class="svgm" data-z="R Knee"/>
+      <ellipse cx="90" cy="528" rx="12" ry="9" class="svgm" data-z="L Ankle"/>
+      <ellipse cx="150" cy="528" rx="12" ry="9" class="svgm" data-z="R Ankle"/>
+      <path d="M78,532 C72,536 68,548 74,556 C82,562 100,562 106,556 C110,550 106,540 98,534 C92,530 84,530 78,532 Z" class="svgm" data-z="L Foot"/>
+      <path d="M 162.0,532C 168.0,536 172.0,548 166.0,556C 158.0,562 140.0,562 134.0,556C 130.0,550 134.0,540 142.0,534C 148.0,530 156.0,530 162.0,532Z" class="svgm" data-z="R Foot"/>
     `;
   } else {
     return grad + `
-      <ellipse cx="100" cy="34" rx="24" ry="30" fill="url(#fg1)" class="svgm" data-z="Head"/>
-      <rect x="89" y="60" width="22" height="16" rx="4" fill="url(#fg1)" class="svgm" data-z="Neck"/>
-      <path d="M80,96 C68,108 62,128 64,150 C66,162 76,168 92,166 L110,166 L128,166 C144,168 154,162 156,150 C158,128 152,108 140,96 L110,92 Z" fill="url(#fg1)" class="svgm" data-z="Upper Back"/>
-      <path d="M60,90 C44,96 36,112 38,130 C40,144 50,154 62,150 C72,146 78,130 76,112 C74,100 68,90 60,90 Z" fill="url(#fg1)" class="svgm" data-z="L Rear Deltoid"/>
-      <path d="M160,90 C176,96 184,112 182,130 C180,144 170,154 158,150 C148,146 142,130 144,112 C146,100 152,90 160,90 Z" fill="url(#fg1)" class="svgm" data-z="R Rear Deltoid"/>
-      <path d="M38,110 C28,118 22,140 24,158 C26,172 36,182 50,180 C64,178 72,162 72,142 C72,120 60,105 48,105 Z" fill="url(#fg1)" class="svgm" data-z="L Tricep"/>
-      <path d="M162,110 C172,118 178,140 176,158 C174,172 164,182 150,180 C136,178 128,162 128,142 C128,120 140,105 152,105 Z" fill="url(#fg1)" class="svgm" data-z="R Tricep"/>
-      <path d="M56,180 C48,188 46,206 48,218 C50,228 58,234 68,234 C78,234 84,228 84,218 L84,184 Z" fill="url(#fg1)" class="svgm" data-z="L Forearm"/>
-      <path d="M144,180 C152,188 154,206 152,218 C150,228 142,234 132,234 C122,234 116,228 116,218 L116,184 Z" fill="url(#fg1)" class="svgm" data-z="R Forearm"/>
-      <path d="M70,162 C62,170 58,190 60,210 C62,224 72,232 84,230 C96,228 102,216 100,198 L100,166 Z" fill="url(#fg1)" class="svgm" data-z="L Lat"/>
-      <path d="M130,162 C138,170 142,190 140,210 C138,224 128,232 116,230 C104,228 98,216 100,198 L100,166 Z" fill="url(#fg1)" class="svgm" data-z="R Lat"/>
-      <rect x="98" y="162" width="24" height="70" rx="4" fill="url(#fg1)" class="svgm" data-z="Lower Back"/>
-      <path d="M68,232 C60,244 58,266 62,282 C66,294 76,302 88,300 C100,298 106,286 104,270 L102,236 Z" fill="url(#fg1)" class="svgm" data-z="L Glute"/>
-      <path d="M132,232 C140,244 142,266 138,282 C134,294 124,302 112,300 C100,298 94,286 96,270 L98,236 Z" fill="url(#fg1)" class="svgm" data-z="R Glute"/>
-      <rect x="76" y="280" width="28" height="80" rx="12" fill="url(#fg1)" class="svgm" data-z="L Hamstring"/>
-      <rect x="116" y="280" width="28" height="80" rx="12" fill="url(#fg1)" class="svgm" data-z="R Hamstring"/>
-      <ellipse cx="90" cy="368" rx="14" ry="11" fill="#A87058" class="svgm" data-z="L Knee"/>
-      <ellipse cx="130" cy="368" rx="14" ry="11" fill="#A87058" class="svgm" data-z="R Knee"/>
-      <rect x="78" y="380" width="22" height="64" rx="10" fill="url(#fg1)" class="svgm" data-z="L Calf"/>
-      <rect x="120" y="380" width="22" height="64" rx="10" fill="url(#fg1)" class="svgm" data-z="R Calf"/>
-      <ellipse cx="90" cy="450" rx="16" ry="12" fill="#A87058" class="svgm" data-z="L Ankle"/>
-      <ellipse cx="130" cy="450" rx="16" ry="12" fill="#A87058" class="svgm" data-z="R Ankle"/>
+      <path d="M96,96 C80,100 74,116 73,140 C72,172 76,210 84,240 C90,256 100,262 120,262 C140,262 150,256 156,240 C164,210 168,172 167,140 C166,116 160,100 144,96 C136,92 104,92 96,96 Z" class="svgm-bg"/>
+      <ellipse cx="120" cy="42" rx="27" ry="33" class="svgm" data-z="Head"/>
+      <path d="M109.2,68.0 L105.3,89.3 A15,15 0 0 0 134.7,89.3 L130.8,68.0 A11,11 0 0 0 109.2,68.0 Z" class="svgm" data-z="Neck"/>
+      <path d="M120,92 C104,94 88,100 76,112 C86,120 104,128 120,130 C136,128 154,120 164,112 C152,100 136,94 120,92 Z" class="svgm" data-z="Trapezius"/>
+      <path d="M51.1,118.1 L42.1,206.7 A13,13 0 0 0 67.6,211.0 L88.5,124.4 A19,19 0 0 0 51.1,118.1 Z" class="svgm" data-z="L Triceps"/>
+      <path d="M151.5,124.4 L172.4,211.0 A13,13 0 0 0 197.9,206.7 L188.9,118.1 A19,19 0 0 0 151.5,124.4 Z" class="svgm" data-z="R Triceps"/>
+      <path d="M42.0,207.9 L41.0,299.9 A9,9 0 0 0 59.0,300.9 L67.9,209.3 A13,13 0 0 0 42.0,207.9 Z" class="svgm" data-z="L Forearm Extensors"/>
+      <path d="M172.1,209.3 L181.0,300.9 A9,9 0 0 0 199.0,299.9 L198.0,207.9 A13,13 0 0 0 172.1,209.3 Z" class="svgm" data-z="R Forearm Extensors"/>
+      <path d="M42,292 C36,296 34,312 38,328 C41,338 50,340 55,332 C58,322 57,306 54,294 C51,290 46,290 42,292 Z" class="svgm" data-z="L Hand"/>
+      <path d="M 198.0,292C 204.0,296 206.0,312 202.0,328C 199.0,338 190.0,340 185.0,332C 182.0,322 183.0,306 186.0,294C 189.0,290 194.0,290 198.0,292Z" class="svgm" data-z="R Hand"/>
+      <path d="M96,134 C82,138 74,152 73,172 C72,196 78,220 92,232 C100,238 106,232 106,220 C106,192 104,160 104,140 C102,136 99,134 96,134 Z" class="svgm" data-z="L Latissimus Dorsi"/>
+      <path d="M 144.0,134C 158.0,138 166.0,152 167.0,172C 168.0,196 162.0,220 148.0,232C 140.0,238 134.0,232 134.0,220C 134.0,192 136.0,160 136.0,140C 138.0,136 141.0,134 144.0,134Z" class="svgm" data-z="R Latissimus Dorsi"/>
+      <path d="M106,182 L134,182 C138,200 138,222 132,240 C127,250 113,250 108,240 C102,222 102,200 106,182 Z" class="svgm" data-z="Erector Spinae"/>
+      <path d="M96,100 C80,98 62,104 54,120 C48,132 50,148 62,154 C74,158 86,150 90,136 C93,124 94,110 96,100 Z" class="svgm" data-z="L Deltoid"/>
+      <path d="M 144.0,100C 160.0,98 178.0,104 186.0,120C 192.0,132 190.0,148 178.0,154C 166.0,158 154.0,150 150.0,136C 147.0,124 146.0,110 144.0,100Z" class="svgm" data-z="R Deltoid"/>
+      <ellipse cx="82" cy="150" rx="11" ry="16" class="svgm" data-z="L Infraspinatus"/>
+      <ellipse cx="158" cy="150" rx="11" ry="16" class="svgm" data-z="R Infraspinatus"/>
+      <ellipse cx="92" cy="248" rx="13" ry="14" class="svgm" data-z="L Glute Medius"/>
+      <ellipse cx="148" cy="248" rx="13" ry="14" class="svgm" data-z="R Glute Medius"/>
+      <path d="M74.0,290.2 L75.0,404.2 A18,18 0 0 0 110.8,406.4 L125.8,293.4 A26,26 0 0 0 74.0,290.2 Z" class="svgm" data-z="L Hamstrings"/>
+      <path d="M114.2,293.4 L129.2,406.4 A18,18 0 0 0 165.0,404.2 L166.0,290.2 A26,26 0 0 0 114.2,293.4 Z" class="svgm" data-z="R Hamstrings"/>
+      <path d="M92,254 C78,258 70,272 70,290 C70,308 80,320 98,320 C110,320 118,312 119,296 L119,258 C112,254 100,252 92,254 Z" class="svgm" data-z="L Glute Maximus"/>
+      <path d="M 148.0,254C 162.0,258 170.0,272 170.0,290C 170.0,308 160.0,320 142.0,320C 130.0,320 122.0,312 121.0,296L 121.0,258C 128.0,254 140.0,252 148.0,254Z" class="svgm" data-z="R Glute Maximus"/>
+      <path d="M77.0,412.3 L78.0,468.2 A13,13 0 0 0 103.9,469.2 L108.9,413.4 A16,16 0 0 0 77.0,412.3 Z" class="svgm" data-z="L Gastrocnemius"/>
+      <path d="M131.1,413.4 L136.1,469.2 A13,13 0 0 0 162.0,468.2 L163.0,412.3 A16,16 0 0 0 131.1,413.4 Z" class="svgm" data-z="R Gastrocnemius"/>
+      <path d="M78.0,468.7 L81.0,522.5 A9,9 0 0 0 99.0,522.8 L103.9,469.2 A13,13 0 0 0 78.0,468.7 Z" class="svgm" data-z="L Soleus"/>
+      <path d="M136.1,469.2 L141.0,522.8 A9,9 0 0 0 159.0,522.5 L162.0,468.7 A13,13 0 0 0 136.1,469.2 Z" class="svgm" data-z="R Soleus"/>
+      <ellipse cx="93" cy="404" rx="15" ry="12" class="svgm" data-z="L Knee"/>
+      <ellipse cx="147" cy="404" rx="15" ry="12" class="svgm" data-z="R Knee"/>
+      <ellipse cx="90" cy="528" rx="10" ry="9" class="svgm" data-z="L Achilles"/>
+      <ellipse cx="150" cy="528" rx="10" ry="9" class="svgm" data-z="R Achilles"/>
+      <path d="M78,532 C72,536 68,548 74,556 C82,562 100,562 106,556 C110,550 106,540 98,534 C92,530 84,530 78,532 Z" class="svgm" data-z="L Foot"/>
+      <path d="M 162.0,532C 168.0,536 172.0,548 166.0,556C 158.0,562 140.0,562 134.0,556C 130.0,550 134.0,540 142.0,534C 148.0,530 156.0,530 162.0,532Z" class="svgm" data-z="R Foot"/>
     `;
   }
 }
@@ -1270,18 +1285,21 @@ function attachSvgHandlers() {
   });
 }
 
+// ─── 7-STATE MUSCLE FEELING SCALE ───
+const FEELINGS = {
+  relax:     { emoji: '😌', label: 'Relax',      color: '#7B9E87' },
+  feelgood:  { emoji: '💪', label: 'Feel Good',  color: '#C8A96E' },
+  sweetpain: { emoji: '🔥', label: 'Sweet Pain', color: '#6E9FB0' },
+  tight:     { emoji: '⚡', label: 'Tight',      color: '#D4956A' },
+  sore:      { emoji: '🟠', label: 'Sore',       color: '#C77B4A' },
+  pain:      { emoji: '🔴', label: 'Pain',       color: '#C47070' },
+  injured:   { emoji: '🚨', label: 'Injured',    color: '#8B3A3A' },
+};
+
 function updateSvgMuscleColor(el) {
   const zone = el.getAttribute('data-z');
   const feeling = svgBodyStates[zone];
-  if (feeling) {
-    const feelingMap = {
-      sore: '#C47070', pain: '#C47070',
-      tight: '#D4956A', worked: '#C8A96E', strong: '#7B9E87'
-    };
-    el.style.fill = feelingMap[feeling] || 'url(#fg1)';
-  } else {
-    el.style.fill = 'url(#fg1)';
-  }
+  el.style.fill = feeling && FEELINGS[feeling] ? FEELINGS[feeling].color : 'url(#fg1)';
 }
 
 function svgTap(el) {
@@ -1289,6 +1307,35 @@ function svgTap(el) {
   window.pendingZone = { zone, point: null };
   document.getElementById('fp-muscle-name').textContent = zone;
   document.getElementById('feel-pick').classList.add('show');
+}
+
+function buildFeelPickerButtons() {
+  const row = document.getElementById('fp-row');
+  row.innerHTML = '';
+  Object.entries(FEELINGS).forEach(([key, f]) => {
+    const btn = document.createElement('button');
+    btn.className = 'fp-btn';
+    btn.style.cssText = `background:${f.color}26;border-color:${f.color};color:${f.color}`;
+    btn.textContent = `${f.emoji} ${f.label}`;
+    btn.onclick = () => applyFeeling(key);
+    row.appendChild(btn);
+  });
+  const clearBtn = document.createElement('button');
+  clearBtn.className = 'fp-btn fp-clear';
+  clearBtn.textContent = '✕ Clear';
+  clearBtn.onclick = () => applyFeeling(null);
+  row.appendChild(clearBtn);
+}
+
+function buildBodyLegend() {
+  const legend = document.getElementById('body-legend');
+  legend.innerHTML = '';
+  Object.values(FEELINGS).forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'leg-item';
+    item.innerHTML = `<div class="leg-dot" style="background:${f.color}"></div>${f.emoji} ${f.label}`;
+    legend.appendChild(item);
+  });
 }
 
 // SVG Front/Back toggle
@@ -1338,15 +1385,12 @@ function renderAreaTags() {
     container.innerHTML = '<div class="empty-hint">Tap muscle groups to mark</div>';
     return;
   }
-  const feelingEmojis = {
-    sore: '🟠', pain: '🔴', worked: '🎯', tight: '⚡', strong: '💪'
-  };
   entries.forEach(([zone, feeling]) => {
-    const emoji = feelingEmojis[feeling] || '✦';
+    const f = FEELINGS[feeling] || { emoji: '✦', color: '#C8A96E' };
     const tag = document.createElement('span');
     tag.className = 'area-tag';
-    tag.style.cssText = 'background:rgba(196,112,112,0.15);border-color:#C47070;color:#C47070';
-    tag.textContent = `${emoji} ${zone}`;
+    tag.style.cssText = `background:${f.color}26;border-color:${f.color};color:${f.color}`;
+    tag.textContent = `${f.emoji} ${zone}`;
     container.appendChild(tag);
   });
 }
