@@ -155,6 +155,7 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 
   <div class="tabs">
     <button class="tab-btn on" id="tab-btn-roster" onclick="switchTeacherTab('roster')">Roster</button>
+    <button class="tab-btn" id="tab-btn-directory" onclick="switchTeacherTab('directory')">Directory</button>
     <button class="tab-btn" id="tab-btn-groups" onclick="switchTeacherTab('groups')">Groups</button>
     <button class="tab-btn" id="tab-btn-analytics" onclick="switchTeacherTab('analytics')">Analytics</button>
     <button class="tab-btn" id="tab-btn-feedback" onclick="switchTeacherTab('feedback')">Feedback</button>
@@ -189,6 +190,17 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 
       <div class="section-label">Linked Students</div>
       <div id="students-list"></div>
+    </div>
+
+    <div class="tab-panel" id="panel-directory">
+      <div class="card">
+        <div class="section-label" id="dir-teachers-label">Contracted Teachers</div>
+        <div id="directory-teachers"></div>
+      </div>
+      <div class="card">
+        <div class="section-label">Linked Students</div>
+        <div id="directory-students"></div>
+      </div>
     </div>
 
     <div class="tab-panel" id="panel-groups">
@@ -240,6 +252,7 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 
 <script>
 let currentUser = null
+let currentUserRole = null
 let RED_FLAGS = {} // student_id -> [{ flag_type, detail }]
 let LINKED_STUDENTS = [] // [{ student_id, display_name }]
 let GROUPS_LOADED = false
@@ -256,17 +269,20 @@ let FEEDBACK_LOADED = false
     return
   }
 
+  currentUserRole = profile.role
   await loadRedFlags()
   await Promise.all([loadCategories(), loadFocusAreas(), loadStudents()])
 })()
 
 let ANALYTICS_LOADED = false
+let DIRECTORY_LOADED = false
 
 function switchTeacherTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('on'))
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'))
   document.getElementById('panel-' + tab).classList.add('on')
   document.getElementById('tab-btn-' + tab).classList.add('on')
+  if (tab === 'directory' && !DIRECTORY_LOADED) { DIRECTORY_LOADED = true; loadDirectory() }
   if (tab === 'groups' && !GROUPS_LOADED) { GROUPS_LOADED = true; loadGroups() }
   if (tab === 'analytics' && !ANALYTICS_LOADED) { ANALYTICS_LOADED = true; loadAnalytics() }
   if (tab === 'feedback' && !FEEDBACK_LOADED) { FEEDBACK_LOADED = true; loadFeedbackReceived() }
@@ -577,6 +593,59 @@ async function sendBulletin(groupId) {
   if (error) { console.error('Send bulletin failed:', error); return }
   input.value = ''
   await loadGroups()
+}
+
+// ── DIRECTORY ────────────────────────────────────────────
+async function loadDirectory() {
+  // Load contracted teachers/studios (entities the current user is bound to)
+  const { data: bindingData } = await db.from('studio_linkages')
+    .select('entity_id, entity_type, profiles!studio_linkages_entity_id_fkey(display_name)')
+    .eq('student_id', currentUser.id)
+    .eq('status', 'active')
+
+  const teachersEl = document.getElementById('directory-teachers')
+  teachersEl.innerHTML = ''
+
+  if (bindingData && bindingData.length) {
+    const label = currentUserRole === 'teacher' ? 'My Studios' : 'Associated Teachers'
+    document.getElementById('dir-teachers-label').textContent = label
+
+    bindingData.forEach(link => {
+      const name = link.profiles ? link.profiles.display_name : 'Unknown'
+      const row = document.createElement('div')
+      row.className = 'link-row'
+      row.innerHTML =
+        '<div class="link-avatar">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+        '<div><div class="link-name">' + name + '</div><div class="link-role">' + link.entity_type + '</div></div>'
+      teachersEl.appendChild(row)
+    })
+  } else {
+    const label = currentUserRole === 'teacher' ? 'You are not bound to any studio.' : 'No associated teachers.'
+    teachersEl.innerHTML = '<div class="empty-hint">' + label + '</div>'
+  }
+
+  // Load linked students (students bound to the current user)
+  const { data: studentData } = await db.from('studio_linkages')
+    .select('student_id, created_at, profiles!studio_linkages_student_id_fkey(display_name)')
+    .eq('entity_id', currentUser.id)
+    .eq('status', 'active')
+
+  const studentsEl = document.getElementById('directory-students')
+  studentsEl.innerHTML = ''
+
+  if (studentData && studentData.length) {
+    studentData.forEach(link => {
+      const name = link.profiles ? link.profiles.display_name : 'Unknown'
+      const row = document.createElement('div')
+      row.className = 'link-row'
+      row.innerHTML =
+        '<div class="link-avatar">' + (name || 'U').charAt(0).toUpperCase() + '</div>' +
+        '<div><div class="link-name">' + name + '</div><div class="link-role">Student</div></div>'
+      studentsEl.appendChild(row)
+    })
+  } else {
+    studentsEl.innerHTML = '<div class="empty-hint">No linked students yet.</div>'
+  }
 }
 
 // ── ANALYTICS ─────────────────────────────────────────────
