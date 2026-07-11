@@ -142,6 +142,10 @@ The user supplied the actual reference photos (front/back) used to spec M3b and 
 
 **Verified:** page loads with no JS errors; both views render the correct photo + list (10 header groups / 42 rows front, matching back); click → picker → multi-select confirmed across bilateral and midline muscles; front/back toggle rebuilds the list correctly; compact widget and full-screen modal stay in sync on open/close; `savePractice()` inserts the correct `muscle_feelings` payload; editing a pre-M3c log with retired SVG-era zone names causes no crash and the current list stays fully functional (same accepted limitation as M3b: orphaned old names survive round-trip but aren't visually re-selectable under their old name).
 
+**UI Layout adjustment (2026-07-11):** repositioned the "Tap to Mark" instruction text from below the photo to the left and right edges of the body-map pane using a 3-column grid layout, creating visual symmetry with the reference photo's side-annotated design. The instruction is now flanked on both sides while the photo + toggle + CTA remain centered.
+
+**Follow-up enhancement (post-M3c):** refactor the full-screen modal to display the muscle list in left and right columns flanking the central photo — organized by the reference photo's anatomical section headers (Neck, Chest, Shoulders, Biceps, etc.) in the sequence they appear in the photos (front and back). This would make the muscle names visible at all times alongside their visual locations, reducing the need for the modal footer hint and creating a more self-documenting interface. Scope: restructure `.am-body` grid layout, merge `renderMuscleList()` into a two-column render pass, verify no regression in the click → picker → save flow.
+
 ---
 
 ## M4 — Class Scheduling & Booking Framework (PRD §3.5 + §8)
