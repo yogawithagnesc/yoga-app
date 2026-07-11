@@ -284,6 +284,18 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - Upload/registration workflow for teachers/studios (Mux asset creation is manual in the Mux dashboard for beta; the app stores playback IDs).
 - Catalog UI on the Classes tab; `video_progress` resume already works via `MuxVideoPlayer.js`.
 
+**Status:** 🚧 In Progress (catalog browsing & resume implemented, upload workflow pending)
+
+**Completed:**
+1. ✅ `schema_phase16_m7_videos.sql`: videos + video_progress tables, RLS policies
+2. ✅ `index.html`: loadVideosCatalog() renders published videos in horizontal scroll
+3. ✅ `index.html`: Updated loadContinueWatching() to fetch video metadata from DB
+4. ✅ Video catalog section in Classes tab (linked to video-player.html?videoId=UUID)
+
+**Pending:**
+- Upload/registration workflow (teacher/studio dashboard for video management)
+- video-player.html implementation (Mux player + video_progress updates)
+
 **Acceptance:** multiple videos listed from the DB; continue-watching works across them.
 
 ---
