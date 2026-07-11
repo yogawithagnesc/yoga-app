@@ -69,10 +69,12 @@ ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
 
 -- Both endpoints see the follow record (follower sees their pending request,
 -- followee sees who requested)
+DROP POLICY IF EXISTS "follows_involved_select" ON public.follows;
 CREATE POLICY "follows_involved_select" ON public.follows
   FOR SELECT USING (follower_id = auth.uid() OR followee_id = auth.uid());
 
 -- Follower initiates a follow request (always starts as pending)
+DROP POLICY IF EXISTS "follows_follower_insert" ON public.follows;
 CREATE POLICY "follows_follower_insert" ON public.follows
   FOR INSERT WITH CHECK (
     follower_id = auth.uid()
@@ -81,11 +83,13 @@ CREATE POLICY "follows_follower_insert" ON public.follows
 
 -- Either endpoint can update (followee accepts/revokes, follower can withdraw)
 -- App enforces which status transitions each side may make
+DROP POLICY IF EXISTS "follows_endpoint_update" ON public.follows;
 CREATE POLICY "follows_endpoint_update" ON public.follows
   FOR UPDATE USING (followee_id = auth.uid() OR follower_id = auth.uid())
   WITH CHECK (followee_id = auth.uid() OR follower_id = auth.uid());
 
 -- Either party can delete (unfollow / reject)
+DROP POLICY IF EXISTS "follows_endpoint_delete" ON public.follows;
 CREATE POLICY "follows_endpoint_delete" ON public.follows
   FOR DELETE USING (follower_id = auth.uid() OR followee_id = auth.uid());
 
@@ -101,6 +105,7 @@ CREATE POLICY "follows_endpoint_delete" ON public.follows
 --    has a follows row (either direction, any status — a pending
 --    request must still show the requester's name).
 -- ────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "profiles_follow_related_select" ON public.profiles;
 CREATE POLICY "profiles_follow_related_select" ON public.profiles
   FOR SELECT USING (
     EXISTS (
@@ -158,6 +163,7 @@ ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
 -- Teacher/studio owners have full CRUD over their own groups.
 -- WITH CHECK additionally requires a teacher/studio role on INSERT/UPDATE
 -- (students cannot create groups).
+DROP POLICY IF EXISTS "groups_owner_all" ON public.groups;
 CREATE POLICY "groups_owner_all" ON public.groups
   FOR ALL USING (owner_id = auth.uid())
   WITH CHECK (
@@ -169,6 +175,7 @@ CREATE POLICY "groups_owner_all" ON public.groups
   );
 
 -- Group members can read groups they belong to
+DROP POLICY IF EXISTS "groups_member_select" ON public.groups;
 CREATE POLICY "groups_member_select" ON public.groups
   FOR SELECT USING (is_group_member(id, auth.uid()));
 
@@ -192,6 +199,7 @@ CREATE INDEX IF NOT EXISTS group_members_student_idx ON public.group_members (st
 ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
 
 -- Teachers can read and manage members of their own groups
+DROP POLICY IF EXISTS "group_members_owner_all" ON public.group_members;
 CREATE POLICY "group_members_owner_all" ON public.group_members
   FOR ALL USING (
     EXISTS (
@@ -217,6 +225,7 @@ CREATE POLICY "group_members_owner_all" ON public.group_members
   );
 
 -- Members can see co-members in their own groups (used for roster visibility)
+DROP POLICY IF EXISTS "group_members_member_select" ON public.group_members;
 CREATE POLICY "group_members_member_select" ON public.group_members
   FOR SELECT USING (is_group_member(group_id, auth.uid()));
 
@@ -248,11 +257,13 @@ CREATE INDEX IF NOT EXISTS group_bulletins_group_created_idx
 ALTER TABLE public.group_bulletins ENABLE ROW LEVEL SECURITY;
 
 -- Members of a group can read bulletins posted to that group
+DROP POLICY IF EXISTS "group_bulletins_member_select" ON public.group_bulletins;
 CREATE POLICY "group_bulletins_member_select" ON public.group_bulletins
   FOR SELECT USING (is_group_member(group_id, auth.uid()));
 
 -- Teachers can insert bulletins into their own groups
 -- (member-authored posts deferred to a future phase)
+DROP POLICY IF EXISTS "group_bulletins_teacher_insert" ON public.group_bulletins;
 CREATE POLICY "group_bulletins_teacher_insert" ON public.group_bulletins
   FOR INSERT WITH CHECK (
     EXISTS (
@@ -285,6 +296,7 @@ CREATE POLICY "group_bulletins_teacher_insert" ON public.group_bulletins
 DROP POLICY IF EXISTS "feed_authenticated_select" ON public.community_feeds;
 
 -- Accepted follows: follower can see followee's activity
+DROP POLICY IF EXISTS "feed_accepted_follow_select" ON public.community_feeds;
 CREATE POLICY "feed_accepted_follow_select" ON public.community_feeds
   FOR SELECT USING (
     EXISTS (
@@ -298,6 +310,7 @@ CREATE POLICY "feed_accepted_follow_select" ON public.community_feeds
 -- Linked teachers/studios: can read non-private logs of linked students
 -- (this already exists as "logs_linked_select" on practice_logs;
 --  community_feeds is a denormalized copy, so grant the same visibility)
+DROP POLICY IF EXISTS "feed_linked_teacher_select" ON public.community_feeds;
 CREATE POLICY "feed_linked_teacher_select" ON public.community_feeds
   FOR SELECT USING (
     EXISTS (
@@ -310,8 +323,9 @@ CREATE POLICY "feed_linked_teacher_select" ON public.community_feeds
   );
 
 -- Keep existing delete policy (users can delete their own feed entries)
--- If it doesn't exist, recreate it:
-CREATE POLICY IF NOT EXISTS "feed_own_delete" ON public.community_feeds
+-- Drop-then-recreate for idempotency (Postgres has no CREATE POLICY IF NOT EXISTS)
+DROP POLICY IF EXISTS "feed_own_delete" ON public.community_feeds;
+CREATE POLICY "feed_own_delete" ON public.community_feeds
   FOR DELETE USING (user_id = auth.uid());
 
 
@@ -345,19 +359,25 @@ ALTER TABLE public.feedback
 
 -- Enforce: teacher_to_student feedback must reference a specific session;
 -- student_to_teacher feedback must target a specific entity.
+-- (Postgres has no ADD CONSTRAINT IF NOT EXISTS — drop-then-add instead.)
 ALTER TABLE public.feedback
-  ADD CONSTRAINT IF NOT EXISTS feedback_direction_shape CHECK (
+  DROP CONSTRAINT IF EXISTS feedback_direction_shape;
+ALTER TABLE public.feedback
+  ADD CONSTRAINT feedback_direction_shape CHECK (
     (direction = 'teacher_to_student' AND session_id IS NOT NULL)
     OR (direction = 'student_to_teacher' AND target_entity_id IS NOT NULL)
   );
 
 -- Add text length constraint (1–2000 chars, enforced at DB level)
 ALTER TABLE public.feedback
-  ADD CONSTRAINT IF NOT EXISTS feedback_body_len CHECK (char_length(body) BETWEEN 1 AND 2000);
+  DROP CONSTRAINT IF EXISTS feedback_body_len;
+ALTER TABLE public.feedback
+  ADD CONSTRAINT feedback_body_len CHECK (char_length(body) BETWEEN 1 AND 2000);
 
 -- Teacher→Student: teacher submits feedback on a non-private student log
 -- (Enforces the "never comment on private data" rule at the DB level)
-CREATE POLICY IF NOT EXISTS "feedback_teacher_insert" ON public.feedback
+DROP POLICY IF EXISTS "feedback_teacher_insert" ON public.feedback;
+CREATE POLICY "feedback_teacher_insert" ON public.feedback
   FOR INSERT WITH CHECK (
     -- Author is a teacher/studio
     auth.uid() = author_id
@@ -375,7 +395,8 @@ CREATE POLICY IF NOT EXISTS "feedback_teacher_insert" ON public.feedback
   );
 
 -- Student→Teacher: student submits feedback to a linked teacher/studio
-CREATE POLICY IF NOT EXISTS "feedback_student_insert" ON public.feedback
+DROP POLICY IF EXISTS "feedback_student_insert" ON public.feedback;
+CREATE POLICY "feedback_student_insert" ON public.feedback
   FOR INSERT WITH CHECK (
     -- Author is the current user
     auth.uid() = author_id
@@ -392,6 +413,7 @@ CREATE POLICY IF NOT EXISTS "feedback_student_insert" ON public.feedback
 
 -- Replace the existing SELECT policy to include target_entity_id visibility
 DROP POLICY IF EXISTS "feedback_session_owner_select" ON public.feedback;
+DROP POLICY IF EXISTS "feedback_view" ON public.feedback;
 CREATE POLICY "feedback_view" ON public.feedback
   FOR SELECT USING (
     author_id = auth.uid()
