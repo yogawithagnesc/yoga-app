@@ -1081,7 +1081,7 @@ async function loadMonthLogs() {
 
   var result = await db
     .from('practice_logs')
-    .select('id, practice_date, style_name, duration_minutes, practice_categories(category_type)')
+    .select('id, practice_date, style_name, duration_minutes, is_private, practice_categories(category_type)')
     .eq('user_id', currentUser.id)
     .gte('practice_date', start)
     .lte('practice_date', end);
@@ -1574,12 +1574,18 @@ async function toggleLogPrivacy(logId, currentlyPrivate) {
     return;
   }
 
-  // Refresh the modal to show updated privacy status
-  var currentDay = document.getElementById('day-modal-title').textContent;
-  // Extract day from title if needed, or reload the logs
+  // Update the in-memory state
   var dayValue = document.getElementById('day-modal').dataset.day;
   if (dayValue) {
-    await renderDayModal(dayValue);
+    var source = STATE.perspective === 'yoga' ? STATE.dayLogsYoga : STATE.dayLogs;
+    if (source && source[dayValue]) {
+      var log = source[dayValue].find(function(l) { return l.id === logId; });
+      if (log) {
+        log.is_private = newPrivate;
+      }
+    }
+    // Re-render the modal with updated privacy state
+    openDayLogs(dayValue);
   }
   showToast(newPrivate ? 'Set to private' : 'Shared with your connections');
 }
