@@ -93,6 +93,9 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .username-check.show{display:block}
 .username-check.available{color:var(--success)}
 .username-check.unavailable{color:var(--error)}
+.username-save-btn{font-size:11px;font-weight:600;background:var(--accent);border:none;border-radius:var(--r-sm);color:var(--tx-inv);padding:8px 14px;cursor:pointer;transition:all .15s;min-height:32px;min-width:44px}
+.username-save-btn:hover{background:var(--accent-h)}
+.username-save-btn:disabled{opacity:.5;cursor:not-allowed}
 
 .logout-row{margin-top:8px}
 .logout-btn{width:100%;padding:13px;background:none;border:1px solid var(--br-def);border-radius:var(--r-lg);color:var(--tx-2);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px}
@@ -130,6 +133,7 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       <div class="username-row">
         <label class="username-label">Username</label>
         <input class="username-input" id="username-input" type="text" placeholder="Set your unique username" maxlength="32"/>
+        <button class="username-save-btn" id="username-save-btn" onclick="saveUsernameExplicit()">Save</button>
       </div>
       <div class="username-check" id="username-check"></div>
     </div>
@@ -265,10 +269,8 @@ async function debounceUsernameCheck(e) {
     const isDifferent = username !== (document.getElementById('username-input').dataset.original || '')
 
     if (isAvailable && isDifferent) {
-      checkEl.textContent = '✓ Available'
+      checkEl.textContent = '✓ Available — click Save to confirm'
       checkEl.className = 'username-check show available'
-      // Save on confirmation
-      await saveUsername(username)
     } else if (!isAvailable) {
       checkEl.textContent = '✗ Already taken'
       checkEl.className = 'username-check show unavailable'
@@ -291,6 +293,47 @@ async function saveUsername(username) {
   }
 
   document.getElementById('username-input').dataset.original = username
+}
+
+async function saveUsernameExplicit() {
+  const input = document.getElementById('username-input')
+  const username = (input.value || '').trim()
+  const checkEl = document.getElementById('username-check')
+
+  if (!username || username.length < 3) {
+    checkEl.textContent = 'Username must be at least 3 characters'
+    checkEl.className = 'username-check show unavailable'
+    return
+  }
+
+  const btn = document.getElementById('username-save-btn')
+  btn.disabled = true
+
+  const { data, error: checkError } = await db.rpc('check_username_available', { p_username: username })
+
+  if (checkError || !data || !data.length || !data[0].available) {
+    checkEl.textContent = '✗ Username already taken'
+    checkEl.className = 'username-check show unavailable'
+    btn.disabled = false
+    return
+  }
+
+  const { error } = await db.from('profiles')
+    .update({ username })
+    .eq('id', currentUser.id)
+
+  if (error) {
+    checkEl.textContent = 'Could not save username'
+    checkEl.className = 'username-check show unavailable'
+    btn.disabled = false
+    return
+  }
+
+  input.dataset.original = username
+  checkEl.textContent = '✓ Username saved!'
+  checkEl.className = 'username-check show available'
+  btn.disabled = false
+  setTimeout(() => checkEl.classList.remove('show'), 2000)
 }
 
 // ── JOIN CODES (teacher/studio) ──────────────────────────
