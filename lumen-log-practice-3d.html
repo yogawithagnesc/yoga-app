@@ -1185,46 +1185,28 @@ function buildTypeGrid() {
     chkDiv.textContent = selType===t.id?'✓':'';
     card.appendChild(chkDiv);
 
-    // Manual double-click detection
-    let lastClickTime = 0;
-    typeNameEl.addEventListener('mousedown', (e) => {
-      const now = Date.now();
-      if (now - lastClickTime < 300) {
-        e.preventDefault();
-        e.stopPropagation();
-        startRenameType(typeNameEl, t, card);
-        lastClickTime = 0;
-      } else {
-        lastClickTime = now;
-      }
-    });
+    // Prevent single clicks on the name from also selecting the card.
+    typeNameEl.addEventListener('click', (e) => { e.stopPropagation(); });
 
-    // Prevent click on type-name from triggering card selection (unless it's part of rename)
-    typeNameEl.addEventListener('click', (e) => {
+    // Double-click / double-tap the name to rename in place.
+    typeNameEl.addEventListener('dblclick', (e) => {
       e.stopPropagation();
+      startRenameType(typeNameEl, t, card);
     });
-
-    // Touch double-tap for mobile
-    let lastTouchTime = 0;
-    typeNameEl.addEventListener('touchstart', (e) => {
+    let lastTap = 0;
+    typeNameEl.addEventListener('touchend', (e) => {
       const now = Date.now();
-      if (now - lastTouchTime < 300) {
-        e.preventDefault();
+      if (now - lastTap < 350) {
         e.stopPropagation();
+        e.preventDefault();
         startRenameType(typeNameEl, t, card);
-        lastTouchTime = 0;
-      } else {
-        lastTouchTime = now;
       }
+      lastTap = now;
     });
 
     card.onclick=()=>{
       if (card.dataset.dragged || card.dataset.editing === 'true') { delete card.dataset.dragged; return; }
-      // Delay to allow dblclick event to fire first
-      setTimeout(() => {
-        if (card.dataset.editing === 'true') return; // dblclick set editing mode
-        selType=t.id; buildTypeGrid();
-      }, 250);
+      selType=t.id; buildTypeGrid();
     };
     attachTypeDragHandlers(card, t);
     grid.appendChild(card);
@@ -1329,6 +1311,12 @@ function attachTypeDragHandlers(card, category) {
 
   card.addEventListener('pointerdown', (e) => {
     if (e.button !== undefined && e.button !== 0) return;
+    // Don't hijack pointer capture when the interaction starts on the
+    // renameable name text — setPointerCapture() here would redirect the
+    // subsequent mousedown/click/dblclick compat events (for this same
+    // interaction) to `card`, silently breaking rename regardless of what
+    // listeners are attached to the name element.
+    if (e.target.closest('.type-name')) return;
     startX = e.clientX; startY = e.clientY; dragging = false;
     card.setPointerCapture(e.pointerId);
 
