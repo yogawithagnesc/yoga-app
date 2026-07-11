@@ -1754,7 +1754,7 @@ async function loadFollows() {
   var html = '';
 
   html += '<div class="follow-search">' +
-    '<input type="email" id="follow-email-input" placeholder="Peer email address" />' +
+    '<input type="text" id="follow-email-input" placeholder="Username or email address" />' +
     '<button onclick="sendFollowRequest()">Follow</button>' +
     '</div>' +
     '<div class="follow-msg" id="follow-search-msg"></div>';
@@ -1785,7 +1785,7 @@ async function loadFollows() {
   }
 
   if (!pendingIncoming.length && !accepted.length) {
-    html += '<div class="empty-hint" style="padding:6px 0">Follow a peer by email to see their activity in your feed.</div>';
+    html += '<div class="empty-hint" style="padding:6px 0">Follow a peer by username or email to see their activity in your feed.</div>';
   }
 
   el.innerHTML = html;
@@ -1794,17 +1794,39 @@ async function loadFollows() {
 async function sendFollowRequest() {
   var input = document.getElementById('follow-email-input');
   var msgEl = document.getElementById('follow-search-msg');
-  var email = input.value.trim().toLowerCase();
+  var query = input.value.trim().toLowerCase();
   msgEl.className = 'follow-msg';
   msgEl.textContent = '';
-  if (!email) return;
+  if (!query) return;
 
-  var { data: targets, error: lookupErr } = await db.rpc('lookup_profile_by_email', { p_email: email });
-  var target = targets && targets.length ? targets[0] : null;
+  var target = null;
+  var lookupErr = null;
 
-  if (lookupErr || !target) {
+  // Try username lookup first (if no @ sign)
+  if (!query.includes('@')) {
+    var { data: usernameResults, error: usernameErr } = await db.rpc('check_username_available', { p_username: query });
+    if (!usernameErr && usernameResults && usernameResults.length > 0 && !usernameResults[0].available) {
+      // Username exists, fetch the profile
+      var { data: profile, error: profileErr } = await db.from('profiles')
+        .select('id')
+        .eq('username', query)
+        .single();
+      if (!profileErr && profile) {
+        target = profile;
+      }
+    }
+  }
+
+  // Fallback to email lookup
+  if (!target) {
+    var { data: emailResults, error: emailErr } = await db.rpc('lookup_profile_by_email', { p_email: query });
+    target = emailResults && emailResults.length ? emailResults[0] : null;
+    lookupErr = emailErr;
+  }
+
+  if (!target) {
     msgEl.className = 'follow-msg err';
-    msgEl.textContent = 'No user found with that email.';
+    msgEl.textContent = 'No user found with that username or email.';
     return;
   }
   if (target.id === currentUser.id) {
