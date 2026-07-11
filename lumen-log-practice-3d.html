@@ -1185,22 +1185,37 @@ function buildTypeGrid() {
     chkDiv.textContent = selType===t.id?'✓':'';
     card.appendChild(chkDiv);
 
-    // Prevent click on type-name from triggering card selection
-    typeNameEl.addEventListener('click', (e) => { e.stopPropagation(); });
-
-    // Double-click / double-tap to rename
-    let lastTap = 0;
-    typeNameEl.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      startRenameType(typeNameEl, t, card);
-    });
-    typeNameEl.addEventListener('touchend', (e) => {
+    // Manual double-click detection
+    let lastClickTime = 0;
+    typeNameEl.addEventListener('mousedown', (e) => {
       const now = Date.now();
-      if (now - lastTap < 350) {
+      if (now - lastClickTime < 300) {
+        e.preventDefault();
         e.stopPropagation();
         startRenameType(typeNameEl, t, card);
+        lastClickTime = 0;
+      } else {
+        lastClickTime = now;
       }
-      lastTap = now;
+    });
+
+    // Prevent click on type-name from triggering card selection (unless it's part of rename)
+    typeNameEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Touch double-tap for mobile
+    let lastTouchTime = 0;
+    typeNameEl.addEventListener('touchstart', (e) => {
+      const now = Date.now();
+      if (now - lastTouchTime < 300) {
+        e.preventDefault();
+        e.stopPropagation();
+        startRenameType(typeNameEl, t, card);
+        lastTouchTime = 0;
+      } else {
+        lastTouchTime = now;
+      }
     });
 
     card.onclick=()=>{
