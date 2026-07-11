@@ -182,12 +182,12 @@ let currentUserRole = null
   if (!session) { window.location.href = 'login.html'; return }
   currentUser = session.user
 
-  const { data: profile } = await db.from('profiles')
+  const { data: profile, error: profileError } = await db.from('profiles')
     .select('display_name, email, role, username')
     .eq('id', currentUser.id)
     .single()
 
-  if (!profile?.role) { window.location.href = 'role-select.html'; return }
+  if (profileError || !profile?.role) { window.location.href = 'role-select.html'; return }
   currentUserRole = profile.role
 
   const name = profile.display_name || 'Practitioner'
@@ -197,10 +197,12 @@ let currentUserRole = null
   document.getElementById('id-role').textContent = currentUserRole
 
   // Load username
+  const usernameInput = document.getElementById('username-input')
   if (profile.username) {
-    document.getElementById('username-input').value = profile.username
+    usernameInput.value = profile.username
+    usernameInput.dataset.original = profile.username  // Initialize so debounce knows what was saved
   }
-  document.getElementById('username-input').addEventListener('input', debounceUsernameCheck)
+  usernameInput.addEventListener('input', debounceUsernameCheck)
 
   if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
     document.getElementById('codes-card').style.display = 'block'
