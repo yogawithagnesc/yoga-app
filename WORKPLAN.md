@@ -313,6 +313,26 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 
 ---
 
+## M8 Follow-up — Data Completeness: Practice-Log Teacher Linking
+
+**Rationale:** Current M6 studio analytics reads only from `bookings`, capturing attendance for formally booked classes. However, students may attend a linked teacher's class informally (show up and practice, but never formally book), resulting in invisible attendance to the teacher's analytics. Adding optional teacher/class links to `practice_logs` would allow studios to aggregate both formal bookings and informal attendance into a complete picture.
+
+**Scope:**
+- **Schema:** Add three nullable columns to `practice_logs`: `class_id` (FK to `classes.id`, nullable), `teacher_id` (FK to `profiles.id`, nullable), `teacher_name` (text, nullable — for one-off teachers not in the system). Ensure RLS allows a student to record their own practice linked to any teacher in their linkage network.
+- **UI:** Add a checkbox to `lumen-log-practice-3d.html`: "This practice was with a linked teacher's class" → reveals a selector for linked teachers or a free-text "Teacher name" field if the teacher isn't in the system. Kept optional (students can still log self-directed practice).
+- **Analytics upgrade:** Update `studio_class_tiers()` and related aggregates (e.g., `studio_total_linked_sessions()`, `studio_total_linked_minutes()`) to optionally count practice-log linked attendance alongside booking-based attendance. Provide a query parameter to studios (e.g., `include_informal_attendance` boolean) so they can view complete vs. formal-only totals independently.
+- **Migration:** `schema_phase_*_practice_log_teacher_linking.sql` (idempotent; add columns + updated RLS, no data backfill needed).
+
+**Design note:** The current M6 analytics (bookings-only) is correct for its scope. This enhancement improves data completeness without breaking the existing aggregate functions — it's purely additive.
+
+**Acceptance:** a student logs a practice with a linked teacher's name (or class) → studio analytics can toggle a filter to include/exclude informal attendance and see total attendance (booked + logged) vs. formal bookings alone.
+
+**Dependencies:** M4 (classes + teacher roster already exist), M6 (complete — this is a post-M6 follow-up, not blocking M6 closure).
+
+**Deferred:** integration with M7 video catalog (could tag a practice-log entry with a viewed video for correlating practice → teaching asset consumption).
+
+---
+
 ## Model Recommendations & Cost Rationale
 
 The codebase is deliberately simple — single-file vanilla JS pages, direct Supabase calls, no build step. That keeps per-milestone model needs modest:
