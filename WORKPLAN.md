@@ -16,7 +16,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M2 | Dynamic categorization engine | §3.2.1–3.2.2 | ✅ Done (pending migration run + live test) | Sonnet 5 |
 | M3 | SVG Body Map + 14-day rest engine | §3.2.3 | ✅ Done (verified live) | Sonnet 5 |
 | M3a | Advanced anatomical illustration redesign | §3.2.3 | ✅ Done | Sonnet 5 |
-| M4 | Class scheduling & booking framework | §3.5, §8 | 🚧 Phase A done (federated view + provisioning); Phase B (filters + DnD) pending | Sonnet 5 (+ Opus 4.8 design pass) |
+| M4 | Class scheduling & booking framework | §3.5, §8 | ✅ Phase A + Phase B done | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | Not started | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | Not started | Haiku 4.5 / Sonnet 5 |
@@ -185,6 +185,22 @@ Session A shipped. Two architecture decisions were confirmed with the user befor
 **Verified:** `tools/classes/verify_m4.js` (Playwright, stubbed Supabase) — 23/23 checks: student view shows only linked-studio classes, excludes a non-linked studio and a >14-day class, hides the provisioning CTA, renders the featured hero + booked-today strip, opens the booking modal with the gated tag and correct studio name, no JS errors; teacher view shows the CTA + owned/assigned classes + today's teaching strip; the provisioning form inserts a correct `classes` row (title/style/capacity/featured/owner/assigned/end=start+duration/status). Visual screenshot confirms the day-grouped, two-studio-branded layout.
 
 **Deferred to Phase B:** filter overlay + saved-filter chips and the §8.2 drag-and-drop schedule mutator (the piece most warranting its own Opus pass).
+
+### M4 Phase B — ✅ Done
+
+An Opus 4.8 planning pass proposed a 7×15 weekly DnD grid per §8.2's literal spec. That was adapted to this app's actual constraints before implementing: the whole codebase is single-file/mobile-first (every other view, including Phase A's own list layout, is validated at a 430px viewport) and there is no desktop-only layout anywhere to fall back to. A dense weekly grid would not have been legible at that width, so the reschedule interaction became **drag-a-card-onto-a-day-group-header** (moves the date, keeps time-of-day) plus a **tap-to-edit modal** (precise date/time/duration/room) — same outcome as the grid (drag reschedules a class, propagates live) without the legibility risk, reusing the exact M2 Pointer-Events drag pattern (deferred `setPointerCapture` until movement clears a threshold, so a plain tap still opens the booking modal).
+
+**Delivered:**
+- `schema_phase12_saved_filters.sql` (idempotent) — adds `profiles.saved_filters jsonb default '[]'`. No new RLS needed (existing self-row UPDATE policy covers it). **Action required: run in Supabase SQL Editor after phase 11.**
+- **Filter overlay** — a `⚙ Filters` bar above the day-grouped list (both student and teacher/studio views) opens a popover (date range, teacher, style-text) reusing the `.overlay`/`.modal` shell. Filtering runs client-side over the already-fetched 14-day window; a badge on the Filters button shows the active-filter count.
+- **Saved-filter chips** — `⭐ Save this filter` names the current filter set and persists it into `profiles.saved_filters`; chips render in a horizontal-scroll row, tap-to-apply, ✕-to-delete (each mutation is a full-array `profiles` UPDATE, matching the JSONB-array design chosen for the expected low per-user cardinality).
+- **Drag-to-reschedule** — a drag handle (⠿) appears only on cards the current user owns (`teacher_id = auth.uid()`, matching the `classes_teacher_update` RLS policy exactly, so a rejected UPDATE can never surprise the user). Dragging a card onto another day-group header updates its date via an optimistic-then-confirmed `classes` UPDATE (same-day drops are a no-op); a conflict check blocks the move (and reverts) if the new time window collides with another class in the same room or under the same (assigned) teacher.
+- **Edit modal** — the ✎ button on owned cards opens a date/time/duration/room form with the same conflict check, for precise reschedules that a day-level drag can't express.
+- **Realtime sync** — a single unfiltered `postgres_changes` subscription on `classes` per page load; each event is relevance-gated client-side (teacher: owned or assigned; student: `teacher_id` in the linked-studio set) before triggering a full re-fetch of the current view, so a reschedule by one party lands in every other linked viewer's Classes tab without a manual reload.
+
+**Verified:** `tools/classes/verify_m4b.js` (Playwright, extended stub with a capturing `postgres_changes` channel + an `update()` payload capture) — 25/25 checks across 4 scenarios: filters narrow/reset/save/reapply/delete correctly with the badge tracking count; a real mouse-driven drag from a card's handle onto a different day header fires the correct `classes` UPDATE and the card re-renders under the new day group optimistically; the edit modal opens pre-filled, rejects a room-conflicting save with the conflicting class named in the error while staying open, and accepts + persists + closes on a valid save; a relevant realtime event triggers a clean re-fetch while an irrelevant one (unlinked studio) is ignored without error. Re-ran `verify_m4.js` (Phase A, 23 checks) afterward with no regressions. Visual screenshots confirm the filter bar/chips/drag-handle/edit-icon all read cleanly at the 430px viewport used throughout the rest of the app.
+
+**Not built:** the literal §8.2 weekly/monthly grid — the day-group drag + edit-modal combination was judged the mobile-safe equivalent per the reasoning above; a true grid remains available as a future desktop-specific enhancement if the studio-manager persona ever gets one.
 
 ---
 
