@@ -641,6 +641,12 @@
         </div>
       </div>
 
+      <!-- Video catalog (M7) — shown on Home tab if videos published -->
+      <div id="home-video-catalog-wrap" style="padding:0 28px 22px;display:none">
+        <div class="section-label">On-Demand Videos</div>
+        <div id="home-video-catalog-list"></div>
+      </div>
+
       <div class="section">
         <div class="section-label" id="cal-label">March 2026</div>
         <div class="cal-grid" id="cal-grid"></div>
@@ -940,6 +946,9 @@ let currentUserRole = null;
     // Load in-progress videos for the Continue Watching shelf
     loadContinueWatching();
 
+    // Load on-demand video catalog (M7) for the Home tab
+    loadVideosCatalog('home');
+
     // Load last-14-days muscle feelings for the Body Status widget
     loadBodyStatus();
 
@@ -1135,7 +1144,8 @@ async function loadMonthLogs() {
 // Video catalog loaded from DB (replaces hardcoded VIDEO_CATALOG)
 var VIDEOS_LOADED = {};
 
-async function loadVideosCatalog() {
+async function loadVideosCatalog(tabId = null) {
+  // tabId: null (load both), 'home', or 'classes' (specific tab only)
   if (!currentUser) return;
 
   const { data: videos, error } = await db.from('videos')
@@ -1144,33 +1154,65 @@ async function loadVideosCatalog() {
     .order('created_at', { ascending: false })
     .limit(10);
 
-  if (error || !videos || !videos.length) {
-    document.getElementById('video-catalog-wrap').style.display = 'none';
-    return;
+  const shouldShowVideos = !error && videos && videos.length > 0;
+
+  // Render to Classes tab if requested (or if null = both)
+  if (tabId === null || tabId === 'classes') {
+    const wrapId = 'video-catalog-wrap';
+    const listId = 'video-catalog-list';
+    if (shouldShowVideos) {
+      const catalogEl = document.getElementById(listId);
+      catalogEl.innerHTML = '';
+      const ul = document.createElement('div');
+      ul.className = 'video-list';
+      videos.forEach(function(video) {
+        const card = document.createElement('a');
+        card.className = 'video-card';
+        card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
+        const mins = video.duration_seconds ? Math.round(video.duration_seconds / 60) : '–';
+        card.innerHTML =
+          '<div class="video-thumb">🎥</div>' +
+          '<div class="video-meta">' +
+            '<div class="video-title">' + video.title + '</div>' +
+            '<div class="video-duration">' + mins + ' min</div>' +
+          '</div>';
+        ul.appendChild(card);
+      });
+      catalogEl.appendChild(ul);
+      document.getElementById(wrapId).style.display = 'block';
+    } else {
+      document.getElementById(wrapId).style.display = 'none';
+    }
   }
 
-  const catalogEl = document.getElementById('video-catalog-list');
-  catalogEl.innerHTML = '';
-
-  const ul = document.createElement('div');
-  ul.className = 'video-list';
-
-  videos.forEach(function(video) {
-    const card = document.createElement('a');
-    card.className = 'video-card';
-    card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
-    const mins = video.duration_seconds ? Math.round(video.duration_seconds / 60) : '–';
-    card.innerHTML =
-      '<div class="video-thumb">🎥</div>' +
-      '<div class="video-meta">' +
-        '<div class="video-title">' + video.title + '</div>' +
-        '<div class="video-duration">' + mins + ' min</div>' +
-      '</div>';
-    ul.appendChild(card);
-  });
-
-  catalogEl.appendChild(ul);
-  document.getElementById('video-catalog-wrap').style.display = 'block';
+  // Render to Home tab if requested (or if null = both)
+  if (tabId === null || tabId === 'home') {
+    const wrapId = 'home-video-catalog-wrap';
+    const listId = 'home-video-catalog-list';
+    if (shouldShowVideos) {
+      const catalogEl = document.getElementById(listId);
+      catalogEl.innerHTML = '';
+      const ul = document.createElement('div');
+      ul.className = 'video-list';
+      videos.forEach(function(video) {
+        const card = document.createElement('a');
+        card.className = 'video-card';
+        card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
+        const mins = video.duration_seconds ? Math.round(video.duration_seconds / 60) : '–';
+        card.innerHTML =
+          '<div class="video-thumb">🎥</div>' +
+          '<div class="video-meta">' +
+            '<div class="video-title">' + video.title + '</div>' +
+            '<div class="video-duration">' + mins + ' min</div>' +
+          '</div>';
+        ul.appendChild(card);
+      });
+      catalogEl.appendChild(ul);
+      document.getElementById(wrapId).style.display = 'block';
+    } else {
+      document.getElementById(wrapId).style.display = 'none';
+    }
+  }
 }
 
 async function loadContinueWatching() {
