@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <title>Lumen — My Students</title>
 <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=DM+Sans:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Serif+TC:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -287,6 +288,7 @@ let FEEDBACK_LOADED = false
   const { data: { session } } = await db.auth.getSession()
   if (!session) { window.location.href = 'login.html'; return }
   currentUser = session.user
+  console.log('🔐 Logged-in teacher auth.uid:', currentUser.id)
 
   const { data: profile } = await db.from('profiles').select('role').eq('id', currentUser.id).single()
   if (!profile || (profile.role !== 'teacher' && profile.role !== 'studio')) {
@@ -440,6 +442,8 @@ async function loadStudents() {
     .eq('entity_id', currentUser.id)
     .eq('status', 'active')
 
+  console.log('🔗 Studio linkages found for teacher', currentUser.id, ':', links)
+
   const el = document.getElementById('students-list')
   el.innerHTML = ''
   LINKED_STUDENTS = []
@@ -516,8 +520,8 @@ function escapeHtmlTeacher(s) {
 }
 
 // Lazily fetch + render a session's teacher-consented photos/videos.
-// session_media RLS already enforces shared_with_teacher=true (phase 20),
-// so this query only ever returns files the student explicitly opted in.
+// Uses get_shared_session_media() RPC (SECURITY DEFINER) to bypass RLS
+// restrictions and properly authorize teacher access.
 async function toggleSharedMedia(btn, sessionId) {
   const grid = btn.nextElementSibling
   const opening = grid.style.display === 'none'
@@ -525,24 +529,31 @@ async function toggleSharedMedia(btn, sessionId) {
   if (!opening || grid.dataset.loaded) return
   grid.dataset.loaded = '1'
 
-  const { data: rows, error } = await db.from('session_media')
-    .select('storage_path, media_type')
-    .eq('session_id', sessionId)
-    .eq('shared_with_teacher', true)
+  console.log('📷 Fetching shared media for session', sessionId, 'from teacher', currentUser.id)
+  const { data: rows, error } = await db.rpc('get_shared_session_media', { p_session_id: sessionId })
+  console.log('📷 get_shared_session_media response:', rows, error)
 
-  if (error || !rows || !rows.length) {
+  if (error) { console.error('get_shared_session_media failed:', error); return; }
+  if (!rows || !rows.length) {
     grid.innerHTML = '<div class="empty-hint">No shared media.</div>'
     return
   }
 
   const paths = rows.map(r => r.storage_path)
-  const { data: signed } = await db.storage.from('practice-media').createSignedUrls(paths, 3600)
+  const { data: signed, error: signErr } = await db.storage.from('practice-media').createSignedUrls(paths, 3600)
+  if (signErr) console.error('createSignedUrls failed:', signErr)
   const urlByPath = {}
-  ;(signed || []).forEach(s => { if (s && s.path && s.signedUrl) urlByPath[s.path] = s.signedUrl })
+  ;(signed || []).forEach(s => {
+    if (s && s.error) console.error('signed URL error for', s.path, ':', s.error)
+    if (s && s.path && s.signedUrl) urlByPath[s.path] = s.signedUrl
+  })
 
   grid.innerHTML = rows.map(r => {
-    const url = urlByPath[r.storage_path] || ''
-    if (r.media_type === 'image' && url) {
+    const url = urlByPath[r.storage_path]
+    if (!url) {
+      return '<div class="sr-media-thumb sr-media-thumb-error" title="Media unavailable">⚠️</div>'
+    }
+    if (r.media_type === 'image') {
       return '<a class="sr-media-thumb" href="' + url + '" target="_blank" rel="noopener"><img src="' + url + '" alt=""></a>'
     }
     return '<a class="sr-media-thumb" href="' + url + '" target="_blank" rel="noopener">🎥</a>'

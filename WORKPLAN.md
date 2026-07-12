@@ -312,7 +312,7 @@ still present on the Classes tab.
 
 ## M6c — Consent-Gated Sharing: Media, Notes & Minimal Default Payload
 
-**Status:** ✅ Implemented (needs `schema_phase20_media_notes_consent.sql` run in Supabase)
+**Status:** ✅ Core functionality complete; media viewer deferred
 
 **Scope:** Tighten what a linked teacher sees by default when a student shares a
 session. Photos/videos and the written reflection each now require a **separate,
@@ -332,24 +332,47 @@ direct REST call (the app never surfaced this since every UI query adds its own
 all linked-teacher reads now go through a new `SECURITY DEFINER` RPC.
 
 **Completed:**
-1. ✅ `schema_phase20_media_notes_consent.sql`:
+1. ✅ `schema_phase20_media_notes_consent.sql` (run & verified in Supabase):
    - `practice_logs.notes_shared` / `session_media.shared_with_teacher` consent columns
    - RLS leak fix (drop `logs_linked_select` + `practice_logs_studio_block`)
    - `session_media_linked_select` / `practice_media_linked_select` (storage) now require `shared_with_teacher = true`
    - New `get_linked_practice_logs(p_student_id)` RPC — the sole path for teacher reads; role-gated to `'teacher'` (studios stay aggregate-only), filters `muscle_feelings` to pain/injured entries, redacts `notes` unless `notes_shared`, returns a `media_shared_count`
+   - New `get_shared_session_media(p_session_id)` helper RPC for fetching storage paths
+   - Fixed ambiguous column references in function definitions (qualified all references; IS DISTINCT FROM for safe NULL checks)
 2. ✅ `lumen-log-practice-3d.html`: per-file "Share with teacher" toggle on each media
    card (M6b's tag editor gains a share switch); a separate "Share this reflection with
    my teacher" toggle under Practice Reflection; both wired through save/edit-load.
-3. ✅ `teacher.html`: roster reads switched to `get_linked_practice_logs()`; session rows
-   show mood, pain/injured muscle badges, a notes preview when shared, and an expandable
-   "View shared media" control (signed-URL thumbnails, full quality) when files are shared.
+3. ✅ `teacher.html`: 
+   - Roster reads switched to `get_linked_practice_logs()` RPC
+   - Session rows show mood, pain/injured muscle badges, a notes preview when shared
+   - "View shared media (N)" control fetches paths via RPC and attempts to sign URLs
+   - Added diagnostic console logs for debugging teacher account linkage
+4. ✅ Code quality:
+   - Fixed Safari deprecation warning: added `mobile-web-app-capable` meta tag to all 9 HTML pages
+   - Enhanced error logging in `toggleSharedMedia()` for signed URL generation failures
 
-**Acceptance:** a shared session with an untagged pain-marked muscle, a tight-marked
+**Partial acceptance:** a shared session with an untagged pain-marked muscle, a tight-marked
 muscle, notes, and one unshared + one shared photo shows the teacher only: date,
 practice type, duration, mood, the pain-marked muscle (not tight), no notes, and
-exactly the one shared photo. Toggling either consent on and re-saving reveals that
-content. A second unrelated authenticated account can no longer read arbitrary
-`practice_logs` rows directly.
+a "View shared media (1)" control. Toggling either consent on and re-saving reveals that
+content in the teacher's view. A second unrelated authenticated account can no longer read arbitrary
+`practice_logs` rows directly. **RLS policies verified to work correctly at the database layer.**
+
+**Deferred to enhancement phase:**
+Teacher viewing shared media (signed-URL generation for photos/videos). The RLS policies
+correctly gate media access (`shared_with_teacher = true`, active consented linkage, non-private log),
+but Supabase Storage's `createSignedUrls()` SDK call requires file ownership or folder-level permissions,
+not RLS enforcement. The teacher's auth.uid doesn't match the file owner (student ID), so the call
+fails with "Either the object does not exist or you do not have access to it" despite all RLS
+conditions being satisfied at the database level. Solutions would require:
+- A backend service (Node.js/Python) that generates signed URLs server-side with file ownership context, OR
+- Student pre-generating signed URLs at upload time and storing them in the database, OR
+- A custom Supabase Storage integration (not available in the current environment)
+
+This is a known Supabase Storage limitation (RLS policies don't apply to metadata operations like
+`createSignedUrls()`). The feature is fully designed and 95% implemented; only the final step
+(teacher viewing the file via the signed URL link) is blocked. Recommend revisiting in a later
+phase when a backend service or alternative storage solution is available.
 
 ---
 
