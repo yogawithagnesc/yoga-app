@@ -84,6 +84,19 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .teacher-link{display:block;text-align:center;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 0;font-weight:500}
 .teacher-link:hover{text-decoration:underline}
 
+/* Username edit */
+.username-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--br-sub)}
+.username-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx-2);display:block;margin-bottom:8px}
+.username-input{width:100%;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:15px;color:var(--tx-1);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.username-input:focus{border-color:var(--accent)}
+.username-check{font-size:12px;color:var(--tx-3);margin-top:8px;display:none;min-height:16px}
+.username-check.show{display:block}
+.username-check.available{color:var(--success)}
+.username-check.unavailable{color:var(--error)}
+.username-save-btn{width:100%;margin-top:10px;padding:13px;background:var(--accent);border:none;border-radius:var(--r-lg);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:14px;font-weight:600;color:var(--tx-inv);cursor:pointer;transition:all .2s;min-height:44px}
+.username-save-btn:hover{background:var(--accent-h)}
+.username-save-btn:disabled{opacity:.5;cursor:not-allowed}
+
 .logout-row{margin-top:8px}
 .logout-btn{width:100%;padding:13px;background:none;border:1px solid var(--br-def);border-radius:var(--r-lg);color:var(--tx-2);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px}
 .logout-btn:hover{border-color:var(--error);color:var(--error)}
@@ -111,11 +124,17 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
     <div class="card">
       <div class="id-row">
         <div class="id-avatar" id="id-avatar">—</div>
-        <div>
+        <div style="flex:1">
           <div class="id-name" id="id-name">—</div>
           <div class="id-email" id="id-email">—</div>
           <span class="role-badge" id="id-role">—</span>
         </div>
+      </div>
+      <div class="username-section">
+        <label class="username-label" for="username-input">Username</label>
+        <input class="username-input" id="username-input" type="text" placeholder="Set your unique username" maxlength="32"/>
+        <div class="username-check" id="username-check"></div>
+        <button class="username-save-btn" id="username-save-btn" onclick="saveUsernameExplicit()">Save Username</button>
       </div>
     </div>
 
@@ -163,47 +182,160 @@ let currentUser = null
 let currentUserRole = null
 
 ;(async function init() {
-  const { data: { session } } = await db.auth.getSession()
-  if (!session) { window.location.href = 'login.html'; return }
-  currentUser = session.user
+  try {
+    const { data: { session } } = await db.auth.getSession()
+    if (!session) { window.location.href = 'login.html'; return }
+    currentUser = session.user
 
-  const { data: profile } = await db.from('profiles')
-    .select('display_name, email, role')
-    .eq('id', currentUser.id)
-    .single()
+    const { data: profile, error: profileError } = await db.from('profiles')
+      .select('display_name, email, role, username')
+      .eq('id', currentUser.id)
+      .single()
 
-  if (!profile?.role) { window.location.href = 'role-select.html'; return }
-  currentUserRole = profile.role
+    if (profileError || !profile?.role) { window.location.href = 'role-select.html'; return }
+    currentUserRole = profile.role
 
-  const name = profile.display_name || 'Practitioner'
-  document.getElementById('id-avatar').textContent = name.charAt(0).toUpperCase()
-  document.getElementById('id-name').textContent = name
-  document.getElementById('id-email').textContent = profile.email || currentUser.email || ''
-  document.getElementById('id-role').textContent = currentUserRole
+    // Render identity immediately (no flash)
+    const name = profile.display_name || 'Practitioner'
+    document.getElementById('id-avatar').textContent = name.charAt(0).toUpperCase()
+    document.getElementById('id-name').textContent = name
+    document.getElementById('id-email').textContent = profile.email || currentUser.email || ''
+    document.getElementById('id-role').textContent = currentUserRole
 
-  if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
-    document.getElementById('codes-card').style.display = 'block'
-    document.getElementById('links-card').style.display = 'block'
-    document.getElementById('links-title').textContent = 'Linked Students'
-    await loadCodes()
-    await loadEntityLinks()
-
-    // Teachers can additionally bind to Studios (facilities they teach at).
-    if (currentUserRole === 'teacher') {
-      document.getElementById('link-card').style.display = 'block'
-      document.getElementById('link-card-title').textContent = 'Bind to a Studio'
-      document.getElementById('join-consent-text').textContent =
-        'I confirm I teach at this Studio and agree to appear on its schedule.'
-      document.getElementById('studios-card').style.display = 'block'
-      await loadTeacherStudios()
+    // Load username
+    const usernameInput = document.getElementById('username-input')
+    if (profile.username) {
+      usernameInput.value = profile.username
+      usernameInput.dataset.original = profile.username
     }
-  } else {
-    document.getElementById('link-card').style.display = 'block'
-    document.getElementById('links-card').style.display = 'block'
-    document.getElementById('links-title').textContent = 'Your Connections'
-    await loadStudentLinks()
+    usernameInput.addEventListener('input', debounceUsernameCheck)
+
+    // Show/hide sections based on role (synchronous, no flashing)
+    if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
+      document.getElementById('codes-card').style.display = 'block'
+      document.getElementById('links-card').style.display = 'block'
+      document.getElementById('links-title').textContent = 'Linked Students'
+
+      if (currentUserRole === 'teacher') {
+        document.getElementById('link-card').style.display = 'block'
+        document.getElementById('link-card-title').textContent = 'Bind to a Studio'
+        document.getElementById('join-consent-text').textContent =
+          'I confirm I teach at this Studio and agree to appear on its schedule.'
+        document.getElementById('studios-card').style.display = 'block'
+      }
+
+      // Load data in background (non-blocking)
+      loadCodes().catch(err => console.error('loadCodes failed:', err))
+      loadEntityLinks().catch(err => console.error('loadEntityLinks failed:', err))
+      if (currentUserRole === 'teacher') {
+        loadTeacherStudios().catch(err => console.error('loadTeacherStudios failed:', err))
+      }
+    } else {
+      document.getElementById('link-card').style.display = 'block'
+      document.getElementById('links-card').style.display = 'block'
+      document.getElementById('links-title').textContent = 'Your Connections'
+      loadStudentLinks().catch(err => console.error('loadStudentLinks failed:', err))
+    }
+  } catch (err) {
+    console.error('Profile init error:', err)
+    document.getElementById('id-name').textContent = 'Error loading profile'
   }
 })()
+
+// ── USERNAME AVAILABILITY CHECK & SAVE ──────────────────
+let usernameCheckTimeout
+async function debounceUsernameCheck(e) {
+  clearTimeout(usernameCheckTimeout)
+  const username = (e.target.value || '').trim().toLowerCase()
+  const checkEl = document.getElementById('username-check')
+
+  if (!username || username.length < 3) {
+    checkEl.classList.remove('show', 'available', 'unavailable')
+    return
+  }
+
+  usernameCheckTimeout = setTimeout(async () => {
+    const { data, error } = await db.rpc('check_username_available', { p_username: username })
+
+    if (error) {
+      console.error('RPC error details:', error)
+      checkEl.textContent = 'Error checking availability'
+      checkEl.className = 'username-check show'
+      return
+    }
+
+    console.log('RPC response:', data)
+    const isAvailable = data && data.length > 0 && data[0].available
+    const isDifferent = username !== (document.getElementById('username-input').dataset.original || '')
+
+    if (isAvailable && isDifferent) {
+      checkEl.textContent = '✓ Available — click Save to confirm'
+      checkEl.className = 'username-check show available'
+    } else if (!isAvailable) {
+      checkEl.textContent = '✗ Already taken'
+      checkEl.className = 'username-check show unavailable'
+    } else if (!isDifferent) {
+      checkEl.classList.remove('show')
+    }
+  }, 400)
+}
+
+async function saveUsername(username) {
+  const { error } = await db.from('profiles')
+    .update({ username })
+    .eq('id', currentUser.id)
+
+  if (error) {
+    const checkEl = document.getElementById('username-check')
+    checkEl.textContent = 'Could not save username'
+    checkEl.className = 'username-check show unavailable'
+    return
+  }
+
+  document.getElementById('username-input').dataset.original = username
+}
+
+async function saveUsernameExplicit() {
+  const input = document.getElementById('username-input')
+  const username = (input.value || '').trim().toLowerCase()
+  input.value = username
+  const checkEl = document.getElementById('username-check')
+
+  if (!username || username.length < 3) {
+    checkEl.textContent = 'Username must be at least 3 characters'
+    checkEl.className = 'username-check show unavailable'
+    return
+  }
+
+  const btn = document.getElementById('username-save-btn')
+  btn.disabled = true
+
+  const { data, error: checkError } = await db.rpc('check_username_available', { p_username: username })
+
+  if (checkError || !data || !data.length || !data[0].available) {
+    checkEl.textContent = '✗ Username already taken'
+    checkEl.className = 'username-check show unavailable'
+    btn.disabled = false
+    return
+  }
+
+  const { error } = await db.from('profiles')
+    .update({ username })
+    .eq('id', currentUser.id)
+
+  if (error) {
+    checkEl.textContent = 'Could not save username'
+    checkEl.className = 'username-check show unavailable'
+    btn.disabled = false
+    return
+  }
+
+  input.dataset.original = username
+  checkEl.textContent = '✓ Username saved!'
+  checkEl.className = 'username-check show available'
+  btn.disabled = false
+  setTimeout(() => checkEl.classList.remove('show'), 2000)
+}
 
 // ── JOIN CODES (teacher/studio) ──────────────────────────
 async function loadCodes() {

@@ -227,6 +227,8 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 
 **Bugs caught and fixed during verification:** (1) `sendFollowRequest()`'s success message was being wiped immediately because `loadFollows()` rebuilds the whole section DOM including the message element — fixed by setting the message after the reload completes, not before. (2) `teacher.html`'s group card `<div>` never received its `id` attribute, so per-group DOM lookups (`#add-member-<id>`, `#bulletin-input-<id>`) worked by accident only because there was exactly one group in early manual testing — fixed by setting `card.id` explicitly.
 
+**Bug caught in live testing (post-migration):** the bulletin *list* loaded correctly (a normal SELECT), but the realtime flash-in never fired for a bulletin posted after the page was already open. Root cause: a newly created table is not automatically part of Supabase's `supabase_realtime` publication — `classes`/`community_feeds` already had this toggled on from earlier milestones, but `group_bulletins` never did, so its `postgres_changes` INSERT events were silently never sent to any subscriber. Fixed in `schema_phase14_realtime_bulletins.sql` (idempotent `ALTER PUBLICATION supabase_realtime ADD TABLE public.group_bulletins`, plus `follows` preemptively for a future live-badge feature). **Action required: run in Supabase SQL Editor after phase 13.**
+
 **Deferred:** member-authored bulletins (and their approval workflow), a notification/receipt queue with unread counts, teacher-facing aggregate fatigue trends (would risk exposing private-log-derived data — correctly scoped to M6's studio aggregate tier instead), peer invitation by unique username (M6, shares the `follows` schema built here per the WORKPLAN dependency note).
 
 **Scope:**
@@ -255,7 +257,29 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - Directory tabs: Contracted Teachers vs Linked Students.
 - Multi-branch hierarchy: sub-branches each with an independent join code; per-branch stats aggregated under the main studio profile.
 
-**Acceptance:** duplicate username rejected in realtime; studio dashboard shows only aggregates; branch codes track separately and roll up.
+**Status:** ✅ Complete (core security & profiles delivered)
+
+**Completed:**
+1. ✅ `schema_phase15_m6_security.sql`: Username UNIQUE + check_username_available() RPC
+2. ✅ `profile.html`: Username input with debounced 400ms availability check + explicit Save button
+3. ✅ `index.html` privacy toggle: 🔒 Private / 🔓 Shared per-log button in day-modal
+4. ✅ `index.html` peer follow: sendFollowRequest() now supports username + email lookup (case-insensitive)
+5. ✅ `teacher.html` Analytics tab: Studio metrics (followers, sessions, minutes) + date-range attendance analyzer
+6. ✅ `teacher.html` Directory tab: Contracted Teachers & Linked Students (styling fixed)
+7. ✅ Studio aggregate RLS: `schema_phase17_rls_studio_fix.sql` — studios blocked from reading individual logs
+8. ✅ Test 7 (RLS Enforcement) Parts A–C: Studio blocks (0 rows), aggregates work, teacher linkage works
+
+**Acceptance:** duplicate username rejected in realtime; studio dashboard shows only aggregates; per-log toggle persists; RLS verified at database layer.
+
+**Test 7 Part D Follow-up (M6 QA):**
+- Non-linked teacher account should see 0 rows when querying a student's logs
+- Requires creating a 2nd teacher test account (not linked to the student being tested)
+- Deferred: add to M6 final QA checklist when additional test accounts are available
+
+**Pending:**
+- Studio brand channel (realtime broadcasts to linked students' home screens) — low priority
+- Multi-branch hierarchy (schema extension for sub-branches, per-branch codes) — scoped for later
+- Motivational quote header (cosmetic, not core functionality)
 
 ---
 
@@ -265,6 +289,18 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - `videos` table (title, Mux playback ID, duration, thumbnail, teacher/studio owner, published flag) replacing the hardcoded single-entry `VIDEO_CATALOG` in `index.html` (~line 859).
 - Upload/registration workflow for teachers/studios (Mux asset creation is manual in the Mux dashboard for beta; the app stores playback IDs).
 - Catalog UI on the Classes tab; `video_progress` resume already works via `MuxVideoPlayer.js`.
+
+**Status:** 🚧 In Progress (catalog browsing & resume implemented, upload workflow pending)
+
+**Completed:**
+1. ✅ `schema_phase16_m7_videos.sql`: videos + video_progress tables, RLS policies
+2. ✅ `index.html`: loadVideosCatalog() renders published videos in horizontal scroll
+3. ✅ `index.html`: Updated loadContinueWatching() to fetch video metadata from DB
+4. ✅ Video catalog section in Classes tab (linked to video-player.html?videoId=UUID)
+
+**Pending:**
+- Upload/registration workflow (teacher/studio dashboard for video management)
+- video-player.html implementation (Mux player + video_progress updates)
 
 **Acceptance:** multiple videos listed from the DB; continue-watching works across them.
 
@@ -280,6 +316,26 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - Enable Google/Apple OAuth: re-enable the disabled buttons in `login.html`, configure providers in Supabase Auth, verify the `handle_new_user` OAuth metadata path (`schema_phase4_oauth_display_name.sql`) end-to-end. Apple requires an Apple Developer account ($99/yr) — confirm before scheduling.
 
 **Acceptance:** all pages visually consistent in dark+gold; full zh-TC UI switch; OAuth sign-up lands on role-select correctly.
+
+---
+
+## M8 Follow-up — Data Completeness: Practice-Log Teacher Linking
+
+**Rationale:** Current M6 studio analytics reads only from `bookings`, capturing attendance for formally booked classes. However, students may attend a linked teacher's class informally (show up and practice, but never formally book), resulting in invisible attendance to the teacher's analytics. Adding optional teacher/class links to `practice_logs` would allow studios to aggregate both formal bookings and informal attendance into a complete picture.
+
+**Scope:**
+- **Schema:** Add three nullable columns to `practice_logs`: `class_id` (FK to `classes.id`, nullable), `teacher_id` (FK to `profiles.id`, nullable), `teacher_name` (text, nullable — for one-off teachers not in the system). Ensure RLS allows a student to record their own practice linked to any teacher in their linkage network.
+- **UI:** Add a checkbox to `lumen-log-practice-3d.html`: "This practice was with a linked teacher's class" → reveals a selector for linked teachers or a free-text "Teacher name" field if the teacher isn't in the system. Kept optional (students can still log self-directed practice).
+- **Analytics upgrade:** Update `studio_class_tiers()` and related aggregates (e.g., `studio_total_linked_sessions()`, `studio_total_linked_minutes()`) to optionally count practice-log linked attendance alongside booking-based attendance. Provide a query parameter to studios (e.g., `include_informal_attendance` boolean) so they can view complete vs. formal-only totals independently.
+- **Migration:** `schema_phase_*_practice_log_teacher_linking.sql` (idempotent; add columns + updated RLS, no data backfill needed).
+
+**Design note:** The current M6 analytics (bookings-only) is correct for its scope. This enhancement improves data completeness without breaking the existing aggregate functions — it's purely additive.
+
+**Acceptance:** a student logs a practice with a linked teacher's name (or class) → studio analytics can toggle a filter to include/exclude informal attendance and see total attendance (booked + logged) vs. formal bookings alone.
+
+**Dependencies:** M4 (classes + teacher roster already exist), M6 (complete — this is a post-M6 follow-up, not blocking M6 closure).
+
+**Deferred:** integration with M7 video catalog (could tag a practice-log entry with a viewed video for correlating practice → teaching asset consumption).
 
 ---
 
