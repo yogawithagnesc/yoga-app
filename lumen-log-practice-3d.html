@@ -569,7 +569,9 @@ let calDate = new Date();
 let selType = null;       // practice_categories.id
 let selFocus = new Set(); // focus_areas.id values
 let activeGroupId = null; // practice_groups.id currently shown in the type grid
-let mediaItems = [];      // { file, url, type: 'image'|'video' }
+let mediaItems = [];      // NEW uploads this session: { file, url, type: 'image'|'video' }
+let existingMedia = [];   // already-saved media when editing: { id, storage_path, media_type, url }
+let removedMedia = [];    // existing media the user deleted while editing: { id, storage_path }
 let editSessionId = null; // practice_logs.id when editing a past session, else null
 let editRow = null;       // the fetched row being edited, held for DOM prefill after render
 
@@ -598,6 +600,34 @@ async function loadEditLog(id) {
 
   const cat = CATEGORIES.find(c => c.id === row.category_id);
   if (cat) activeGroupId = effectiveGroupId(cat);
+
+  await loadExistingMedia(row.id);
+}
+
+// Fetch media already attached to a session and build preview URLs.
+// The practice-media bucket is private, so we mint short-lived signed URLs.
+async function loadExistingMedia(sessionId) {
+  existingMedia = [];
+  removedMedia  = [];
+
+  const { data: rows, error } = await db.from('session_media')
+    .select('id, storage_path, media_type')
+    .eq('session_id', sessionId)
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: true });
+
+  if (error) { console.error('Load session media failed:', error); return; }
+  if (!rows || !rows.length) return;
+
+  for (const r of rows) {
+    let url = '';
+    const { data: signed } = await db.storage
+      .from('practice-media')
+      .createSignedUrl(r.storage_path, 3600);
+    if (signed) url = signed.signedUrl;
+    existingMedia.push({ id: r.id, storage_path: r.storage_path, media_type: r.media_type, url });
+  }
+  renderMedia();
 }
 
 // Populate the plain DOM fields once buildTypes()/buildFocus()/initBodyMap() have rendered.
@@ -1154,7 +1184,7 @@ const MAX_MEDIA_BYTES = 50 * 1024 * 1024; // 50MB, matches practice-media bucket
 function handleFileSelect(e) {
   const files = Array.from(e.target.files || []);
   files.forEach(file => {
-    if (mediaItems.length >= MAX_MEDIA_FILES) { showToast(STRINGS.mediaLimitReached()); return; }
+    if (existingMedia.length + mediaItems.length >= MAX_MEDIA_FILES) { showToast(STRINGS.mediaLimitReached()); return; }
     if (file.size > MAX_MEDIA_BYTES) { showToast(STRINGS.mediaTooLarge(file.name)); return; }
     const type = file.type.startsWith('video') ? 'video' : 'image';
     mediaItems.push({ file, url: URL.createObjectURL(file), type });
@@ -1164,6 +1194,15 @@ function handleFileSelect(e) {
 }
 function renderMedia() {
   const g=document.getElementById('media-grid'); g.innerHTML='';
+  // Previously-saved media first (edit flow), then new uploads.
+  existingMedia.forEach((item,i)=>{
+    const t=document.createElement('div'); t.className='media-thumb';
+    const inner = (item.media_type === 'image' && item.url)
+      ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md)">`
+      : `<span style="font-size:28px">${item.media_type === 'video' ? '🎥' : '🖼️'}</span>`;
+    t.innerHTML = inner + `<div class="thumb-del" onclick="rmExistingMedia(${i})"><span class="thumb-del-badge">✕</span></div>`;
+    g.appendChild(t);
+  });
   mediaItems.forEach((item,i)=>{
     const t=document.createElement('div'); t.className='media-thumb';
     const inner = item.type === 'image'
@@ -1176,6 +1215,13 @@ function renderMedia() {
 function rmMedia(i) {
   const [removed] = mediaItems.splice(i,1);
   if (removed) URL.revokeObjectURL(removed.url);
+  renderMedia();
+}
+// Removing existing media only queues it — the actual storage/DB delete
+// happens on save, so a cancelled edit leaves the media intact.
+function rmExistingMedia(i) {
+  const [removed] = existingMedia.splice(i,1);
+  if (removed) removedMedia.push({ id: removed.id, storage_path: removed.storage_path });
   renderMedia();
 }
 
@@ -1223,6 +1269,24 @@ async function uploadSessionMedia(sessionId) {
     if (rowErr) { console.error('session_media insert failed:', rowErr); failures++; }
   }
   return failures;
+}
+
+// Delete media the user removed while editing: storage object first, then row.
+async function deleteRemovedMedia() {
+  const paths = removedMedia.map(m => m.storage_path);
+  const ids   = removedMedia.map(m => m.id);
+  if (paths.length) {
+    const { error: stErr } = await db.storage.from('practice-media').remove(paths);
+    if (stErr) console.error('Media storage delete failed:', stErr);
+  }
+  if (ids.length) {
+    const { error: rowErr } = await db.from('session_media')
+      .delete()
+      .in('id', ids)
+      .eq('user_id', currentUser.id);
+    if (rowErr) console.error('session_media delete failed:', rowErr);
+  }
+  removedMedia = [];
 }
 
 // ─── SAVE ───
@@ -1277,6 +1341,10 @@ async function savePractice() {
     btn.disabled = false;
     btn.innerHTML = editSessionId ? 'Update Practice ✎' : 'Save Practice ✦';
     return;
+  }
+
+  if (removedMedia.length) {
+    await deleteRemovedMedia();
   }
 
   if (mediaItems.length) {
