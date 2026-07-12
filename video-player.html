@@ -251,39 +251,59 @@ html, body {
 <script type="module">
 import MuxVideoPlayer from './MuxVideoPlayer.js'
 
-// ── Video catalog (mirrors VIDEO_CATALOG in index.html) ─────
-// Add one entry per Mux upload. video_id is the stable key used
-// in video_progress and in ?videoId= URL params.
-const VIDEO_CATALOG = {
+// ── Legacy fallback (pre-DB single hardcoded class) ─────────
+// Kept only so an old ?videoId=intro-vinyasa-flow link still plays.
+// New links pass the videos.id UUID and resolve from the DB below.
+const LEGACY_CATALOG = {
   'intro-vinyasa-flow': {
     playbackId:  'QSq3Bgs005a0132Qb00AYgn7fyZggqHZWVZxoUrqx1Gzig',
     title:       'Intro to Vinyasa Flow',
     style:       'Vinyasa',
-    description: 'A foundational Vinyasa class linking breath to movement. ' +
-                 'Build heat through a balanced sequence of standing poses, ' +
-                 'forward folds, and a grounding savasana.',
+    description: 'A foundational Vinyasa class linking breath to movement.',
   },
 }
-
-// ── Resolve which video to play ─────────────────────────────
-const params  = new URLSearchParams(window.location.search)
-const videoId = params.get('videoId') || 'intro-vinyasa-flow'
-const video   = VIDEO_CATALOG[videoId] || VIDEO_CATALOG['intro-vinyasa-flow']
-
-// Populate metadata panel
-document.getElementById('meta-style').textContent = video.style
-document.getElementById('meta-title').textContent = video.title
-document.getElementById('meta-desc').textContent  = video.description
-
-let player = null
 
 // ── Auth guard ──────────────────────────────────────────────
 const { data: { session } } = await db.auth.getSession()
 if (!session) {
   window.location.href = 'login.html'
 }
-
 const userId = session.user.id
+
+// ── Resolve which video to play ─────────────────────────────
+const params  = new URLSearchParams(window.location.search)
+const videoId = params.get('videoId') || ''
+
+let video = null
+
+// UUID → fetch the catalog row from the DB (RLS: published, or owned).
+const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(videoId)
+if (isUuid) {
+  const { data: row } = await db.from('videos')
+    .select('id, title, description, mux_playback_id, duration_seconds')
+    .eq('id', videoId)
+    .maybeSingle()
+  if (row) {
+    video = {
+      playbackId:  row.mux_playback_id,
+      title:       row.title,
+      style:       '',
+      description: row.description || '',
+    }
+  }
+}
+
+// Fall back to the legacy hardcoded entry (old slug links).
+if (!video) video = LEGACY_CATALOG[videoId] || LEGACY_CATALOG['intro-vinyasa-flow']
+
+// Populate metadata panel (hide the style pill when empty)
+const styleEl = document.getElementById('meta-style')
+if (video.style) { styleEl.textContent = video.style }
+else { styleEl.style.display = 'none' }
+document.getElementById('meta-title').textContent = video.title
+document.getElementById('meta-desc').textContent  = video.description
+
+let player = null
 
 // ── Mount player ────────────────────────────────────────────
 player = new MuxVideoPlayer({

@@ -33,6 +33,8 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .back-btn{width:44px;height:44px;border-radius:50%;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .back-btn:hover{border-color:var(--accent);color:var(--accent)}
 .hdr-title{font-family:'Tenor Sans','Noto Sans TC',sans-serif;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx-1)}
+.hdr-action{margin-left:auto;padding:8px 12px;border-radius:20px;background:var(--bg-ov);border:1px solid var(--br-def);color:var(--tx-2);font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
+.hdr-action:hover{border-color:var(--accent);color:var(--accent)}
 
 .scroll{flex:1;overflow-y:auto;padding:20px 20px 60px}
 .scroll::-webkit-scrollbar{display:none}
@@ -157,6 +159,7 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
   <div class="hdr">
     <button class="back-btn" onclick="window.location.href='profile.html'">←</button>
     <div class="hdr-title">My Students</div>
+    <button class="hdr-action" onclick="window.location.href='video-admin.html'" title="Video Studio">🎬 Videos</button>
   </div>
 
   <div class="tabs">

@@ -19,7 +19,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M4 | Class scheduling & booking framework | §3.5, §8 | ✅ Phase A + Phase B done | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | ✅ Done (schema pending migration run) | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
-| M7 | On-demand video catalog | P4 | Not started | Haiku 4.5 / Sonnet 5 |
+| M7 | On-demand video catalog | P4 | ✅ Implemented (needs Mux env vars) | Haiku 4.5 / Sonnet 5 |
 | M8 | Polish: theme, localization, OAuth | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -290,19 +290,36 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - Upload/registration workflow for teachers/studios (Mux asset creation is manual in the Mux dashboard for beta; the app stores playback IDs).
 - Catalog UI on the Classes tab; `video_progress` resume already works via `MuxVideoPlayer.js`.
 
-**Status:** 🚧 In Progress (catalog browsing & resume implemented, upload workflow pending)
+**Status:** ✅ Implemented (end-to-end upload → catalog → resume; needs Mux env vars in Vercel to go live)
 
 **Completed:**
 1. ✅ `schema_phase16_m7_videos.sql`: videos + video_progress tables, RLS policies
-2. ✅ `index.html`: loadVideosCatalog() renders published videos in horizontal scroll
-3. ✅ `index.html`: Updated loadContinueWatching() to fetch video metadata from DB
-4. ✅ Video catalog section in Classes tab (linked to video-player.html?videoId=UUID)
+2. ✅ `schema_phase18_video_progress_fix.sql`: reconciled video_progress columns
+   (position_seconds/completed/last_watched_at) + video_id text→uuid FK; the base
+   schema had shadowed phase 16's `CREATE TABLE IF NOT EXISTS`, silently breaking resume.
+3. ✅ `index.html`: loadVideosCatalog() renders published videos; loadContinueWatching() joins video metadata.
+4. ✅ **Full Mux upload workflow** — `video-admin.html` (teacher/studio only): file
+   picker → direct upload to Mux → poll until ready → insert catalog row; plus
+   publish/unpublish toggle and delete for existing videos.
+5. ✅ `api/mux-create-upload.js` + `api/mux-upload-status.js` — Vercel serverless
+   functions that hold the Mux secret, verify the caller's Supabase JWT + teacher/studio
+   role, create the direct upload, and poll upload→asset→playbackId+duration.
+6. ✅ `video-player.html` migrated off the hardcoded slug `VIDEO_CATALOG` to fetch the
+   `videos` row by UUID (legacy slug link kept as a fallback). Previously any DB video
+   click fell through to the hardcoded intro clip.
+7. ✅ `teacher.html`: "🎬 Videos" header link into the Video Studio.
 
-**Pending:**
-- Upload/registration workflow (teacher/studio dashboard for video management)
-- video-player.html implementation (Mux player + video_progress updates)
+**Deploy prerequisite:** set `MUX_TOKEN_ID` and `MUX_TOKEN_SECRET` (Mux Video API token)
+in Vercel env. `video-admin.html` shows a warning banner if the functions aren't reachable.
+Uploads use `video_quality: 'basic'` and a public playback policy.
 
-**Acceptance:** multiple videos listed from the DB; continue-watching works across them.
+**Acceptance:** multiple videos listed from the DB; continue-watching works across them;
+a teacher can upload a new class from the Video Studio and see it appear published.
+
+**Deferred / future:**
+- Thumbnail generation (Mux animated/still thumbnails) → replace the 🎥 emoji tile.
+- Server-side webhook (instead of client polling) for very long processing jobs.
+- Per-video access scoping to linked students only (currently published = all authenticated).
 
 ---
 
