@@ -534,13 +534,20 @@ async function toggleSharedMedia(btn, sessionId) {
   }
 
   const paths = rows.map(r => r.storage_path)
-  const { data: signed } = await db.storage.from('practice-media').createSignedUrls(paths, 3600)
+  const { data: signed, error: signErr } = await db.storage.from('practice-media').createSignedUrls(paths, 3600)
+  if (signErr) console.error('createSignedUrls failed:', signErr)
   const urlByPath = {}
-  ;(signed || []).forEach(s => { if (s && s.path && s.signedUrl) urlByPath[s.path] = s.signedUrl })
+  ;(signed || []).forEach(s => {
+    if (s && s.error) console.error('signed URL error for', s.path, ':', s.error)
+    if (s && s.path && s.signedUrl) urlByPath[s.path] = s.signedUrl
+  })
 
   grid.innerHTML = rows.map(r => {
-    const url = urlByPath[r.storage_path] || ''
-    if (r.media_type === 'image' && url) {
+    const url = urlByPath[r.storage_path]
+    if (!url) {
+      return '<div class="sr-media-thumb sr-media-thumb-error" title="Media unavailable">⚠️</div>'
+    }
+    if (r.media_type === 'image') {
       return '<a class="sr-media-thumb" href="' + url + '" target="_blank" rel="noopener"><img src="' + url + '" alt=""></a>'
     }
     return '<a class="sr-media-thumb" href="' + url + '" target="_blank" rel="noopener">🎥</a>'
