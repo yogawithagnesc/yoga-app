@@ -287,6 +287,7 @@ let FEEDBACK_LOADED = false
   const { data: { session } } = await db.auth.getSession()
   if (!session) { window.location.href = 'login.html'; return }
   currentUser = session.user
+  console.log('🔐 Logged-in teacher auth.uid:', currentUser.id)
 
   const { data: profile } = await db.from('profiles').select('role').eq('id', currentUser.id).single()
   if (!profile || (profile.role !== 'teacher' && profile.role !== 'studio')) {
@@ -440,6 +441,8 @@ async function loadStudents() {
     .eq('entity_id', currentUser.id)
     .eq('status', 'active')
 
+  console.log('🔗 Studio linkages found for teacher', currentUser.id, ':', links)
+
   const el = document.getElementById('students-list')
   el.innerHTML = ''
   LINKED_STUDENTS = []
@@ -525,7 +528,9 @@ async function toggleSharedMedia(btn, sessionId) {
   if (!opening || grid.dataset.loaded) return
   grid.dataset.loaded = '1'
 
+  console.log('📷 Fetching shared media for session', sessionId, 'from teacher', currentUser.id)
   const { data: rows, error } = await db.rpc('get_shared_session_media', { p_session_id: sessionId })
+  console.log('📷 get_shared_session_media response:', rows, error)
 
   if (error) { console.error('get_shared_session_media failed:', error); return; }
   if (!rows || !rows.length) {
