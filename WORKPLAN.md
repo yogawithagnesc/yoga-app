@@ -261,19 +261,25 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 
 **Completed:**
 1. ✅ `schema_phase15_m6_security.sql`: Username UNIQUE + check_username_available() RPC
-2. ✅ `profile.html`: Username input with debounced 400ms availability check + auto-save
+2. ✅ `profile.html`: Username input with debounced 400ms availability check + explicit Save button
 3. ✅ `index.html` privacy toggle: 🔒 Private / 🔓 Shared per-log button in day-modal
-4. ✅ `index.html` peer follow: sendFollowRequest() now supports username + email lookup
+4. ✅ `index.html` peer follow: sendFollowRequest() now supports username + email lookup (case-insensitive)
 5. ✅ `teacher.html` Analytics tab: Studio metrics (followers, sessions, minutes) + date-range attendance analyzer
-6. ✅ `teacher.html` Directory tab: Contracted Teachers & Linked Students (role-aware labels)
-7. ✅ Studio aggregate RLS: practice_logs_studio_block policy prevents individual log access
+6. ✅ `teacher.html` Directory tab: Contracted Teachers & Linked Students (styling fixed)
+7. ✅ Studio aggregate RLS: `schema_phase17_rls_studio_fix.sql` — studios blocked from reading individual logs
+8. ✅ Test 7 (RLS Enforcement) Parts A–C: Studio blocks (0 rows), aggregates work, teacher linkage works
+
+**Acceptance:** duplicate username rejected in realtime; studio dashboard shows only aggregates; per-log toggle persists; RLS verified at database layer.
+
+**Test 7 Part D Follow-up (M6 QA):**
+- Non-linked teacher account should see 0 rows when querying a student's logs
+- Requires creating a 2nd teacher test account (not linked to the student being tested)
+- Deferred: add to M6 final QA checklist when additional test accounts are available
 
 **Pending:**
 - Studio brand channel (realtime broadcasts to linked students' home screens) — low priority
 - Multi-branch hierarchy (schema extension for sub-branches, per-branch codes) — scoped for later
 - Motivational quote header (cosmetic, not core functionality)
-
-**Acceptance:** duplicate username rejected in realtime; studio dashboard shows only aggregates; per-log toggle persists.
 
 ---
 
