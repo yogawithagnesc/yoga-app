@@ -132,4 +132,42 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_linked_practice_logs(uuid) TO authenticated;
 
+-- 5. get_shared_session_media() — helper RPC to fetch media files a
+--    teacher can access for a given session. Encapsulates the same
+--    authorization checks (teacher role, active consented linkage,
+--    non-private log) but returns only the storage paths and media types
+--    for files explicitly marked shared_with_teacher = true.
+CREATE OR REPLACE FUNCTION public.get_shared_session_media(p_session_id uuid)
+RETURNS TABLE (
+  storage_path  text,
+  media_type    text
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF (SELECT role FROM public.profiles WHERE id = auth.uid()) != 'teacher' THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    sm.storage_path,
+    sm.media_type
+  FROM public.session_media sm
+  JOIN public.practice_logs pl ON pl.id = sm.session_id
+  JOIN public.studio_linkages sl ON sl.student_id = pl.user_id
+  WHERE sm.session_id = p_session_id
+    AND sm.shared_with_teacher = true
+    AND pl.is_private = false
+    AND sl.entity_id = auth.uid()
+    AND sl.status = 'active'
+    AND sl.consent_given = true
+  ORDER BY sm.created_at ASC;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_shared_session_media(uuid) TO authenticated;
+
 -- Idempotent: safe to re-run.
