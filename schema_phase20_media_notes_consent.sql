@@ -94,16 +94,16 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF (SELECT role FROM public.profiles WHERE id = auth.uid()) != 'teacher' THEN
+  IF (SELECT profiles.role FROM public.profiles WHERE profiles.id = auth.uid()) IS DISTINCT FROM 'teacher' THEN
     RETURN;
   END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM public.studio_linkages
-    WHERE student_id = p_student_id
-      AND entity_id   = auth.uid()
-      AND status      = 'active'
-      AND consent_given = true
+    WHERE studio_linkages.student_id = p_student_id
+      AND studio_linkages.entity_id   = auth.uid()
+      AND studio_linkages.status      = 'active'
+      AND studio_linkages.consent_given = true
   ) THEN
     RETURN;
   END IF;
@@ -147,7 +147,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF (SELECT role FROM public.profiles WHERE id = auth.uid()) != 'teacher' THEN
+  IF (SELECT profiles.role FROM public.profiles WHERE profiles.id = auth.uid()) IS DISTINCT FROM 'teacher' THEN
     RETURN;
   END IF;
 
