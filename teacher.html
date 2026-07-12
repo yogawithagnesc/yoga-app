@@ -516,8 +516,8 @@ function escapeHtmlTeacher(s) {
 }
 
 // Lazily fetch + render a session's teacher-consented photos/videos.
-// session_media RLS already enforces shared_with_teacher=true (phase 20),
-// so this query only ever returns files the student explicitly opted in.
+// Uses get_shared_session_media() RPC (SECURITY DEFINER) to bypass RLS
+// restrictions and properly authorize teacher access.
 async function toggleSharedMedia(btn, sessionId) {
   const grid = btn.nextElementSibling
   const opening = grid.style.display === 'none'
@@ -525,12 +525,10 @@ async function toggleSharedMedia(btn, sessionId) {
   if (!opening || grid.dataset.loaded) return
   grid.dataset.loaded = '1'
 
-  const { data: rows, error } = await db.from('session_media')
-    .select('storage_path, media_type')
-    .eq('session_id', sessionId)
-    .eq('shared_with_teacher', true)
+  const { data: rows, error } = await db.rpc('get_shared_session_media', { p_session_id: sessionId })
 
-  if (error || !rows || !rows.length) {
+  if (error) { console.error('get_shared_session_media failed:', error); return; }
+  if (!rows || !rows.length) {
     grid.innerHTML = '<div class="empty-hint">No shared media.</div>'
     return
   }
