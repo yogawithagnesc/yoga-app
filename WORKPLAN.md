@@ -306,7 +306,50 @@ date/tag/type/practice, and plays the filtered set as a slideshow; teacher catal
 still present on the Classes tab.
 
 **Deferred:** teacher/studio viewing a linked student's shared media as a gallery
-(RLS already permits shared-media reads; UI not built).
+(RLS already permits shared-media reads; UI not built — superseded by M6c below).
+
+---
+
+## M6c — Consent-Gated Sharing: Media, Notes & Minimal Default Payload
+
+**Status:** ✅ Implemented (needs `schema_phase20_media_notes_consent.sql` run in Supabase)
+
+**Scope:** Tighten what a linked teacher sees by default when a student shares a
+session. Photos/videos and the written reflection each now require a **separate,
+explicit opt-in** beyond the base privacy toggle; the default share is reduced to
+date, practice type, duration, mood, and only **pain/injured** muscle entries.
+
+**Critical security fix (found while implementing this milestone):**
+`practice_logs_studio_block` (added in `schema_phase15_m6_security.sql`) was a
+*permissive* `FOR SELECT` policy whose `USING` clause was `TRUE` for any
+authenticated non-studio user, with no ownership or linkage check. Since
+PostgreSQL combines multiple permissive policies on the same table with **OR**,
+this policy alone granted **any authenticated non-studio user read access to
+every row of `practice_logs`** — regardless of `is_private` or linkage — via a
+direct REST call (the app never surfaced this since every UI query adds its own
+`.eq('user_id', …)` filter). Fixed by dropping both `logs_linked_select` and
+`practice_logs_studio_block`, leaving `logs_own_all` as the only row policy;
+all linked-teacher reads now go through a new `SECURITY DEFINER` RPC.
+
+**Completed:**
+1. ✅ `schema_phase20_media_notes_consent.sql`:
+   - `practice_logs.notes_shared` / `session_media.shared_with_teacher` consent columns
+   - RLS leak fix (drop `logs_linked_select` + `practice_logs_studio_block`)
+   - `session_media_linked_select` / `practice_media_linked_select` (storage) now require `shared_with_teacher = true`
+   - New `get_linked_practice_logs(p_student_id)` RPC — the sole path for teacher reads; role-gated to `'teacher'` (studios stay aggregate-only), filters `muscle_feelings` to pain/injured entries, redacts `notes` unless `notes_shared`, returns a `media_shared_count`
+2. ✅ `lumen-log-practice-3d.html`: per-file "Share with teacher" toggle on each media
+   card (M6b's tag editor gains a share switch); a separate "Share this reflection with
+   my teacher" toggle under Practice Reflection; both wired through save/edit-load.
+3. ✅ `teacher.html`: roster reads switched to `get_linked_practice_logs()`; session rows
+   show mood, pain/injured muscle badges, a notes preview when shared, and an expandable
+   "View shared media" control (signed-URL thumbnails, full quality) when files are shared.
+
+**Acceptance:** a shared session with an untagged pain-marked muscle, a tight-marked
+muscle, notes, and one unshared + one shared photo shows the teacher only: date,
+practice type, duration, mood, the pain-marked muscle (not tight), no notes, and
+exactly the one shared photo. Toggling either consent on and re-saving reveals that
+content. A second unrelated authenticated account can no longer read arbitrary
+`practice_logs` rows directly.
 
 ---
 

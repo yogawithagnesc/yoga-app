@@ -73,11 +73,22 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .student-chevron.open{transform:rotate(90deg);color:var(--accent)}
 .student-detail{display:none;padding:0 16px 16px;border-top:1px solid var(--br-sub)}
 .student-detail.show{display:block}
-.session-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--br-sub)}
+.session-row{padding:10px 0;border-bottom:1px solid var(--br-sub)}
 .session-row:last-child{border-bottom:none}
+.sr-top{display:flex;align-items:center;justify-content:space-between}
 .sr-name{font-size:13px;color:var(--tx-1);font-weight:500}
 .sr-date{font-size:11px;color:var(--tx-3)}
 .sr-dur{font-size:12px;color:var(--tx-2)}
+.sr-mood{font-size:11px;color:var(--tx-3);margin-top:2px}
+.sr-muscles{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.sr-muscle-badge{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500}
+.sr-muscle-badge.pain{background:rgba(196,112,112,.15);color:#C47070}
+.sr-muscle-badge.injured{background:rgba(139,58,58,.2);color:#C47070}
+.sr-notes{font-size:12px;color:var(--tx-2);margin-top:8px;padding:8px 10px;background:var(--bg-ov);border-radius:8px;line-height:1.5}
+.sr-media-btn{font-size:11px;color:var(--accent);margin-top:8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:0;font-family:inherit}
+.sr-media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.sr-media-thumb{aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--bg-ov);border:1px solid var(--br-def);display:flex;align-items:center;justify-content:center;font-size:20px}
+.sr-media-thumb img{width:100%;height:100%;object-fit:cover}
 
 /* Red flag badge */
 .flag-badge{margin-left:8px;font-size:14px;flex-shrink:0;cursor:help}
@@ -418,6 +429,11 @@ async function deactivateFocus(id) {
 }
 
 // ── LINKED STUDENTS ───────────────────────────────────────
+// Per-session detail comes exclusively from get_linked_practice_logs(),
+// a SECURITY DEFINER RPC (schema_phase20) that redacts muscle_feelings to
+// pain/injured entries only and returns notes only when the student has
+// separately opted in — practice_logs itself is no longer directly
+// readable for linked (non-owner) rows.
 async function loadStudents() {
   const { data: links } = await db.from('studio_linkages')
     .select('student_id, profiles!studio_linkages_student_id_fkey(display_name)')
@@ -437,11 +453,8 @@ async function loadStudents() {
     const name = link.profiles ? link.profiles.display_name : 'Unknown'
     LINKED_STUDENTS.push({ student_id: link.student_id, display_name: name })
 
-    const { data: sessions } = await db.from('practice_logs')
-      .select('id, practice_date, style_name, duration_minutes, mood')
-      .eq('user_id', link.student_id)
-      .eq('is_private', false)
-      .order('practice_date', { ascending: false })
+    const { data: sessions, error } = await db.rpc('get_linked_practice_logs', { p_student_id: link.student_id })
+    if (error) console.error('get_linked_practice_logs failed:', error)
 
     const shared = sessions || []
     const totalMin = shared.reduce((sum, s) => sum + (s.duration_minutes || 0), 0)
@@ -459,16 +472,81 @@ async function loadStudents() {
       '</div>' +
       '<div class="student-detail">' +
         (shared.length
-          ? shared.slice(0, 10).map(s =>
-              '<div class="session-row">' +
-                '<div><div class="sr-name">' + s.style_name + '</div><div class="sr-date">' + s.practice_date + '</div></div>' +
-                '<div class="sr-dur">' + s.duration_minutes + ' min</div>' +
-              '</div>'
-            ).join('')
+          ? shared.slice(0, 10).map(s => buildSessionRowHtml(s)).join('')
           : '<div class="empty-hint">No shared sessions yet — this student\'s practice is currently private.</div>')
       + '</div>'
     el.appendChild(card)
   }
+}
+
+const MUSCLE_BADGE_LABEL = { pain: '🔴 Pain', injured: '🚨 Injured' }
+
+function buildSessionRowHtml(s) {
+  const muscles = (s.muscle_feelings || [])
+    .map(mf => mf && mf.zone && MUSCLE_BADGE_LABEL[mf.feeling]
+      ? '<span class="sr-muscle-badge ' + mf.feeling + '">' + MUSCLE_BADGE_LABEL[mf.feeling] + ' · ' + mf.zone + '</span>'
+      : '').join('')
+
+  const notesHtml = s.notes
+    ? '<div class="sr-notes">' + escapeHtmlTeacher(s.notes) + '</div>'
+    : ''
+
+  const mediaBtn = s.media_shared_count > 0
+    ? '<button class="sr-media-btn" onclick="toggleSharedMedia(this,\'' + s.id + '\')">📷 View shared media (' + s.media_shared_count + ')</button>' +
+      '<div class="sr-media-grid" style="display:none"></div>'
+    : ''
+
+  return (
+    '<div class="session-row">' +
+      '<div class="sr-top">' +
+        '<div><div class="sr-name">' + escapeHtmlTeacher(s.style_name || '') + '</div><div class="sr-date">' + s.practice_date + '</div></div>' +
+        '<div class="sr-dur">' + s.duration_minutes + ' min</div>' +
+      '</div>' +
+      (s.mood ? '<div class="sr-mood">' + escapeHtmlTeacher(s.mood) + '</div>' : '') +
+      (muscles ? '<div class="sr-muscles">' + muscles + '</div>' : '') +
+      notesHtml +
+      mediaBtn +
+    '</div>'
+  )
+}
+
+function escapeHtmlTeacher(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]))
+}
+
+// Lazily fetch + render a session's teacher-consented photos/videos.
+// session_media RLS already enforces shared_with_teacher=true (phase 20),
+// so this query only ever returns files the student explicitly opted in.
+async function toggleSharedMedia(btn, sessionId) {
+  const grid = btn.nextElementSibling
+  const opening = grid.style.display === 'none'
+  grid.style.display = opening ? 'grid' : 'none'
+  if (!opening || grid.dataset.loaded) return
+  grid.dataset.loaded = '1'
+
+  const { data: rows, error } = await db.from('session_media')
+    .select('storage_path, media_type')
+    .eq('session_id', sessionId)
+    .eq('shared_with_teacher', true)
+
+  if (error || !rows || !rows.length) {
+    grid.innerHTML = '<div class="empty-hint">No shared media.</div>'
+    return
+  }
+
+  const paths = rows.map(r => r.storage_path)
+  const { data: signed } = await db.storage.from('practice-media').createSignedUrls(paths, 3600)
+  const urlByPath = {}
+  ;(signed || []).forEach(s => { if (s && s.path && s.signedUrl) urlByPath[s.path] = s.signedUrl })
+
+  grid.innerHTML = rows.map(r => {
+    const url = urlByPath[r.storage_path] || ''
+    if (r.media_type === 'image' && url) {
+      return '<a class="sr-media-thumb" href="' + url + '" target="_blank" rel="noopener"><img src="' + url + '" alt=""></a>'
+    }
+    return '<a class="sr-media-thumb" href="' + url + '" target="_blank" rel="noopener">🎥</a>'
+  }).join('')
 }
 
 function toggleStudent(headerEl) {
