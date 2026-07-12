@@ -243,6 +243,39 @@
   .video-title { font-size: 11px; font-weight: 500; color: var(--tx-1); line-height: 1.3; }
   .video-duration { font-size: 10px; color: var(--tx-2); }
 
+  /* Practice Gallery (M6b) */
+  .gallery-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .gallery-filter-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: var(--r-full); background: var(--bg-ov); border: 1px solid var(--br-def); color: var(--tx-2); font-size: 12px; font-family: inherit; cursor: pointer; transition: all .15s; }
+  .gallery-filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .gallery-filter-badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--accent); color: var(--bg); font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+  .gallery-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .gallery-chips:empty { display: none; }
+  .g-active-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--r-full); background: var(--adim, rgba(200,169,110,0.12)); border: 1px solid var(--accent); color: var(--accent); font-size: 11px; }
+  .g-active-chip .x { cursor: pointer; opacity: .8; }
+  .g-active-chip .x:hover { opacity: 1; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .g-tile { position: relative; aspect-ratio: 1; border-radius: var(--r-md); overflow: hidden; background: var(--bg-ov); border: 1px solid var(--br-def); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .g-tile img { width: 100%; height: 100%; object-fit: cover; }
+  .g-tile .g-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.28); color: #fff; font-size: 24px; }
+  .g-tile .g-tagcount { position: absolute; bottom: 4px; left: 4px; font-size: 9px; background: rgba(0,0,0,.7); color: #fff; padding: 2px 6px; border-radius: 8px; }
+  .gallery-empty { text-align: center; color: var(--tx-3); font-size: 13px; padding: 24px 0; }
+
+  /* Lightbox */
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.94); z-index: 300; display: none; flex-direction: column; }
+  .lightbox.open { display: flex; }
+  .lb-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; color: var(--tx-1); }
+  .lb-counter { font-size: 13px; color: var(--tx-2); }
+  .lb-close, .lb-play { background: none; border: none; color: var(--tx-1); font-size: 20px; cursor: pointer; padding: 6px 10px; }
+  .lb-play.on { color: var(--accent); }
+  .lb-stage { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .lb-stage img, .lb-stage video { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .lb-nav:disabled { opacity: .25; cursor: default; }
+  .lb-prev { left: 12px; } .lb-next { right: 12px; }
+  .lb-caption { padding: 14px 20px 26px; color: var(--tx-2); font-size: 13px; text-align: center; }
+  .lb-caption .lb-tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .lb-caption .lb-tag { font-size: 11px; padding: 3px 9px; border-radius: var(--r-full); background: var(--adim, rgba(200,169,110,0.12)); border: 1px solid var(--accent); color: var(--accent); }
+
   /* Community */
   .feed { padding: 0 28px; }
   .feed-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--br-sub); }
@@ -641,10 +674,16 @@
         </div>
       </div>
 
-      <!-- Video catalog (M7) — shown on Home tab if videos published -->
-      <div id="home-video-catalog-wrap" style="padding:0 28px 22px;display:none">
-        <div class="section-label">On-Demand Videos</div>
-        <div id="home-video-catalog-list"></div>
+      <!-- Practice Gallery (M6b) — the user's own uploaded practice media -->
+      <div id="gallery-section" style="padding:0 28px 22px;display:none">
+        <div class="gallery-head">
+          <div class="section-label" style="margin:0">Practice Gallery</div>
+          <button class="gallery-filter-btn" id="gallery-filter-btn" onclick="openGalleryFilter()">
+            ⚙ Filter<span class="gallery-filter-badge" id="gallery-filter-badge" style="display:none">0</span>
+          </button>
+        </div>
+        <div class="gallery-chips" id="gallery-active-chips"></div>
+        <div class="gallery-grid" id="gallery-grid"></div>
       </div>
 
       <div class="section">
@@ -764,6 +803,49 @@
     <div id="day-log-list"></div>
     <button class="save-btn" style="margin-top:16px;background:var(--br-def);color:var(--tx-1)" onclick="closeDayModal()">Close</button>
   </div>
+</div>
+
+<!-- Practice Gallery Filter Modal (M6b) -->
+<div class="overlay" id="gallery-filter-modal" style="display:none" onclick="if(event.target===this)closeGalleryFilter()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Filter Gallery</div>
+    <div class="filter-field"><label>From</label><input type="date" id="gf-date-min"></div>
+    <div class="filter-field"><label>To</label><input type="date" id="gf-date-max"></div>
+    <div class="filter-field"><label>Media</label>
+      <select id="gf-type">
+        <option value="">All media</option>
+        <option value="image">Photos</option>
+        <option value="video">Videos</option>
+      </select>
+    </div>
+    <div class="filter-field"><label>Practice type</label>
+      <select id="gf-practice"><option value="">Any practice</option></select>
+    </div>
+    <div class="filter-field">
+      <label>Tags</label>
+      <div class="chips" id="gf-tag-chips" style="margin-bottom:0"></div>
+    </div>
+    <div class="filter-actions">
+      <button class="save-btn" onclick="applyGalleryFilterForm()">Apply</button>
+      <button class="save-btn" style="background:var(--br-def);color:var(--tx-1)" onclick="resetGalleryFilter()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Practice Gallery Lightbox (M6b) -->
+<div class="lightbox" id="gallery-lightbox">
+  <div class="lb-top">
+    <button class="lb-close" onclick="closeLightbox()">✕</button>
+    <span class="lb-counter" id="lb-counter"></span>
+    <button class="lb-play" id="lb-play" onclick="toggleLightboxPlay()" title="Auto-play">▶</button>
+  </div>
+  <div class="lb-stage" id="lb-stage">
+    <button class="lb-nav lb-prev" onclick="lightboxStep(-1)">‹</button>
+    <div id="lb-media"></div>
+    <button class="lb-nav lb-next" onclick="lightboxStep(1)">›</button>
+  </div>
+  <div class="lb-caption" id="lb-caption"></div>
 </div>
 
 <!-- Class Booking Modal (M4 — booking engine gated to a later phase) -->
@@ -946,8 +1028,8 @@ let currentUserRole = null;
     // Load in-progress videos for the Continue Watching shelf
     loadContinueWatching();
 
-    // Load on-demand video catalog (M7) for the Home tab
-    loadVideosCatalog('home');
+    // Load the personal Practice Gallery (M6b) for the Home tab
+    loadGallery();
 
     // Load last-14-days muscle feelings for the Body Status widget
     loadBodyStatus();
@@ -1136,6 +1218,278 @@ async function loadMonthLogs() {
 }
 
 /* ─────────────────────────────────────────
+   PRACTICE GALLERY (M6b) — home tab
+   The user's own uploaded practice media (session_media), browsable
+   and filterable by date, tag, media type, and practice type, with a
+   full-screen lightbox slideshow.
+───────────────────────────────────────── */
+
+var GALLERY_RAW = [];   // [{ id, media_type, tags[], url, date, style }]
+var GALLERY_VIEW = [];  // currently filtered + ordered subset (drives lightbox)
+var GALLERY_FILTER = { dateMin: null, dateMax: null, type: '', practiceId: '', tags: [] };
+
+async function loadGallery() {
+  if (!currentUser) return;
+
+  var result = await db.from('session_media')
+    .select('id, storage_path, media_type, tags, created_at, practice_logs(practice_date, style_name, category_id)')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  if (result.error || !result.data || !result.data.length) {
+    document.getElementById('gallery-section').style.display = 'none';
+    return;
+  }
+
+  // Batch-sign all paths at once (private bucket).
+  var paths = result.data.map(function(r) { return r.storage_path; });
+  var signedMap = {};
+  var signed = await db.storage.from('practice-media').createSignedUrls(paths, 3600);
+  (signed.data || []).forEach(function(s) {
+    if (s && s.path && s.signedUrl) signedMap[s.path] = s.signedUrl;
+  });
+
+  GALLERY_RAW = result.data.map(function(r) {
+    var log = r.practice_logs || {};
+    return {
+      id: r.id,
+      media_type: r.media_type,
+      tags: r.tags || [],
+      url: signedMap[r.storage_path] || '',
+      date: log.practice_date || (r.created_at ? r.created_at.slice(0, 10) : null),
+      style: log.style_name || '',
+      categoryId: log.category_id || null,
+    };
+  });
+
+  document.getElementById('gallery-section').style.display = 'block';
+  renderGallery();
+}
+
+function galleryFiltered() {
+  var f = GALLERY_FILTER;
+  return GALLERY_RAW.filter(function(m) {
+    if (f.type && m.media_type !== f.type) return false;
+    if (f.practiceId && m.categoryId !== f.practiceId) return false;
+    if (f.dateMin && (!m.date || m.date < f.dateMin)) return false;
+    if (f.dateMax && (!m.date || m.date > f.dateMax)) return false;
+    if (f.tags.length && !f.tags.every(function(t) { return m.tags.includes(t); })) return false;
+    return true;
+  });
+}
+
+function renderGallery() {
+  GALLERY_VIEW = galleryFiltered();
+  var grid = document.getElementById('gallery-grid');
+  grid.innerHTML = '';
+
+  if (!GALLERY_VIEW.length) {
+    grid.innerHTML = '<div class="gallery-empty" style="grid-column:1/-1">No media matches these filters.</div>';
+  } else {
+    GALLERY_VIEW.forEach(function(m, idx) {
+      var tile = document.createElement('div');
+      tile.className = 'g-tile';
+      tile.onclick = (function(i) { return function() { openLightbox(i); }; })(idx);
+      var inner = (m.media_type === 'image' && m.url)
+        ? '<img src="' + m.url + '" alt="">'
+        : '<span>🎥</span>';
+      if (m.media_type === 'video') inner += '<div class="g-play">▶</div>';
+      if (m.tags.length) inner += '<div class="g-tagcount">#' + m.tags.length + '</div>';
+      tile.innerHTML = inner;
+      grid.appendChild(tile);
+    });
+  }
+  renderGalleryActiveChips();
+  updateGalleryBadge();
+}
+
+function updateGalleryBadge() {
+  var f = GALLERY_FILTER;
+  var n = (f.dateMin ? 1 : 0) + (f.dateMax ? 1 : 0) + (f.type ? 1 : 0) +
+          (f.practiceId ? 1 : 0) + f.tags.length;
+  var badge = document.getElementById('gallery-filter-badge');
+  badge.textContent = n;
+  badge.style.display = n ? 'inline-flex' : 'none';
+}
+
+function renderGalleryActiveChips() {
+  var wrap = document.getElementById('gallery-active-chips');
+  var f = GALLERY_FILTER;
+  var chips = [];
+  if (f.type) chips.push(['type', f.type === 'image' ? 'Photos' : 'Videos']);
+  if (f.practiceId) {
+    var match = GALLERY_RAW.find(function(m) { return m.categoryId === f.practiceId; });
+    chips.push(['practiceId', match && match.style ? match.style : 'Practice']);
+  }
+  if (f.dateMin) chips.push(['dateMin', 'From ' + f.dateMin]);
+  if (f.dateMax) chips.push(['dateMax', 'To ' + f.dateMax]);
+  f.tags.forEach(function(t) { chips.push(['tag:' + t, '#' + t]); });
+
+  wrap.innerHTML = chips.map(function(c) {
+    return '<span class="g-active-chip">' + galleryEsc(c[1]) +
+      '<span class="x" onclick="clearGalleryFilter(\'' + c[0] + '\')">✕</span></span>';
+  }).join('');
+}
+
+function clearGalleryFilter(key) {
+  if (key.indexOf('tag:') === 0) {
+    var t = key.slice(4);
+    GALLERY_FILTER.tags = GALLERY_FILTER.tags.filter(function(x) { return x !== t; });
+  } else {
+    GALLERY_FILTER[key] = (key === 'tags') ? [] : null;
+    if (key === 'type' || key === 'practiceId') GALLERY_FILTER[key] = '';
+  }
+  renderGallery();
+}
+
+function galleryEsc(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+  });
+}
+
+// ── Filter popover ──
+function openGalleryFilter() {
+  var f = GALLERY_FILTER;
+  document.getElementById('gf-date-min').value = f.dateMin || '';
+  document.getElementById('gf-date-max').value = f.dateMax || '';
+  document.getElementById('gf-type').value = f.type || '';
+
+  // Populate practice-type select from the categories present in the gallery.
+  var sel = document.getElementById('gf-practice');
+  var seen = {};
+  var opts = '<option value="">Any practice</option>';
+  GALLERY_RAW.forEach(function(m) {
+    if (m.categoryId && !seen[m.categoryId]) {
+      seen[m.categoryId] = true;
+      opts += '<option value="' + m.categoryId + '">' + galleryEsc(m.style || 'Practice') + '</option>';
+    }
+  });
+  sel.innerHTML = opts;
+  sel.value = f.practiceId || '';
+
+  // Tag chips from the distinct tags across the user's media.
+  var tagSet = {};
+  GALLERY_RAW.forEach(function(m) { m.tags.forEach(function(t) { tagSet[t] = true; }); });
+  var chipsEl = document.getElementById('gf-tag-chips');
+  var tags = Object.keys(tagSet).sort();
+  chipsEl.innerHTML = tags.length
+    ? tags.map(function(t) {
+        var on = f.tags.includes(t) ? ' on' : '';
+        return '<div class="chip' + on + '" onclick="toggleGalleryTag(this,\'' + galleryEsc(t) + '\')">' + galleryEsc(t) + '</div>';
+      }).join('')
+    : '<div style="font-size:12px;color:var(--tx-3)">No tags yet — add tags when logging practice.</div>';
+
+  document.getElementById('gallery-filter-modal').style.display = 'flex';
+}
+function toggleGalleryTag(el, tag) { el.classList.toggle('on'); }
+function closeGalleryFilter() { document.getElementById('gallery-filter-modal').style.display = 'none'; }
+
+function applyGalleryFilterForm() {
+  GALLERY_FILTER.dateMin = document.getElementById('gf-date-min').value || null;
+  GALLERY_FILTER.dateMax = document.getElementById('gf-date-max').value || null;
+  GALLERY_FILTER.type = document.getElementById('gf-type').value || '';
+  GALLERY_FILTER.practiceId = document.getElementById('gf-practice').value || '';
+  GALLERY_FILTER.tags = Array.prototype.slice
+    .call(document.querySelectorAll('#gf-tag-chips .chip.on'))
+    .map(function(c) { return c.textContent; });
+  closeGalleryFilter();
+  renderGallery();
+}
+function resetGalleryFilter() {
+  GALLERY_FILTER = { dateMin: null, dateMax: null, type: '', practiceId: '', tags: [] };
+  closeGalleryFilter();
+  renderGallery();
+}
+
+// ── Lightbox ──
+var LB_INDEX = 0;
+var LB_TIMER = null;
+var LB_PLAYING = false;
+var LB_ADVANCE_MS = 4000;
+
+function openLightbox(i) {
+  if (!GALLERY_VIEW.length) return;
+  LB_INDEX = i;
+  document.getElementById('gallery-lightbox').classList.add('open');
+  renderLightbox();
+  document.addEventListener('keydown', lightboxKey);
+}
+function closeLightbox() {
+  stopLightboxPlay();
+  document.getElementById('gallery-lightbox').classList.remove('open');
+  document.getElementById('lb-media').innerHTML = '';
+  document.removeEventListener('keydown', lightboxKey);
+}
+function lightboxKey(e) {
+  if (e.key === 'ArrowLeft') lightboxStep(-1);
+  else if (e.key === 'ArrowRight') lightboxStep(1);
+  else if (e.key === 'Escape') closeLightbox();
+}
+function renderLightbox() {
+  var m = GALLERY_VIEW[LB_INDEX];
+  if (!m) return;
+  var stage = document.getElementById('lb-media');
+  if (m.media_type === 'video') {
+    stage.innerHTML = '<video src="' + m.url + '" controls autoplay playsinline></video>';
+    // When a video ends during auto-play, advance to the next item.
+    var v = stage.querySelector('video');
+    if (v) v.addEventListener('ended', function() { if (LB_PLAYING) lightboxStep(1); });
+  } else {
+    stage.innerHTML = '<img src="' + m.url + '" alt="">';
+  }
+  document.getElementById('lb-counter').textContent = (LB_INDEX + 1) + ' / ' + GALLERY_VIEW.length;
+  var cap = (m.style || 'Practice') + (m.date ? ' · ' + m.date : '');
+  var tagsHtml = m.tags.length
+    ? '<div class="lb-tags">' + m.tags.map(function(t) { return '<span class="lb-tag">#' + galleryEsc(t) + '</span>'; }).join('') + '</div>'
+    : '';
+  document.getElementById('lb-caption').innerHTML = galleryEsc(cap) + tagsHtml;
+  document.querySelector('.lb-prev').disabled = (LB_INDEX === 0);
+  document.querySelector('.lb-next').disabled = (LB_INDEX === GALLERY_VIEW.length - 1);
+
+  // Auto-advance timer for photos; videos advance on 'ended' instead.
+  clearTimeout(LB_TIMER);
+  if (LB_PLAYING && m.media_type === 'image') {
+    LB_TIMER = setTimeout(function() { lightboxStep(1); }, LB_ADVANCE_MS);
+  }
+}
+function lightboxStep(dir) {
+  var next = LB_INDEX + dir;
+  if (next < 0 || next >= GALLERY_VIEW.length) {
+    if (LB_PLAYING) { stopLightboxPlay(); }  // stop at the ends
+    return;
+  }
+  LB_INDEX = next;
+  renderLightbox();
+}
+function toggleLightboxPlay() { LB_PLAYING ? stopLightboxPlay() : startLightboxPlay(); }
+function startLightboxPlay() {
+  LB_PLAYING = true;
+  document.getElementById('lb-play').classList.add('on');
+  renderLightbox();
+}
+function stopLightboxPlay() {
+  LB_PLAYING = false;
+  clearTimeout(LB_TIMER);
+  var el = document.getElementById('lb-play');
+  if (el) el.classList.remove('on');
+}
+
+// Touch swipe on the lightbox stage.
+(function attachLightboxSwipe() {
+  var stage = document.getElementById('lb-stage');
+  if (!stage) return;
+  var x0 = null;
+  stage.addEventListener('touchstart', function(e) { x0 = e.changedTouches[0].clientX; }, { passive: true });
+  stage.addEventListener('touchend', function(e) {
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 45) lightboxStep(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, { passive: true });
+})();
+
+/* ─────────────────────────────────────────
    CONTINUE WATCHING — home tab shelf
    Queries video_progress for in-progress videos, renders a card
    per video with a progress bar, links to video-player.html?videoId=…
@@ -1144,8 +1498,8 @@ async function loadMonthLogs() {
 // Video catalog loaded from DB (replaces hardcoded VIDEO_CATALOG)
 var VIDEOS_LOADED = {};
 
-async function loadVideosCatalog(tabId = null) {
-  // tabId: null (load both), 'home', or 'classes' (specific tab only)
+// Teacher-posted On-Demand video catalog — Classes tab only.
+async function loadVideosCatalog() {
   if (!currentUser) return;
 
   const { data: videos, error } = await db.from('videos')
@@ -1154,65 +1508,30 @@ async function loadVideosCatalog(tabId = null) {
     .order('created_at', { ascending: false })
     .limit(10);
 
-  const shouldShowVideos = !error && videos && videos.length > 0;
-
-  // Render to Classes tab if requested (or if null = both)
-  if (tabId === null || tabId === 'classes') {
-    const wrapId = 'video-catalog-wrap';
-    const listId = 'video-catalog-list';
-    if (shouldShowVideos) {
-      const catalogEl = document.getElementById(listId);
-      catalogEl.innerHTML = '';
-      const ul = document.createElement('div');
-      ul.className = 'video-list';
-      videos.forEach(function(video) {
-        const card = document.createElement('a');
-        card.className = 'video-card';
-        card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
-        const mins = video.duration_seconds ? Math.round(video.duration_seconds / 60) : '–';
-        card.innerHTML =
-          '<div class="video-thumb">🎥</div>' +
-          '<div class="video-meta">' +
-            '<div class="video-title">' + video.title + '</div>' +
-            '<div class="video-duration">' + mins + ' min</div>' +
-          '</div>';
-        ul.appendChild(card);
-      });
-      catalogEl.appendChild(ul);
-      document.getElementById(wrapId).style.display = 'block';
-    } else {
-      document.getElementById(wrapId).style.display = 'none';
-    }
+  if (error || !videos || !videos.length) {
+    document.getElementById('video-catalog-wrap').style.display = 'none';
+    return;
   }
 
-  // Render to Home tab if requested (or if null = both)
-  if (tabId === null || tabId === 'home') {
-    const wrapId = 'home-video-catalog-wrap';
-    const listId = 'home-video-catalog-list';
-    if (shouldShowVideos) {
-      const catalogEl = document.getElementById(listId);
-      catalogEl.innerHTML = '';
-      const ul = document.createElement('div');
-      ul.className = 'video-list';
-      videos.forEach(function(video) {
-        const card = document.createElement('a');
-        card.className = 'video-card';
-        card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
-        const mins = video.duration_seconds ? Math.round(video.duration_seconds / 60) : '–';
-        card.innerHTML =
-          '<div class="video-thumb">🎥</div>' +
-          '<div class="video-meta">' +
-            '<div class="video-title">' + video.title + '</div>' +
-            '<div class="video-duration">' + mins + ' min</div>' +
-          '</div>';
-        ul.appendChild(card);
-      });
-      catalogEl.appendChild(ul);
-      document.getElementById(wrapId).style.display = 'block';
-    } else {
-      document.getElementById(wrapId).style.display = 'none';
-    }
-  }
+  const catalogEl = document.getElementById('video-catalog-list');
+  catalogEl.innerHTML = '';
+  const ul = document.createElement('div');
+  ul.className = 'video-list';
+  videos.forEach(function(video) {
+    const card = document.createElement('a');
+    card.className = 'video-card';
+    card.href = 'video-player.html?videoId=' + encodeURIComponent(video.id);
+    const mins = video.duration_seconds ? Math.round(video.duration_seconds / 60) : '–';
+    card.innerHTML =
+      '<div class="video-thumb">🎥</div>' +
+      '<div class="video-meta">' +
+        '<div class="video-title">' + video.title + '</div>' +
+        '<div class="video-duration">' + mins + ' min</div>' +
+      '</div>';
+    ul.appendChild(card);
+  });
+  catalogEl.appendChild(ul);
+  document.getElementById('video-catalog-wrap').style.display = 'block';
 }
 
 async function loadContinueWatching() {

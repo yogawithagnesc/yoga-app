@@ -283,6 +283,33 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 
 ---
 
+## M6b — Practice Gallery (PRD §3.3.1)
+
+**Status:** ✅ Implemented (needs `schema_phase19_media_tags.sql` run in Supabase)
+
+**Scope:** Reframe the Home media surface around the practitioner's *own* uploaded
+practice media. Replace the On-Demand Videos shelf on Home with a filterable
+**Practice Gallery**; the teacher-posted On-Demand catalog stays on the Classes tab.
+
+**Completed:**
+1. ✅ `schema_phase19_media_tags.sql`: `session_media.tags text[]` + GIN index (idempotent).
+2. ✅ `lumen-log-practice-3d.html`: per-file tag entry (chips + input) on each media card;
+   tags saved on upload, loaded on edit, and updated in place for already-saved media.
+3. ✅ `index.html`: Home Practice Gallery — batch-signed thumbnails, a filter popover
+   (date range / media type / practice type / tag multi-select) mirroring the classes
+   filter pattern, active-filter chips, and a full-screen lightbox with manual nav
+   (buttons / arrow keys / swipe) + auto-play (photos timed, videos advance on end).
+4. ✅ Teacher On-Demand catalog reverted to Classes-tab-only (`loadVideosCatalog()`).
+
+**Acceptance:** a user sees their own tagged media on Home, filters it by
+date/tag/type/practice, and plays the filtered set as a slideshow; teacher catalog
+still present on the Classes tab.
+
+**Deferred:** teacher/studio viewing a linked student's shared media as a gallery
+(RLS already permits shared-media reads; UI not built).
+
+---
+
 ## M7 — On-Demand Video Catalog (P4)
 
 **Scope:**

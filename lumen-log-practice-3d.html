@@ -179,10 +179,20 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .upload-zone{border:1px dashed var(--br-str);border-radius:var(--r-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-el);position:relative;overflow:hidden}
 .upload-zone:hover{border-color:var(--accent);background:var(--accent-dim)}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
-.media-thumb{aspect-ratio:1;background:var(--bg-ov);border-radius:var(--r-md);border:1px solid var(--br-def);display:flex;align-items:center;justify-content:center;font-size:26px;position:relative;cursor:pointer}
-.thumb-del{position:absolute;top:0;right:0;width:44px;height:44px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px;cursor:pointer}
+.media-grid{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.media-card{display:flex;gap:12px;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px}
+.media-thumb{width:72px;height:72px;flex-shrink:0;background:var(--bg-ov);border-radius:var(--r-md);border:1px solid var(--br-def);display:flex;align-items:center;justify-content:center;font-size:26px;position:relative;overflow:hidden}
+.media-thumb img{width:100%;height:100%;object-fit:cover}
+.thumb-del{position:absolute;top:0;right:0;width:32px;height:32px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px;cursor:pointer}
 .thumb-del-badge{width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.75);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.media-tagwrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.media-tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:var(--r-full);font-size:11px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent)}
+.tag-chip .tx{cursor:pointer;font-size:12px;line-height:1;opacity:.8}
+.tag-chip .tx:hover{opacity:1}
+.tag-input{width:100%;background:var(--bg-ov);border:1px solid var(--br-def);border-radius:var(--r-sm);color:var(--tx-1);font-family:inherit;font-size:12px;padding:7px 9px}
+.tag-input:focus{outline:none;border-color:var(--accent)}
+.tag-input::placeholder{color:var(--tx-3)}
 
 /* ── MOOD + NOTES ── */
 .mood-row{display:flex;gap:8px;justify-content:space-between}
@@ -611,7 +621,7 @@ async function loadExistingMedia(sessionId) {
   removedMedia  = [];
 
   const { data: rows, error } = await db.from('session_media')
-    .select('id, storage_path, media_type')
+    .select('id, storage_path, media_type, tags')
     .eq('session_id', sessionId)
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: true });
@@ -625,7 +635,10 @@ async function loadExistingMedia(sessionId) {
       .from('practice-media')
       .createSignedUrl(r.storage_path, 3600);
     if (signed) url = signed.signedUrl;
-    existingMedia.push({ id: r.id, storage_path: r.storage_path, media_type: r.media_type, url });
+    existingMedia.push({
+      id: r.id, storage_path: r.storage_path, media_type: r.media_type,
+      url, tags: r.tags || [], tagsDirty: false,
+    });
   }
   renderMedia();
 }
@@ -1187,31 +1200,73 @@ function handleFileSelect(e) {
     if (existingMedia.length + mediaItems.length >= MAX_MEDIA_FILES) { showToast(STRINGS.mediaLimitReached()); return; }
     if (file.size > MAX_MEDIA_BYTES) { showToast(STRINGS.mediaTooLarge(file.name)); return; }
     const type = file.type.startsWith('video') ? 'video' : 'image';
-    mediaItems.push({ file, url: URL.createObjectURL(file), type });
+    mediaItems.push({ file, url: URL.createObjectURL(file), type, tags: [] });
   });
   e.target.value = ''; // allow re-selecting the same file later
   renderMedia();
 }
+
+// Build one media card: thumbnail + removable tag chips + a tag input.
+// `bucket` is 'existing' or 'new' so the tag/remove handlers target the
+// right array; `type` normalizes the media-type field name difference.
+function buildMediaCard(item, i, bucket) {
+  const type = bucket === 'existing' ? item.media_type : item.type;
+  const card = document.createElement('div');
+  card.className = 'media-card';
+
+  const thumb = (type === 'image' && item.url)
+    ? `<img src="${item.url}" alt="">`
+    : `<span>${type === 'video' ? '🎥' : '🖼️'}</span>`;
+  const rmFn = bucket === 'existing' ? 'rmExistingMedia' : 'rmMedia';
+
+  const chips = (item.tags || []).map((t, ti) =>
+    `<span class="tag-chip">${escapeTag(t)}<span class="tx" onclick="removeTag('${bucket}',${i},${ti})">✕</span></span>`
+  ).join('');
+
+  card.innerHTML =
+    `<div class="media-thumb">${thumb}` +
+      `<div class="thumb-del" onclick="${rmFn}(${i})"><span class="thumb-del-badge">✕</span></div>` +
+    `</div>` +
+    `<div class="media-tagwrap">` +
+      `<div class="media-tags">${chips}</div>` +
+      `<input class="tag-input" type="text" placeholder="Add a tag + Enter (e.g. headstand)" ` +
+        `onkeydown="tagKey(event,'${bucket}',${i})">` +
+    `</div>`;
+  return card;
+}
+
 function renderMedia() {
   const g=document.getElementById('media-grid'); g.innerHTML='';
   // Previously-saved media first (edit flow), then new uploads.
-  existingMedia.forEach((item,i)=>{
-    const t=document.createElement('div'); t.className='media-thumb';
-    const inner = (item.media_type === 'image' && item.url)
-      ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md)">`
-      : `<span style="font-size:28px">${item.media_type === 'video' ? '🎥' : '🖼️'}</span>`;
-    t.innerHTML = inner + `<div class="thumb-del" onclick="rmExistingMedia(${i})"><span class="thumb-del-badge">✕</span></div>`;
-    g.appendChild(t);
-  });
-  mediaItems.forEach((item,i)=>{
-    const t=document.createElement('div'); t.className='media-thumb';
-    const inner = item.type === 'image'
-      ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md)">`
-      : `<span style="font-size:28px">🎥</span>`;
-    t.innerHTML = inner + `<div class="thumb-del" onclick="rmMedia(${i})"><span class="thumb-del-badge">✕</span></div>`;
-    g.appendChild(t);
-  });
+  existingMedia.forEach((item,i)=> g.appendChild(buildMediaCard(item,i,'existing')));
+  mediaItems.forEach((item,i)=> g.appendChild(buildMediaCard(item,i,'new')));
 }
+
+// Commit a tag on Enter or comma; ignore blanks/dupes.
+function tagKey(ev, bucket, i) {
+  if (ev.key !== 'Enter' && ev.key !== ',') return;
+  ev.preventDefault();
+  const raw = ev.target.value.trim().replace(/,$/, '').trim();
+  if (!raw) return;
+  const arr = bucket === 'existing' ? existingMedia : mediaItems;
+  if (!arr[i].tags) arr[i].tags = [];
+  const tag = raw.slice(0, 30);
+  if (!arr[i].tags.includes(tag)) arr[i].tags.push(tag);
+  ev.target.value = '';
+  if (bucket === 'existing') arr[i].tagsDirty = true;
+  renderMedia();
+}
+function removeTag(bucket, i, ti) {
+  const arr = bucket === 'existing' ? existingMedia : mediaItems;
+  arr[i].tags.splice(ti, 1);
+  if (bucket === 'existing') arr[i].tagsDirty = true;
+  renderMedia();
+}
+function escapeTag(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
 function rmMedia(i) {
   const [removed] = mediaItems.splice(i,1);
   if (removed) URL.revokeObjectURL(removed.url);
@@ -1265,10 +1320,24 @@ async function uploadSessionMedia(sessionId) {
 
     const { error: rowErr } = await db.from('session_media').insert({
       session_id: sessionId, user_id: currentUser.id, storage_path: path, media_type: item.type,
+      tags: item.tags || [],
     });
     if (rowErr) { console.error('session_media insert failed:', rowErr); failures++; }
   }
   return failures;
+}
+
+// Persist tag edits on already-saved media (edit flow).
+async function updateExistingMediaTags() {
+  for (const item of existingMedia) {
+    if (!item.tagsDirty) continue;
+    const { error } = await db.from('session_media')
+      .update({ tags: item.tags || [] })
+      .eq('id', item.id)
+      .eq('user_id', currentUser.id);
+    if (error) console.error('session_media tag update failed:', error);
+    else item.tagsDirty = false;
+  }
 }
 
 // Delete media the user removed while editing: storage object first, then row.
@@ -1346,6 +1415,9 @@ async function savePractice() {
   if (removedMedia.length) {
     await deleteRemovedMedia();
   }
+
+  // Persist tag edits on media that was already saved (edit flow).
+  await updateExistingMediaTags();
 
   if (mediaItems.length) {
     btn.innerHTML = '<div class="spinner"></div> Uploading media…';

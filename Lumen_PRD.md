@@ -155,7 +155,16 @@ The dashboard grid renders three parameters from the profile schema: Current Str
 - **Dynamic System Configurations:** default practice styles live in the `practice_categories` table (12 system styles seeded), decoupled from client code; the frontend fetches active categories on load. Admin CRUD works without code deployments.
 - **Cross-Functional Customization:** users append personalized categories (Running, Pilates, Weight Training…) directly from the log form.
 - **Hierarchical Visibility:** Student-created categories are private-scoped to their `user_id`. Teacher/Studio categories propagate to all linked Students (`linked` visibility).
-- **Structured Biometric Input:** the logging wizard captures muscle locations with qualitative states, saved as a structured `muscle_feelings` JSONB object driving the Body Status pipeline. Focus chips, mood, intensity, duration, notes, media upload (Supabase Storage `practice-media` bucket) and a privacy toggle complete the form.
+- **Structured Biometric Input:** the logging wizard captures muscle locations with qualitative states, saved as a structured `muscle_feelings` JSONB object driving the Body Status pipeline. Focus chips, mood, intensity, duration, notes, media upload (Supabase Storage `practice-media` bucket) with **per-file tags**, and a privacy toggle complete the form.
+
+### 3.3.1 Practice Gallery (M6b)
+
+A **visual practice diary** on the Home dashboard, built from the practitioner's *own* uploaded practice media (`session_media`) rather than teacher-posted content. It replaces the On-Demand Videos shelf on Home (the teacher catalog moves to the Classes tab).
+
+- **Per-file tagging:** while logging, the student types one or more free-form tags on each photo/video (stored in `session_media.tags text[]`). Tags are editable when re-opening a log.
+- **Filtering:** the gallery filters the user's media by **date range, tag (multi-select), media type (photo/video), and practice type**, with active-filter chips and a running result grid. Filtering is client-side over the user's own media (batch-signed URLs from the private bucket).
+- **Lightbox slideshow:** tapping a tile opens a full-screen viewer with manual step-through (buttons, arrow keys, swipe) and an auto-play toggle — photos advance on a timer, videos play inline and advance when they end — running over the currently-filtered set.
+- **Privacy:** the gallery reads only `auth.uid()`'s own media via the existing `session_media_own_all` RLS; no new policy is required.
 
 ## 3.4 Data Flow & Mutation System Logic (v1.0, implemented)
 
@@ -240,7 +249,7 @@ Reconciled as of 2026-07-10. Full milestone detail in WORKPLAN.md.
 ## P1 — Core Tracking Loop ✅ DONE
 - [x] Student: register → role select → dashboard — live tested
 - [x] Log practice + stats trigger updates — live tested
-- [x] Media upload (video + images) — live tested
+- [x] Media upload (video + images) with per-file **tags** — live tested; feeds the Practice Gallery (§ Practice Gallery, M6b)
 - [x] Teacher role: register/select → dashboard, generate join codes — live tested
 - [x] Studio role: register/select → dashboard — verified (teacher.html serves both teacher and studio roles)
 - [x] Custom categories, dual-perspective toggle, Body Status widget verification — verified
@@ -259,8 +268,9 @@ Reconciled as of 2026-07-10. Full milestone detail in WORKPLAN.md.
 - [ ] Drag-and-drop schedule mutator (§8.2) — not started (M4)
 
 ## P4 — On-Demand Video
-- [ ] Videos catalog table + upload workflow — not started (M7)
-- [ ] Multi-video support (currently 1 hardcoded Mux video) — not started (M7)
+- [x] Videos catalog table + full Mux upload workflow (Video Studio) — implemented (M7); **teacher-posted On-Demand catalog lives on the Classes tab**
+- [x] Multi-video support from the DB catalog — implemented (M7)
+- [x] Personal **Practice Gallery** replaces the On-Demand shelf on the Home tab — implemented (M6b)
 
 ## Polish / Non-Functional
 - [x] Theme decision made: **dark + gold app-wide** (migration in M8)
@@ -297,7 +307,7 @@ Applied migrations, in order: `schema.sql` (base + Phases 2–4 inline), `schema
 | `practice_group_items` | Per-user placement override mapping a practice type to a category, written on drag-and-drop |
 | `practice_logs` | Sessions: category, duration, mood, intensity, `muscle_feelings` JSONB, `focus_area_ids`, `media_urls`, `is_private` |
 | `focus_areas` | Global focus chip dictionary (15 seeded) |
-| `session_media` | Uploaded media metadata (Storage bucket `practice-media`) |
+| `session_media` | Uploaded media metadata (Storage bucket `practice-media`); per-file `tags text[]` powering the Practice Gallery |
 | `studio_linkages` | Consent-driven student ↔ teacher/studio connections |
 | `join_codes` | Multi-code system per owner; create/deactivate; RPCs `create_join_code`, `redeem_join_code` |
 | `community_feeds` | Denormalized public-log feed; `like_count` |
