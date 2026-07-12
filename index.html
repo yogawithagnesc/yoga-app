@@ -431,9 +431,20 @@
   /* Day-log modal rows */
   .day-log-row {
     display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap;
     padding: 12px 0; border-bottom: 1px solid var(--br-sub);
   }
   .day-log-row:last-child { border-bottom: none; }
+  /* Attached session media — own line, full width below the info/actions */
+  .dlr-media { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .dlr-media:empty { display: none; margin-top: 0; }
+  .dlr-media-thumb {
+    width: 56px; height: 56px; border-radius: var(--r-md, 8px);
+    overflow: hidden; background: var(--bg-ov); border: 1px solid var(--br-def);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; text-decoration: none;
+  }
+  .dlr-media-thumb img { width: 100%; height: 100%; object-fit: cover; }
   .dlr-info { display: flex; flex-direction: column; gap: 2px; }
   .dlr-name { font-size: 14px; font-weight: 500; color: var(--tx-1); }
   .dlr-dur  { font-size: 12px; color: var(--tx-2); }
@@ -1561,11 +1572,47 @@ function openDayLogs(day) {
         '<button class="dlr-privacy ' + privacyClass + '" title="' + privacyText + '" onclick="toggleLogPrivacy(\'' + log.id + '\', ' + log.is_private + ')">' + privacyText + '</button>' +
         '<a class="dlr-edit" href="lumen-log-practice-3d.html?edit=' + log.id + '">Edit</a>' +
         '<button class="dlr-del" onclick="deleteLog(\'' + log.id + '\',' + day + ')">Delete</button>' +
-      '</div>';
+      '</div>' +
+      '<div class="dlr-media" id="dlr-media-' + log.id + '"></div>';
     list.appendChild(row);
   });
 
   dayModal.style.display = 'flex';
+
+  // Load attached media per log (async; bucket is private → signed URLs).
+  logs.forEach(function(log) { loadDayLogMedia(log.id); });
+}
+
+// Fetch and render session_media thumbnails inside a day-log row.
+async function loadDayLogMedia(logId) {
+  var wrap = document.getElementById('dlr-media-' + logId);
+  if (!wrap) return;
+
+  var result = await db.from('session_media')
+    .select('id, storage_path, media_type')
+    .eq('session_id', logId)
+    .order('created_at', { ascending: true });
+
+  var rows = result.data;
+  if (result.error || !rows || !rows.length) return;
+
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var signed = await db.storage.from('practice-media').createSignedUrl(r.storage_path, 3600);
+    var url = signed.data ? signed.data.signedUrl : '';
+    var cell = document.createElement('a');
+    cell.className = 'dlr-media-thumb';
+    cell.href = url || '#';
+    cell.target = '_blank';
+    cell.rel = 'noopener';
+    if (r.media_type === 'image' && url) {
+      cell.innerHTML = '<img src="' + url + '" alt="session photo">';
+    } else {
+      cell.classList.add('is-video');
+      cell.innerHTML = '<span>🎥</span>';
+    }
+    wrap.appendChild(cell);
+  }
 }
 
 async function toggleLogPrivacy(logId, currentlyPrivate) {
