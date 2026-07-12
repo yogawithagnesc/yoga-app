@@ -179,10 +179,25 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .upload-zone{border:1px dashed var(--br-str);border-radius:var(--r-lg);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-el);position:relative;overflow:hidden}
 .upload-zone:hover{border-color:var(--accent);background:var(--accent-dim)}
 .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
-.media-thumb{aspect-ratio:1;background:var(--bg-ov);border-radius:var(--r-md);border:1px solid var(--br-def);display:flex;align-items:center;justify-content:center;font-size:26px;position:relative;cursor:pointer}
-.thumb-del{position:absolute;top:0;right:0;width:44px;height:44px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px;cursor:pointer}
+.media-grid{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.media-card{display:flex;gap:12px;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px}
+.media-thumb{width:72px;height:72px;flex-shrink:0;background:var(--bg-ov);border-radius:var(--r-md);border:1px solid var(--br-def);display:flex;align-items:center;justify-content:center;font-size:26px;position:relative;overflow:hidden}
+.media-thumb img{width:100%;height:100%;object-fit:cover}
+.thumb-del{position:absolute;top:0;right:0;width:32px;height:32px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px;cursor:pointer}
 .thumb-del-badge{width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.75);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.media-tagwrap{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.media-tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:var(--r-full);font-size:11px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent)}
+.tag-chip .tx{cursor:pointer;font-size:12px;line-height:1;opacity:.8}
+.tag-chip .tx:hover{opacity:1}
+.tag-input{width:100%;background:var(--bg-ov);border:1px solid var(--br-def);border-radius:var(--r-sm);color:var(--tx-1);font-family:inherit;font-size:12px;padding:7px 9px}
+.tag-input:focus{outline:none;border-color:var(--accent)}
+.tag-input::placeholder{color:var(--tx-3)}
+.media-share-row{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;padding-top:2px}
+.media-share-row span:first-child{font-size:11px;color:var(--tx-2)}
+.media-share-row .toggle-wrap{width:36px;height:20px}
+.media-share-row .toggle-track::after{width:14px;height:14px}
+.media-share-row .toggle-wrap input:checked + .toggle-track::after{transform:translateX(16px)}
 
 /* ── MOOD + NOTES ── */
 .mood-row{display:flex;gap:8px;justify-content:space-between}
@@ -430,9 +445,22 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="flbl" style="margin-bottom:8px">Practice Reflection</div>
       <textarea class="notes-area" id="notes" placeholder="How did this practice feel? Any breakthroughs, challenges, or moments to remember…" maxlength="1000" oninput="updChar()"></textarea>
       <div class="notes-footer">
-        <span>Agnes can leave feedback on your reflection ✦</span>
+        <span>Share to let your teacher leave feedback</span>
         <span id="char-count">0 / 1000</span>
       </div>
+    </div>
+
+    <!-- Notes-sharing toggle — independent of media sharing and of the -->
+    <!-- overall privacy toggle below (still requires is_private=false). -->
+    <div class="privacy-row mt14" onclick="toggleNotesSharedRow()" style="cursor:pointer">
+      <div>
+        <div class="privacy-label">Share this reflection with my teacher</div>
+        <div class="privacy-sub">Off by default · only visible if this session is shared</div>
+      </div>
+      <span class="toggle-wrap" aria-hidden="true">
+        <input type="checkbox" id="notes-shared-toggle" onclick="event.stopPropagation()">
+        <span class="toggle-track"></span>
+      </span>
     </div>
 
     <div class="intensity-wrap">
@@ -569,14 +597,16 @@ let calDate = new Date();
 let selType = null;       // practice_categories.id
 let selFocus = new Set(); // focus_areas.id values
 let activeGroupId = null; // practice_groups.id currently shown in the type grid
-let mediaItems = [];      // { file, url, type: 'image'|'video' }
+let mediaItems = [];      // NEW uploads this session: { file, url, type: 'image'|'video' }
+let existingMedia = [];   // already-saved media when editing: { id, storage_path, media_type, url }
+let removedMedia = [];    // existing media the user deleted while editing: { id, storage_path }
 let editSessionId = null; // practice_logs.id when editing a past session, else null
 let editRow = null;       // the fetched row being edited, held for DOM prefill after render
 
 // ─── EDIT AN EXISTING SESSION (?edit=<id>) ───
 async function loadEditLog(id) {
   const { data: row, error } = await db.from('practice_logs')
-    .select('id,category_id,practice_date,start_time,mood,notes,intensity,muscle_feelings,focus_area_ids,is_private,duration_minutes')
+    .select('id,category_id,practice_date,start_time,mood,notes,intensity,muscle_feelings,focus_area_ids,is_private,notes_shared,duration_minutes')
     .eq('id', id)
     .eq('user_id', currentUser.id)
     .maybeSingle();
@@ -598,6 +628,37 @@ async function loadEditLog(id) {
 
   const cat = CATEGORIES.find(c => c.id === row.category_id);
   if (cat) activeGroupId = effectiveGroupId(cat);
+
+  await loadExistingMedia(row.id);
+}
+
+// Fetch media already attached to a session and build preview URLs.
+// The practice-media bucket is private, so we mint short-lived signed URLs.
+async function loadExistingMedia(sessionId) {
+  existingMedia = [];
+  removedMedia  = [];
+
+  const { data: rows, error } = await db.from('session_media')
+    .select('id, storage_path, media_type, tags, shared_with_teacher')
+    .eq('session_id', sessionId)
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: true });
+
+  if (error) { console.error('Load session media failed:', error); return; }
+  if (!rows || !rows.length) return;
+
+  for (const r of rows) {
+    let url = '';
+    const { data: signed } = await db.storage
+      .from('practice-media')
+      .createSignedUrl(r.storage_path, 3600);
+    if (signed) url = signed.signedUrl;
+    existingMedia.push({
+      id: r.id, storage_path: r.storage_path, media_type: r.media_type,
+      url, tags: r.tags || [], shared: r.shared_with_teacher || false, metaDirty: false,
+    });
+  }
+  renderMedia();
 }
 
 // Populate the plain DOM fields once buildTypes()/buildFocus()/initBodyMap() have rendered.
@@ -615,6 +676,8 @@ function applyEditPrefillToDOM() {
   updIntensity();
   const privacyEl = document.getElementById('privacy-toggle');
   if (privacyEl) privacyEl.checked = row.is_private !== false;
+  const notesSharedEl = document.getElementById('notes-shared-toggle');
+  if (notesSharedEl) notesSharedEl.checked = row.notes_shared === true;
 
   document.querySelectorAll('.mood-btn').forEach(b => {
     b.classList.toggle('sel', b.querySelector('.mood-lbl')?.textContent === row.mood);
@@ -1154,28 +1217,101 @@ const MAX_MEDIA_BYTES = 50 * 1024 * 1024; // 50MB, matches practice-media bucket
 function handleFileSelect(e) {
   const files = Array.from(e.target.files || []);
   files.forEach(file => {
-    if (mediaItems.length >= MAX_MEDIA_FILES) { showToast(STRINGS.mediaLimitReached()); return; }
+    if (existingMedia.length + mediaItems.length >= MAX_MEDIA_FILES) { showToast(STRINGS.mediaLimitReached()); return; }
     if (file.size > MAX_MEDIA_BYTES) { showToast(STRINGS.mediaTooLarge(file.name)); return; }
     const type = file.type.startsWith('video') ? 'video' : 'image';
-    mediaItems.push({ file, url: URL.createObjectURL(file), type });
+    mediaItems.push({ file, url: URL.createObjectURL(file), type, tags: [], shared: false });
   });
   e.target.value = ''; // allow re-selecting the same file later
   renderMedia();
 }
+
+// Build one media card: thumbnail + removable tag chips + a tag input +
+// a per-file "share with teacher" toggle. `bucket` is 'existing' or 'new'
+// so the tag/remove/share handlers target the right array; `type`
+// normalizes the media-type field name difference.
+function buildMediaCard(item, i, bucket) {
+  const type = bucket === 'existing' ? item.media_type : item.type;
+  const card = document.createElement('div');
+  card.className = 'media-card';
+
+  const thumb = (type === 'image' && item.url)
+    ? `<img src="${item.url}" alt="">`
+    : `<span>${type === 'video' ? '🎥' : '🖼️'}</span>`;
+  const rmFn = bucket === 'existing' ? 'rmExistingMedia' : 'rmMedia';
+
+  const chips = (item.tags || []).map((t, ti) =>
+    `<span class="tag-chip">${escapeTag(t)}<span class="tx" onclick="removeTag('${bucket}',${i},${ti})">✕</span></span>`
+  ).join('');
+
+  const sharedId = 'ms-' + bucket + '-' + i;
+  const checked = item.shared ? ' checked' : '';
+
+  card.innerHTML =
+    `<div class="media-thumb">${thumb}` +
+      `<div class="thumb-del" onclick="${rmFn}(${i})"><span class="thumb-del-badge">✕</span></div>` +
+    `</div>` +
+    `<div class="media-tagwrap">` +
+      `<div class="media-tags">${chips}</div>` +
+      `<input class="tag-input" type="text" placeholder="Add a tag + Enter (e.g. headstand)" ` +
+        `onkeydown="tagKey(event,'${bucket}',${i})">` +
+      `<label class="media-share-row" for="${sharedId}">` +
+        `<span>Share with teacher</span>` +
+        `<span class="toggle-wrap"><input type="checkbox" id="${sharedId}"${checked} ` +
+          `onchange="toggleMediaShared('${bucket}',${i},this.checked)"><span class="toggle-track"></span></span>` +
+      `</label>` +
+    `</div>`;
+  return card;
+}
+
+function toggleMediaShared(bucket, i, checked) {
+  const arr = bucket === 'existing' ? existingMedia : mediaItems;
+  arr[i].shared = checked;
+  if (bucket === 'existing') arr[i].metaDirty = true;
+}
+
 function renderMedia() {
   const g=document.getElementById('media-grid'); g.innerHTML='';
-  mediaItems.forEach((item,i)=>{
-    const t=document.createElement('div'); t.className='media-thumb';
-    const inner = item.type === 'image'
-      ? `<img src="${item.url}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--r-md)">`
-      : `<span style="font-size:28px">🎥</span>`;
-    t.innerHTML = inner + `<div class="thumb-del" onclick="rmMedia(${i})"><span class="thumb-del-badge">✕</span></div>`;
-    g.appendChild(t);
-  });
+  // Previously-saved media first (edit flow), then new uploads.
+  existingMedia.forEach((item,i)=> g.appendChild(buildMediaCard(item,i,'existing')));
+  mediaItems.forEach((item,i)=> g.appendChild(buildMediaCard(item,i,'new')));
 }
+
+// Commit a tag on Enter or comma; ignore blanks/dupes.
+function tagKey(ev, bucket, i) {
+  if (ev.key !== 'Enter' && ev.key !== ',') return;
+  ev.preventDefault();
+  const raw = ev.target.value.trim().replace(/,$/, '').trim();
+  if (!raw) return;
+  const arr = bucket === 'existing' ? existingMedia : mediaItems;
+  if (!arr[i].tags) arr[i].tags = [];
+  const tag = raw.slice(0, 30);
+  if (!arr[i].tags.includes(tag)) arr[i].tags.push(tag);
+  ev.target.value = '';
+  if (bucket === 'existing') arr[i].metaDirty = true;
+  renderMedia();
+}
+function removeTag(bucket, i, ti) {
+  const arr = bucket === 'existing' ? existingMedia : mediaItems;
+  arr[i].tags.splice(ti, 1);
+  if (bucket === 'existing') arr[i].metaDirty = true;
+  renderMedia();
+}
+function escapeTag(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
 function rmMedia(i) {
   const [removed] = mediaItems.splice(i,1);
   if (removed) URL.revokeObjectURL(removed.url);
+  renderMedia();
+}
+// Removing existing media only queues it — the actual storage/DB delete
+// happens on save, so a cancelled edit leaves the media intact.
+function rmExistingMedia(i) {
+  const [removed] = existingMedia.splice(i,1);
+  if (removed) removedMedia.push({ id: removed.id, storage_path: removed.storage_path });
   renderMedia();
 }
 
@@ -1193,6 +1329,10 @@ function togglePrivacyRow() {
   const cb = document.getElementById('privacy-toggle');
   cb.checked = !cb.checked;
   updPrivacy(cb);
+}
+function toggleNotesSharedRow() {
+  const cb = document.getElementById('notes-shared-toggle');
+  cb.checked = !cb.checked;
 }
 
 // ─── STEP PROGRESS ───
@@ -1219,10 +1359,42 @@ async function uploadSessionMedia(sessionId) {
 
     const { error: rowErr } = await db.from('session_media').insert({
       session_id: sessionId, user_id: currentUser.id, storage_path: path, media_type: item.type,
+      tags: item.tags || [], shared_with_teacher: item.shared || false,
     });
     if (rowErr) { console.error('session_media insert failed:', rowErr); failures++; }
   }
   return failures;
+}
+
+// Persist tag/share edits on already-saved media (edit flow).
+async function updateExistingMediaMeta() {
+  for (const item of existingMedia) {
+    if (!item.metaDirty) continue;
+    const { error } = await db.from('session_media')
+      .update({ tags: item.tags || [], shared_with_teacher: item.shared || false })
+      .eq('id', item.id)
+      .eq('user_id', currentUser.id);
+    if (error) console.error('session_media meta update failed:', error);
+    else item.metaDirty = false;
+  }
+}
+
+// Delete media the user removed while editing: storage object first, then row.
+async function deleteRemovedMedia() {
+  const paths = removedMedia.map(m => m.storage_path);
+  const ids   = removedMedia.map(m => m.id);
+  if (paths.length) {
+    const { error: stErr } = await db.storage.from('practice-media').remove(paths);
+    if (stErr) console.error('Media storage delete failed:', stErr);
+  }
+  if (ids.length) {
+    const { error: rowErr } = await db.from('session_media')
+      .delete()
+      .in('id', ids)
+      .eq('user_id', currentUser.id);
+    if (rowErr) console.error('session_media delete failed:', rowErr);
+  }
+  removedMedia = [];
 }
 
 // ─── SAVE ───
@@ -1244,6 +1416,7 @@ async function savePractice() {
 
   const muscleFeelings = window.getMuscleFeelings ? window.getMuscleFeelings() : [];
   const isPrivate      = document.getElementById('privacy-toggle')?.checked ?? true;
+  const notesShared     = document.getElementById('notes-shared-toggle')?.checked ?? false;
   const durationVal    = parseInt(document.getElementById('dur-val').value) || 45;
   const sessionId      = editSessionId || crypto.randomUUID();
 
@@ -1260,6 +1433,7 @@ async function savePractice() {
     muscle_feelings:  muscleFeelings,
     focus_area_ids:   Array.from(selFocus),
     is_private:       isPrivate,
+    notes_shared:     notesShared,
   };
   if (!editSessionId) { payload.id = sessionId; payload.user_id = currentUser.id; }
 
@@ -1278,6 +1452,13 @@ async function savePractice() {
     btn.innerHTML = editSessionId ? 'Update Practice ✎' : 'Save Practice ✦';
     return;
   }
+
+  if (removedMedia.length) {
+    await deleteRemovedMedia();
+  }
+
+  // Persist tag/share edits on media that was already saved (edit flow).
+  await updateExistingMediaMeta();
 
   if (mediaItems.length) {
     btn.innerHTML = '<div class="spinner"></div> Uploading media…';

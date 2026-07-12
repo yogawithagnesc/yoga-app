@@ -189,7 +189,7 @@ export default class MuxVideoPlayer {
     try {
       const { data, error } = await this._db
         .from('video_progress')
-        .select('current_time')
+        .select('position_seconds')
         .eq('user_id', this._userId)
         .eq('video_id', this._videoId)
         .maybeSingle()
@@ -198,7 +198,7 @@ export default class MuxVideoPlayer {
         console.warn('[MuxVideoPlayer] Could not fetch resume position:', error.message)
         return 0
       }
-      return data?.current_time || 0
+      return data?.position_seconds || 0
     } catch (e) {
       console.warn('[MuxVideoPlayer] Resume fetch threw:', e)
       return 0
@@ -208,20 +208,20 @@ export default class MuxVideoPlayer {
   async _saveProgress() {
     if (!this._canSave() || !this._el || this._el.currentTime <= 0) return
 
-    const currentTime   = Math.floor(this._el.currentTime)
-    const totalDuration = this._el.duration > 0
-      ? Math.floor(this._el.duration)
-      : null
+    const currentTime = Math.floor(this._el.currentTime)
+    const duration    = this._el.duration > 0 ? Math.floor(this._el.duration) : null
+    const isCompleted = duration !== null && currentTime >= duration - 1
 
     try {
       const { error } = await this._db
         .from('video_progress')
         .upsert(
           {
-            user_id:        this._userId,
-            video_id:       this._videoId,
-            current_time:   currentTime,
-            total_duration: totalDuration,
+            user_id:          this._userId,
+            video_id:         this._videoId,
+            position_seconds: currentTime,
+            completed:        isCompleted,
+            last_watched_at:  new Date().toISOString(),
           },
           { onConflict: 'user_id,video_id' }
         )

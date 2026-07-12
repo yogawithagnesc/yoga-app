@@ -19,7 +19,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M4 | Class scheduling & booking framework | §3.5, §8 | ✅ Phase A + Phase B done | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | ✅ Done (schema pending migration run) | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
-| M7 | On-demand video catalog | P4 | Not started | Haiku 4.5 / Sonnet 5 |
+| M7 | On-demand video catalog | P4 | ✅ Implemented (needs Mux env vars) | Haiku 4.5 / Sonnet 5 |
 | M8 | Polish: theme, localization, OAuth | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -283,6 +283,76 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 
 ---
 
+## M6b — Practice Gallery (PRD §3.3.1)
+
+**Status:** ✅ Implemented (needs `schema_phase19_media_tags.sql` run in Supabase)
+
+**Scope:** Reframe the Home media surface around the practitioner's *own* uploaded
+practice media. Replace the On-Demand Videos shelf on Home with a filterable
+**Practice Gallery**; the teacher-posted On-Demand catalog stays on the Classes tab.
+
+**Completed:**
+1. ✅ `schema_phase19_media_tags.sql`: `session_media.tags text[]` + GIN index (idempotent).
+2. ✅ `lumen-log-practice-3d.html`: per-file tag entry (chips + input) on each media card;
+   tags saved on upload, loaded on edit, and updated in place for already-saved media.
+3. ✅ `index.html`: Home Practice Gallery — batch-signed thumbnails, a filter popover
+   (date range / media type / practice type / tag multi-select) mirroring the classes
+   filter pattern, active-filter chips, and a full-screen lightbox with manual nav
+   (buttons / arrow keys / swipe) + auto-play (photos timed, videos advance on end).
+4. ✅ Teacher On-Demand catalog reverted to Classes-tab-only (`loadVideosCatalog()`).
+
+**Acceptance:** a user sees their own tagged media on Home, filters it by
+date/tag/type/practice, and plays the filtered set as a slideshow; teacher catalog
+still present on the Classes tab.
+
+**Deferred:** teacher/studio viewing a linked student's shared media as a gallery
+(RLS already permits shared-media reads; UI not built — superseded by M6c below).
+
+---
+
+## M6c — Consent-Gated Sharing: Media, Notes & Minimal Default Payload
+
+**Status:** ✅ Implemented (needs `schema_phase20_media_notes_consent.sql` run in Supabase)
+
+**Scope:** Tighten what a linked teacher sees by default when a student shares a
+session. Photos/videos and the written reflection each now require a **separate,
+explicit opt-in** beyond the base privacy toggle; the default share is reduced to
+date, practice type, duration, mood, and only **pain/injured** muscle entries.
+
+**Critical security fix (found while implementing this milestone):**
+`practice_logs_studio_block` (added in `schema_phase15_m6_security.sql`) was a
+*permissive* `FOR SELECT` policy whose `USING` clause was `TRUE` for any
+authenticated non-studio user, with no ownership or linkage check. Since
+PostgreSQL combines multiple permissive policies on the same table with **OR**,
+this policy alone granted **any authenticated non-studio user read access to
+every row of `practice_logs`** — regardless of `is_private` or linkage — via a
+direct REST call (the app never surfaced this since every UI query adds its own
+`.eq('user_id', …)` filter). Fixed by dropping both `logs_linked_select` and
+`practice_logs_studio_block`, leaving `logs_own_all` as the only row policy;
+all linked-teacher reads now go through a new `SECURITY DEFINER` RPC.
+
+**Completed:**
+1. ✅ `schema_phase20_media_notes_consent.sql`:
+   - `practice_logs.notes_shared` / `session_media.shared_with_teacher` consent columns
+   - RLS leak fix (drop `logs_linked_select` + `practice_logs_studio_block`)
+   - `session_media_linked_select` / `practice_media_linked_select` (storage) now require `shared_with_teacher = true`
+   - New `get_linked_practice_logs(p_student_id)` RPC — the sole path for teacher reads; role-gated to `'teacher'` (studios stay aggregate-only), filters `muscle_feelings` to pain/injured entries, redacts `notes` unless `notes_shared`, returns a `media_shared_count`
+2. ✅ `lumen-log-practice-3d.html`: per-file "Share with teacher" toggle on each media
+   card (M6b's tag editor gains a share switch); a separate "Share this reflection with
+   my teacher" toggle under Practice Reflection; both wired through save/edit-load.
+3. ✅ `teacher.html`: roster reads switched to `get_linked_practice_logs()`; session rows
+   show mood, pain/injured muscle badges, a notes preview when shared, and an expandable
+   "View shared media" control (signed-URL thumbnails, full quality) when files are shared.
+
+**Acceptance:** a shared session with an untagged pain-marked muscle, a tight-marked
+muscle, notes, and one unshared + one shared photo shows the teacher only: date,
+practice type, duration, mood, the pain-marked muscle (not tight), no notes, and
+exactly the one shared photo. Toggling either consent on and re-saving reveals that
+content. A second unrelated authenticated account can no longer read arbitrary
+`practice_logs` rows directly.
+
+---
+
 ## M7 — On-Demand Video Catalog (P4)
 
 **Scope:**
@@ -290,19 +360,36 @@ An Opus 4.8 planning pass designed the full RLS/privacy model before any code wa
 - Upload/registration workflow for teachers/studios (Mux asset creation is manual in the Mux dashboard for beta; the app stores playback IDs).
 - Catalog UI on the Classes tab; `video_progress` resume already works via `MuxVideoPlayer.js`.
 
-**Status:** 🚧 In Progress (catalog browsing & resume implemented, upload workflow pending)
+**Status:** ✅ Implemented (end-to-end upload → catalog → resume; needs Mux env vars in Vercel to go live)
 
 **Completed:**
 1. ✅ `schema_phase16_m7_videos.sql`: videos + video_progress tables, RLS policies
-2. ✅ `index.html`: loadVideosCatalog() renders published videos in horizontal scroll
-3. ✅ `index.html`: Updated loadContinueWatching() to fetch video metadata from DB
-4. ✅ Video catalog section in Classes tab (linked to video-player.html?videoId=UUID)
+2. ✅ `schema_phase18_video_progress_fix.sql`: reconciled video_progress columns
+   (position_seconds/completed/last_watched_at) + video_id text→uuid FK; the base
+   schema had shadowed phase 16's `CREATE TABLE IF NOT EXISTS`, silently breaking resume.
+3. ✅ `index.html`: loadVideosCatalog() renders published videos; loadContinueWatching() joins video metadata.
+4. ✅ **Full Mux upload workflow** — `video-admin.html` (teacher/studio only): file
+   picker → direct upload to Mux → poll until ready → insert catalog row; plus
+   publish/unpublish toggle and delete for existing videos.
+5. ✅ `api/mux-create-upload.js` + `api/mux-upload-status.js` — Vercel serverless
+   functions that hold the Mux secret, verify the caller's Supabase JWT + teacher/studio
+   role, create the direct upload, and poll upload→asset→playbackId+duration.
+6. ✅ `video-player.html` migrated off the hardcoded slug `VIDEO_CATALOG` to fetch the
+   `videos` row by UUID (legacy slug link kept as a fallback). Previously any DB video
+   click fell through to the hardcoded intro clip.
+7. ✅ `teacher.html`: "🎬 Videos" header link into the Video Studio.
 
-**Pending:**
-- Upload/registration workflow (teacher/studio dashboard for video management)
-- video-player.html implementation (Mux player + video_progress updates)
+**Deploy prerequisite:** set `MUX_TOKEN_ID` and `MUX_TOKEN_SECRET` (Mux Video API token)
+in Vercel env. `video-admin.html` shows a warning banner if the functions aren't reachable.
+Uploads use `video_quality: 'basic'` and a public playback policy.
 
-**Acceptance:** multiple videos listed from the DB; continue-watching works across them.
+**Acceptance:** multiple videos listed from the DB; continue-watching works across them;
+a teacher can upload a new class from the Video Studio and see it appear published.
+
+**Deferred / future:**
+- Thumbnail generation (Mux animated/still thumbnails) → replace the 🎥 emoji tile.
+- Server-side webhook (instead of client polling) for very long processing jobs.
+- Per-video access scoping to linked students only (currently published = all authenticated).
 
 ---
 
