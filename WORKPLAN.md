@@ -428,6 +428,66 @@ phase when a backend service or alternative storage solution is available.
 
 ---
 
+## M7-1 — Legal Framework: ToS, Privacy Policy & Data Sharing Agreement
+
+**Status:** 🚧 In Progress (engineering brief drafted; awaiting jurisdiction inputs before final drafting)
+
+**Model:** Opus 4.8 — legal/compliance drafting crosses regulatory trust boundaries
+(multi-jurisdiction privacy law, liability, product-fact consistency). Highest
+correctness multiplier of any milestone; a compliance error costs far more than tokens.
+
+**Rationale:** The app collects sensitive personal data (health-adjacent practice logs,
+body/muscle pain data, mood, photos/videos) and brokers data-sharing between students and
+teachers/studios. The join-code consent UI already references a **"Data Sharing Agreement"**
+by name (`profile.html` line 156) with no such document existing — a live compliance gap.
+
+**Scope — three documents:**
+1. **Terms of Service** — applicable to all account holders (student / teacher / studio).
+   Account terms, acceptable use, role definitions, IP (user media ownership + license to
+   operate the service), disclaimers (wellness/not-medical-advice), liability limits,
+   termination, governing law.
+2. **Privacy Policy** — what data is collected, why, legal basis, how it's shared, retention,
+   subprocessors (Supabase / Vercel / Mux), data-subject rights, security posture, minors.
+3. **Data Sharing Agreement** — the consent artifact a student accepts when entering a join
+   code to "Link to a Teacher or Studio" (and the teacher→studio variant). Defines exactly
+   what the linked party can and cannot see, the layered/granular consent model, and revocation.
+
+**Design requirements (from user):**
+1. Legally compliant with applicable laws & regulations (esp. privacy).
+2. Consistent with actual product design — no inconsistency or misleading statements
+   (every claim must map to real code/RLS enforcement).
+3. Fit for purpose — concise, covering (a) what's necessary and (b) industry best practice.
+   Not padded.
+
+**Grounding source of truth:** `legal/M7-1_engineering_brief.md` — the product-fact data map
+(verified against schema.sql, schema_phase15/17/19/20, profile.html, teacher.html) that every
+clause must be consistent with.
+
+**Deliverables:**
+- `legal/M7-1_engineering_brief.md` — ✅ the drafting spec + product-fact map + compliance matrix
+- `legal/terms-of-service.md` — pending jurisdiction inputs
+- `legal/privacy-policy.md` — pending jurisdiction inputs
+- `legal/data-sharing-agreement.md` — pending jurisdiction inputs
+- Later (M8-adjacent): render as `terms.html` / `privacy.html` served pages, link from
+  `register.html` / `login.html` / `profile.html` consent UI.
+
+**⚠️ Non-negotiable disclaimer:** these are AI-drafted starting points engineered for
+accuracy and completeness, **not a substitute for review by a qualified attorney licensed
+in the governing jurisdiction.** Legal review is required before the documents go live.
+
+**Open inputs blocking final drafting (jurisdiction-dependent):**
+- Legal entity / operator name & jurisdiction of establishment (governing law + which
+  privacy regime is primary: HK PDPO / EU GDPR / CA CCPA / other).
+- User geography (determines which extraterritorial regimes attach — GDPR/CCPA).
+- Minimum age / whether minors may hold accounts (parental-consent obligations).
+
+**Acceptance:** three documents that (a) accurately describe the private-by-default, layered-
+consent, studio-aggregate-only architecture; (b) satisfy the primary jurisdiction's privacy
+law plus GDPR/CCPA best-practice baseline; (c) are concise and internally consistent; (d) carry
+the attorney-review disclaimer; (e) are wired into the signup + linkage consent flows.
+
+---
+
 ## M8 — Polish: Theme, Localization, OAuth
 
 **Decision made:** dark + gold is the app-wide standard.
