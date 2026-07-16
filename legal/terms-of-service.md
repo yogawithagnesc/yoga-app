@@ -65,8 +65,23 @@ in the Privacy Policy and for any copies others were permitted to save.
 
 4.3 **We do not sell Your Content or your personal data**, and we do not use it for advertising.
 
-4.4 **Our materials.** The Service's software, design, and branding are owned by the Operator or
-its licensors and may not be copied or reused except as permitted by law.
+4.4 **Ownership of the Service and our materials.** The Service — this website and application —
+belongs to and is owned by **[OPERATOR NAME]** ("the Operator"). All rights, title, and interest
+in the Service and its contents are and remain the exclusive property of the Operator or its
+licensors. This includes, without limitation, the **"Lumen" name and any names**, the **logo**,
+branding, trademarks and trade dress, the software and source code, the user-interface and visual
+design, text, graphics, illustrations (including the body-map artwork), layouts, and all other
+content that is part of the Service (excluding Your Content under §4.1).
+
+4.5 **No unauthorized use.** Except as expressly permitted by these Terms or by applicable law, you
+may **not** copy, reproduce, download, modify, adapt, translate, distribute, publish, display,
+frame, mirror, reverse-engineer, create derivative works from, or otherwise use — in whole or in
+part — the Service, the Lumen name, the logo, or any other content or materials belonging to the
+Operator, and you may **not** remove or obscure any copyright, trademark, or other proprietary
+notice. No right or licence to the Operator's name, logo, or content is granted to you except the
+limited right to use the Service for its intended purpose while these Terms are in effect. Any
+unauthorized use is a breach of these Terms and may infringe the Operator's rights under
+copyright, trademark, and other laws.
 
 ## 5. Teacher and Studio Obligations
 
@@ -130,4 +145,4 @@ you accept the updated Terms.
 
 ## 12. Contact
 
-Questions about these Terms: **[PRIVACY / LEGAL CONTACT EMAIL]**, **[OPERATOR NAME AND ADDRESS]**.
+Questions about these Terms: **yogawithagnesc@gmail.com**, **[OPERATOR NAME AND ADDRESS]**.

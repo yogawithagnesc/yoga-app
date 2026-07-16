@@ -12,7 +12,7 @@
 ## 1. Who We Are
 
 Lumen is operated by **[OPERATOR NAME]** ("we", "us"), the data controller responsible for your
-personal data. Contact us about privacy at **[PRIVACY CONTACT EMAIL]**, **[POSTAL ADDRESS]**.
+personal data. Contact us about privacy at **yogawithagnesc@gmail.com**, **[POSTAL ADDRESS]**.
 
 This policy explains what we collect, why, how we share it, and the rights you have. It applies
 to all account holders — Students, Teachers, and Studios.
@@ -106,7 +106,7 @@ Depending on where you live, you may have the right to:
 - **lodge a complaint** with your data-protection regulator (**[NAME THE REGULATOR PER
   JURISDICTION]**).
 
-To exercise any of these, contact us at **[PRIVACY CONTACT EMAIL]**. Many of these actions —
+To exercise any of these, contact us at **yogawithagnesc@gmail.com**. Many of these actions —
 making a log private, un-sharing media, disconnecting from a teacher, or deleting your account —
 can also be done directly in the app.
 
@@ -139,4 +139,4 @@ email before they take effect.
 
 ## 12. Contact
 
-Privacy questions or requests: **[PRIVACY CONTACT EMAIL]**, **[OPERATOR NAME AND ADDRESS]**.
+Privacy questions or requests: **yogawithagnesc@gmail.com**, **[OPERATOR NAME AND ADDRESS]**.

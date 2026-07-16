@@ -76,10 +76,10 @@ You can **disconnect** from a Teacher or Studio at any time in the app. When you
 
 Information a recipient was permitted to view while you were linked may remain in anything they
 had already noted outside Lumen; Lumen cannot control copies made outside the Service. If you
-have concerns, contact us at **[PRIVACY CONTACT EMAIL]**.
+have concerns, contact us at **yogawithagnesc@gmail.com**.
 
 ## 7. More information
 
 This Agreement works together with the [Privacy Policy](privacy-policy.md) and
 [Terms of Service](terms-of-service.md). If anything here is unclear, contact
-**[PRIVACY CONTACT EMAIL]** before linking.
+**yogawithagnesc@gmail.com** before linking.

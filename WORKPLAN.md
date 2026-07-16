@@ -20,7 +20,8 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M5 | Cross-role community architecture | §3.6 | ✅ Done (schema pending migration run) | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | ✅ Implemented (needs Mux env vars) | Haiku 4.5 / Sonnet 5 |
-| M8 | Polish: theme, localization, OAuth | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
+| M7-1 | Legal framework: ToS, Privacy, Data Sharing Agreement | P4 | 🚧 Drafts complete (v0.1) | Opus 4.8 |
+| M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
 
@@ -494,16 +495,42 @@ the attorney-review disclaimer; (e) are wired into the signup + linkage consent 
 
 ---
 
-## M8 — Polish: Theme, Localization, OAuth
+## M8 — Pre-Published Checklist
+
+The final gating milestone before public launch: everything that must be true — polish,
+localization, auth, **and the legal framework being wired in and finalized** — before the app
+is promoted from beta to published.
 
 **Decision made:** dark + gold is the app-wide standard.
 
-**Scope:**
+### M8.1 — Polish, Localization, OAuth
+
 - Theme unification: apply the dark+gold token set (`#C8A96E` accent family, `#080807`/`#111110` surfaces) to `index.html`'s home screen and any warm-variant remnants; extract a shared token block (copied consistently into each single-file page, or a small shared CSS file).
 - Chinese/Cantonese localization: extend the `STRINGS` pattern in `index.html` to all pages, add a language switcher, provide zh-TC translations (Noto Serif/Sans TC already specified).
 - Enable Google/Apple OAuth: re-enable the disabled buttons in `login.html`, configure providers in Supabase Auth, verify the `handle_new_user` OAuth metadata path (`schema_phase4_oauth_display_name.sql`) end-to-end. Apple requires an Apple Developer account ($99/yr) — confirm before scheduling.
 
-**Acceptance:** all pages visually consistent in dark+gold; full zh-TC UI switch; OAuth sign-up lands on role-select correctly.
+### M8.2 — Legal Framework Wiring & Finalization (from M7-1)
+
+The M7-1 documents are drafted (`legal/*.md`); this phase finalizes and publishes them. Blocking
+inputs must be resolved and counsel review completed **before** launch.
+
+- [ ] **Resolve open inputs** and replace all `[BRACKETED PLACEHOLDERS]` across `legal/terms-of-service.md`, `legal/privacy-policy.md`, `legal/data-sharing-agreement.md`:
+  - `[OPERATOR NAME]` + `[OPERATOR NAME AND ADDRESS]` / `[POSTAL ADDRESS]` (legal entity identity)
+  - `[GOVERNING JURISDICTION]` / `[FORUM]` + `[NAME THE REGULATOR PER JURISDICTION]` (jurisdiction — HK PDPO hypothesis to confirm)
+  - `[RETENTION PERIOD]`, `[REGIONS]` + transfer-safeguard mechanism, `[DATE]` last-updated stamps
+  - `[jurisdiction-specific liability cap / carve-outs]`
+  - Confirm the **18+ age** decision (or add parental-consent provisions if lowering it)
+  - Confirm cookies/analytics scope (currently auth-session only)
+  - ✅ Contact email set to `yogawithagnesc@gmail.com` (done in M7-1)
+  - ✅ IP/ownership clause strengthened — Lumen name/logo/content owned by Operator, no unauthorized use/copying (ToS §4.4–4.5, done in M7-1)
+- [ ] **Attorney review** of all three documents (non-negotiable before go-live per the disclaimer).
+- [ ] **Render to served pages:** `terms.html` + `privacy.html` (single-file, dark+gold token block), DSA rendered inline in the linkage modal.
+- [ ] **Wire into signup:** add an "I agree to the Terms of Service & Privacy Policy" checkbox to `register.html` (block submit until checked); link both pages from `login.html`.
+- [ ] **Wire into linkage:** replace the bare "Data Sharing Agreement" text in the `profile.html` consent row (line ~156) with an actual link/modal showing the DSA before the student consents.
+- [ ] **Version-stamp consent (schema follow-up):** store the accepted document version at signup and at `studio_linkages` creation for auditability (e.g. `profiles.tos_version_accepted`, `studio_linkages.dsa_version_accepted`) — idempotent `schema_phase*` migration.
+- [ ] **Footer links:** add Terms / Privacy links to the app footer or profile page for always-available access.
+
+**Acceptance:** all pages visually consistent in dark+gold; full zh-TC UI switch; OAuth sign-up lands on role-select correctly; **all legal placeholders resolved, counsel-reviewed, published as served pages, and enforced at signup + linkage with versioned consent capture.**
 
 ---
 
