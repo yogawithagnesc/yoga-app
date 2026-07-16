@@ -20,7 +20,8 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M5 | Cross-role community architecture | §3.6 | ✅ Done (schema pending migration run) | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | ✅ Implemented (needs Mux env vars) | Haiku 4.5 / Sonnet 5 |
-| M8 | Polish: theme, localization, OAuth | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
+| M7-1 | Legal framework: ToS, Privacy, Data Sharing Agreement | P4 | 🚧 Drafts complete (v0.1) | Opus 4.8 |
+| M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
 
@@ -376,56 +377,160 @@ phase when a backend service or alternative storage solution is available.
 
 ---
 
-## M7 — On-Demand Video Catalog (P4)
+## M7 — On-Demand Video Catalog (P4) ✅ Complete (Deployed & Verified)
 
 **Scope:**
 - `videos` table (title, Mux playback ID, duration, thumbnail, teacher/studio owner, published flag) replacing the hardcoded single-entry `VIDEO_CATALOG` in `index.html` (~line 859).
 - Upload/registration workflow for teachers/studios (Mux asset creation is manual in the Mux dashboard for beta; the app stores playback IDs).
 - Catalog UI on the Classes tab; `video_progress` resume already works via `MuxVideoPlayer.js`.
 
-**Status:** ✅ Implemented (end-to-end upload → catalog → resume; needs Mux env vars in Vercel to go live)
+**Status:** ✅ Complete (deployed to yoga-app-ten.vercel.app; all 7 QA tests passed 2026-07-16)
 
 **Completed:**
 1. ✅ `schema_phase16_m7_videos.sql`: videos + video_progress tables, RLS policies
 2. ✅ `schema_phase18_video_progress_fix.sql`: reconciled video_progress columns
    (position_seconds/completed/last_watched_at) + video_id text→uuid FK; the base
    schema had shadowed phase 16's `CREATE TABLE IF NOT EXISTS`, silently breaking resume.
-3. ✅ `index.html`: loadVideosCatalog() renders published videos; loadContinueWatching() joins video metadata.
-4. ✅ **Full Mux upload workflow** — `video-admin.html` (teacher/studio only): file
+3. ✅ **CRITICAL RLS SECURITY FIX** — `schema_phase19_m7_rls_fix.sql`: Updated `videos_published_read`
+   policy to require active, consented `studio_linkages` for non-creators to view published
+   videos. Prevents unlinked users from seeing newly published videos. All 7 QA tests verified
+   the fix works correctly: creator sees own videos, linked students see linked-creator videos,
+   unlinked students see nothing.
+4. ✅ `index.html`: loadVideosCatalog() renders published videos; loadContinueWatching() joins video metadata.
+5. ✅ **Full Mux upload workflow** — `video-admin.html` (teacher/studio only): file
    picker → direct upload to Mux → poll until ready → insert catalog row; plus
    publish/unpublish toggle and delete for existing videos.
-5. ✅ `api/mux-create-upload.js` + `api/mux-upload-status.js` — Vercel serverless
+6. ✅ `api/mux-create-upload.js` + `api/mux-upload-status.js` — Vercel serverless
    functions that hold the Mux secret, verify the caller's Supabase JWT + teacher/studio
    role, create the direct upload, and poll upload→asset→playbackId+duration.
-6. ✅ `video-player.html` migrated off the hardcoded slug `VIDEO_CATALOG` to fetch the
+7. ✅ `video-player.html` migrated off the hardcoded slug `VIDEO_CATALOG` to fetch the
    `videos` row by UUID (legacy slug link kept as a fallback). Previously any DB video
    click fell through to the hardcoded intro clip.
-7. ✅ `teacher.html`: "🎬 Videos" header link into the Video Studio.
+8. ✅ `teacher.html`: "🎬 Videos" header link into the Video Studio.
+9. ✅ Mux API credentials configured in Vercel (`MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`).
 
-**Deploy prerequisite:** set `MUX_TOKEN_ID` and `MUX_TOKEN_SECRET` (Mux Video API token)
-in Vercel env. `video-admin.html` shows a warning banner if the functions aren't reachable.
-Uploads use `video_quality: 'basic'` and a public playback policy.
+**QA Test Results (2026-07-16):**
+| Test | Status | Notes |
+|---|---|---|
+| Test 1: Upload Flow | ✅ PASSED | Teacher uploads video → Mux processes → catalog row inserted |
+| Test 2: Catalog Rendering | ✅ PASSED | Published videos appear in On-Demand Classes for linked students |
+| Test 3: Playback | ✅ PASSED | Mux player controls work (play, pause, fullscreen, seek) |
+| Test 4: Resume Functionality | ✅ PASSED | Student position persists across reload via video_progress table |
+| Test 5: Access Gating | ✅ PASSED | Unlinked students cannot see newly published videos (RLS enforced) |
+| Test 6: Publish/Unpublish Toggle | ✅ PASSED | Draft → Published / Published → Draft toggle works bidirectionally |
+| RLS Security Verification | ✅ PASSED | Creator sees all own videos; linked student sees linked creator's; unlinked sees nothing |
 
-**Acceptance:** multiple videos listed from the DB; continue-watching works across them;
-a teacher can upload a new class from the Video Studio and see it appear published.
+**Deployment:** Vercel env vars set on 2026-07-16. Live at https://yoga-app-ten.vercel.app.
 
 **Deferred / future:**
 - Thumbnail generation (Mux animated/still thumbnails) → replace the 🎥 emoji tile.
 - Server-side webhook (instead of client polling) for very long processing jobs.
-- Per-video access scoping to linked students only (currently published = all authenticated).
+- Per-video access scoping to linked students only — **NOW COMPLETE** (RLS enforces linkage-gated visibility).
 
 ---
 
-## M8 — Polish: Theme, Localization, OAuth
+## M7-1 — Legal Framework: ToS, Privacy Policy & Data Sharing Agreement
+
+**Status:** 🚧 Drafts complete (jurisdiction-neutral v0.1 with bracketed placeholders; awaiting jurisdiction/entity inputs + attorney review before go-live)
+
+**Model:** Opus 4.8 — legal/compliance drafting crosses regulatory trust boundaries
+(multi-jurisdiction privacy law, liability, product-fact consistency). Highest
+correctness multiplier of any milestone; a compliance error costs far more than tokens.
+
+**Rationale:** The app collects sensitive personal data (health-adjacent practice logs,
+body/muscle pain data, mood, photos/videos) and brokers data-sharing between students and
+teachers/studios. The join-code consent UI already references a **"Data Sharing Agreement"**
+by name (`profile.html` line 156) with no such document existing — a live compliance gap.
+
+**Scope — three documents:**
+1. **Terms of Service** — applicable to all account holders (student / teacher / studio).
+   Account terms, acceptable use, role definitions, IP (user media ownership + license to
+   operate the service), disclaimers (wellness/not-medical-advice), liability limits,
+   termination, governing law.
+2. **Privacy Policy** — what data is collected, why, legal basis, how it's shared, retention,
+   subprocessors (Supabase / Vercel / Mux), data-subject rights, security posture, minors.
+3. **Data Sharing Agreement** — the consent artifact a student accepts when entering a join
+   code to "Link to a Teacher or Studio" (and the teacher→studio variant). Defines exactly
+   what the linked party can and cannot see, the layered/granular consent model, and revocation.
+
+**Design requirements (from user):**
+1. Legally compliant with applicable laws & regulations (esp. privacy).
+2. Consistent with actual product design — no inconsistency or misleading statements
+   (every claim must map to real code/RLS enforcement).
+3. Fit for purpose — concise, covering (a) what's necessary and (b) industry best practice.
+   Not padded.
+
+**Grounding source of truth:** `legal/M7-1_engineering_brief.md` — the product-fact data map
+(verified against schema.sql, schema_phase15/17/19/20, profile.html, teacher.html) that every
+clause must be consistent with.
+
+**Deliverables:**
+- `legal/M7-1_engineering_brief.md` — ✅ the drafting spec + product-fact map + compliance matrix
+- `legal/terms-of-service.md` — ✅ draft v0.1 (jurisdiction-neutral, bracketed placeholders)
+- `legal/privacy-policy.md` — ✅ draft v0.1 (GDPR/CCPA/PDPO baseline, bracketed placeholders)
+- `legal/data-sharing-agreement.md` — ✅ draft v0.1 (matches consent-box wording + minimal payload)
+- Later (M8-adjacent): render as `terms.html` / `privacy.html` served pages, link from
+  `register.html` / `login.html` / `profile.html` consent UI.
+
+**Drafting defaults applied (v0.1, adjustable):** jurisdiction-neutral (GDPR+CCPA+HK-PDPO
+baseline); **18+ adults-only** with a note that lowering the age adds parental-consent
+obligations; operator identity, governing law, regulator, retention period, and contact all
+left as `[BRACKETED PLACEHOLDERS]`. Every factual claim traces to the §3 product-fact map /
+§4 consistency matrix in the engineering brief.
+
+**⚠️ Non-negotiable disclaimer:** these are AI-drafted starting points engineered for
+accuracy and completeness, **not a substitute for review by a qualified attorney licensed
+in the governing jurisdiction.** Legal review is required before the documents go live.
+
+**Open inputs blocking final drafting (jurisdiction-dependent):**
+- Legal entity / operator name & jurisdiction of establishment (governing law + which
+  privacy regime is primary: HK PDPO / EU GDPR / CA CCPA / other).
+- User geography (determines which extraterritorial regimes attach — GDPR/CCPA).
+- Minimum age / whether minors may hold accounts (parental-consent obligations).
+
+**Acceptance:** three documents that (a) accurately describe the private-by-default, layered-
+consent, studio-aggregate-only architecture; (b) satisfy the primary jurisdiction's privacy
+law plus GDPR/CCPA best-practice baseline; (c) are concise and internally consistent; (d) carry
+the attorney-review disclaimer; (e) are wired into the signup + linkage consent flows.
+
+---
+
+## M8 — Pre-Published Checklist
+
+The final gating milestone before public launch: everything that must be true — polish,
+localization, auth, **and the legal framework being wired in and finalized** — before the app
+is promoted from beta to published.
 
 **Decision made:** dark + gold is the app-wide standard.
 
-**Scope:**
+### M8.1 — Polish, Localization, OAuth
+
 - Theme unification: apply the dark+gold token set (`#C8A96E` accent family, `#080807`/`#111110` surfaces) to `index.html`'s home screen and any warm-variant remnants; extract a shared token block (copied consistently into each single-file page, or a small shared CSS file).
 - Chinese/Cantonese localization: extend the `STRINGS` pattern in `index.html` to all pages, add a language switcher, provide zh-TC translations (Noto Serif/Sans TC already specified).
 - Enable Google/Apple OAuth: re-enable the disabled buttons in `login.html`, configure providers in Supabase Auth, verify the `handle_new_user` OAuth metadata path (`schema_phase4_oauth_display_name.sql`) end-to-end. Apple requires an Apple Developer account ($99/yr) — confirm before scheduling.
 
-**Acceptance:** all pages visually consistent in dark+gold; full zh-TC UI switch; OAuth sign-up lands on role-select correctly.
+### M8.2 — Legal Framework Wiring & Finalization (from M7-1)
+
+The M7-1 documents are drafted (`legal/*.md`); this phase finalizes and publishes them. Blocking
+inputs must be resolved and counsel review completed **before** launch.
+
+- [ ] **Resolve open inputs** and replace all `[BRACKETED PLACEHOLDERS]` across `legal/terms-of-service.md`, `legal/privacy-policy.md`, `legal/data-sharing-agreement.md`:
+  - `[OPERATOR NAME]` + `[OPERATOR NAME AND ADDRESS]` / `[POSTAL ADDRESS]` (legal entity identity)
+  - `[GOVERNING JURISDICTION]` / `[FORUM]` + `[NAME THE REGULATOR PER JURISDICTION]` (jurisdiction — HK PDPO hypothesis to confirm)
+  - `[RETENTION PERIOD]`, `[REGIONS]` + transfer-safeguard mechanism, `[DATE]` last-updated stamps
+  - `[jurisdiction-specific liability cap / carve-outs]`
+  - Confirm the **18+ age** decision (or add parental-consent provisions if lowering it)
+  - Confirm cookies/analytics scope (currently auth-session only)
+  - ✅ Contact email set to `yogawithagnesc@gmail.com` (done in M7-1)
+  - ✅ IP/ownership clause strengthened — Lumen name/logo/content owned by Operator, no unauthorized use/copying (ToS §4.4–4.5, done in M7-1)
+- [ ] **Attorney review** of all three documents (non-negotiable before go-live per the disclaimer).
+- [ ] **Render to served pages:** `terms.html` + `privacy.html` (single-file, dark+gold token block), DSA rendered inline in the linkage modal.
+- [ ] **Wire into signup:** add an "I agree to the Terms of Service & Privacy Policy" checkbox to `register.html` (block submit until checked); link both pages from `login.html`.
+- [ ] **Wire into linkage:** replace the bare "Data Sharing Agreement" text in the `profile.html` consent row (line ~156) with an actual link/modal showing the DSA before the student consents.
+- [ ] **Version-stamp consent (schema follow-up):** store the accepted document version at signup and at `studio_linkages` creation for auditability (e.g. `profiles.tos_version_accepted`, `studio_linkages.dsa_version_accepted`) — idempotent `schema_phase*` migration.
+- [ ] **Footer links:** add Terms / Privacy links to the app footer or profile page for always-available access.
+
+**Acceptance:** all pages visually consistent in dark+gold; full zh-TC UI switch; OAuth sign-up lands on role-select correctly; **all legal placeholders resolved, counsel-reviewed, published as served pages, and enforced at signup + linkage with versioned consent capture.**
 
 ---
 
