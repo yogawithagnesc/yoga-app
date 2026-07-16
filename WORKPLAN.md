@@ -430,7 +430,7 @@ phase when a backend service or alternative storage solution is available.
 
 ## M7-1 — Legal Framework: ToS, Privacy Policy & Data Sharing Agreement
 
-**Status:** 🚧 In Progress (engineering brief drafted; awaiting jurisdiction inputs before final drafting)
+**Status:** 🚧 Drafts complete (jurisdiction-neutral v0.1 with bracketed placeholders; awaiting jurisdiction/entity inputs + attorney review before go-live)
 
 **Model:** Opus 4.8 — legal/compliance drafting crosses regulatory trust boundaries
 (multi-jurisdiction privacy law, liability, product-fact consistency). Highest
@@ -465,11 +465,17 @@ clause must be consistent with.
 
 **Deliverables:**
 - `legal/M7-1_engineering_brief.md` — ✅ the drafting spec + product-fact map + compliance matrix
-- `legal/terms-of-service.md` — pending jurisdiction inputs
-- `legal/privacy-policy.md` — pending jurisdiction inputs
-- `legal/data-sharing-agreement.md` — pending jurisdiction inputs
+- `legal/terms-of-service.md` — ✅ draft v0.1 (jurisdiction-neutral, bracketed placeholders)
+- `legal/privacy-policy.md` — ✅ draft v0.1 (GDPR/CCPA/PDPO baseline, bracketed placeholders)
+- `legal/data-sharing-agreement.md` — ✅ draft v0.1 (matches consent-box wording + minimal payload)
 - Later (M8-adjacent): render as `terms.html` / `privacy.html` served pages, link from
   `register.html` / `login.html` / `profile.html` consent UI.
+
+**Drafting defaults applied (v0.1, adjustable):** jurisdiction-neutral (GDPR+CCPA+HK-PDPO
+baseline); **18+ adults-only** with a note that lowering the age adds parental-consent
+obligations; operator identity, governing law, regulator, retention period, and contact all
+left as `[BRACKETED PLACEHOLDERS]`. Every factual claim traces to the §3 product-fact map /
+§4 consistency matrix in the engineering brief.
 
 **⚠️ Non-negotiable disclaimer:** these are AI-drafted starting points engineered for
 accuracy and completeness, **not a substitute for review by a qualified attorney licensed
