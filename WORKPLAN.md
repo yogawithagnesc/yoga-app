@@ -376,43 +376,55 @@ phase when a backend service or alternative storage solution is available.
 
 ---
 
-## M7 — On-Demand Video Catalog (P4)
+## M7 — On-Demand Video Catalog (P4) ✅ Complete (Deployed & Verified)
 
 **Scope:**
 - `videos` table (title, Mux playback ID, duration, thumbnail, teacher/studio owner, published flag) replacing the hardcoded single-entry `VIDEO_CATALOG` in `index.html` (~line 859).
 - Upload/registration workflow for teachers/studios (Mux asset creation is manual in the Mux dashboard for beta; the app stores playback IDs).
 - Catalog UI on the Classes tab; `video_progress` resume already works via `MuxVideoPlayer.js`.
 
-**Status:** ✅ Implemented (end-to-end upload → catalog → resume; needs Mux env vars in Vercel to go live)
+**Status:** ✅ Complete (deployed to yoga-app-ten.vercel.app; all 7 QA tests passed 2026-07-16)
 
 **Completed:**
 1. ✅ `schema_phase16_m7_videos.sql`: videos + video_progress tables, RLS policies
 2. ✅ `schema_phase18_video_progress_fix.sql`: reconciled video_progress columns
    (position_seconds/completed/last_watched_at) + video_id text→uuid FK; the base
    schema had shadowed phase 16's `CREATE TABLE IF NOT EXISTS`, silently breaking resume.
-3. ✅ `index.html`: loadVideosCatalog() renders published videos; loadContinueWatching() joins video metadata.
-4. ✅ **Full Mux upload workflow** — `video-admin.html` (teacher/studio only): file
+3. ✅ **CRITICAL RLS SECURITY FIX** — `schema_phase19_m7_rls_fix.sql`: Updated `videos_published_read`
+   policy to require active, consented `studio_linkages` for non-creators to view published
+   videos. Prevents unlinked users from seeing newly published videos. All 7 QA tests verified
+   the fix works correctly: creator sees own videos, linked students see linked-creator videos,
+   unlinked students see nothing.
+4. ✅ `index.html`: loadVideosCatalog() renders published videos; loadContinueWatching() joins video metadata.
+5. ✅ **Full Mux upload workflow** — `video-admin.html` (teacher/studio only): file
    picker → direct upload to Mux → poll until ready → insert catalog row; plus
    publish/unpublish toggle and delete for existing videos.
-5. ✅ `api/mux-create-upload.js` + `api/mux-upload-status.js` — Vercel serverless
+6. ✅ `api/mux-create-upload.js` + `api/mux-upload-status.js` — Vercel serverless
    functions that hold the Mux secret, verify the caller's Supabase JWT + teacher/studio
    role, create the direct upload, and poll upload→asset→playbackId+duration.
-6. ✅ `video-player.html` migrated off the hardcoded slug `VIDEO_CATALOG` to fetch the
+7. ✅ `video-player.html` migrated off the hardcoded slug `VIDEO_CATALOG` to fetch the
    `videos` row by UUID (legacy slug link kept as a fallback). Previously any DB video
    click fell through to the hardcoded intro clip.
-7. ✅ `teacher.html`: "🎬 Videos" header link into the Video Studio.
+8. ✅ `teacher.html`: "🎬 Videos" header link into the Video Studio.
+9. ✅ Mux API credentials configured in Vercel (`MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`).
 
-**Deploy prerequisite:** set `MUX_TOKEN_ID` and `MUX_TOKEN_SECRET` (Mux Video API token)
-in Vercel env. `video-admin.html` shows a warning banner if the functions aren't reachable.
-Uploads use `video_quality: 'basic'` and a public playback policy.
+**QA Test Results (2026-07-16):**
+| Test | Status | Notes |
+|---|---|---|
+| Test 1: Upload Flow | ✅ PASSED | Teacher uploads video → Mux processes → catalog row inserted |
+| Test 2: Catalog Rendering | ✅ PASSED | Published videos appear in On-Demand Classes for linked students |
+| Test 3: Playback | ✅ PASSED | Mux player controls work (play, pause, fullscreen, seek) |
+| Test 4: Resume Functionality | ✅ PASSED | Student position persists across reload via video_progress table |
+| Test 5: Access Gating | ✅ PASSED | Unlinked students cannot see newly published videos (RLS enforced) |
+| Test 6: Publish/Unpublish Toggle | ✅ PASSED | Draft → Published / Published → Draft toggle works bidirectionally |
+| RLS Security Verification | ✅ PASSED | Creator sees all own videos; linked student sees linked creator's; unlinked sees nothing |
 
-**Acceptance:** multiple videos listed from the DB; continue-watching works across them;
-a teacher can upload a new class from the Video Studio and see it appear published.
+**Deployment:** Vercel env vars set on 2026-07-16. Live at https://yoga-app-ten.vercel.app.
 
 **Deferred / future:**
 - Thumbnail generation (Mux animated/still thumbnails) → replace the 🎥 emoji tile.
 - Server-side webhook (instead of client polling) for very long processing jobs.
-- Per-video access scoping to linked students only (currently published = all authenticated).
+- Per-video access scoping to linked students only — **NOW COMPLETE** (RLS enforces linkage-gated visibility).
 
 ---
 
