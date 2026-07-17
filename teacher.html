@@ -862,9 +862,24 @@ async function loadFeedbackReceived() {
     row.innerHTML =
       '<div class="feedback-author">' + authorName + '</div>' +
       '<div class="feedback-body">' + f.body + '</div>' +
-      '<div class="feedback-time">' + new Date(f.created_at).toLocaleString() + '</div>'
+      '<div class="feedback-time">' + new Date(f.created_at).toLocaleString() + '</div>' +
+      '<button class="feedback-delete-btn" onclick="deleteFeedback(\'' + f.id + '\')">Delete</button>'
     el.appendChild(row)
   })
+}
+
+async function deleteFeedback(feedbackId) {
+  if (!confirm('Delete this message?')) return
+  const { error } = await db.from('feedback')
+    .delete()
+    .eq('id', feedbackId)
+    .eq('target_entity_id', currentUser.id)
+  if (error) {
+    console.error('Delete feedback failed:', error)
+    alert('Could not delete message')
+    return
+  }
+  loadFeedbackReceived()
 }
 </script>
 </body>

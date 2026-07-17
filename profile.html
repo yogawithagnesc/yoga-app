@@ -102,6 +102,24 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .logout-btn{width:100%;padding:13px;background:none;border:1px solid var(--br-def);border-radius:var(--r-lg);color:var(--tx-2);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px}
 .logout-btn:hover{border-color:var(--error);color:var(--error)}
 
+.delete-account-btn{width:100%;padding:13px;background:rgba(196,112,112,0.1);border:1px solid var(--error);border-radius:var(--r-lg);color:var(--error);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px;margin-top:8px}
+.delete-account-btn:hover{background:rgba(196,112,112,0.2)}
+
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:none;z-index:300;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:24px;max-width:320px;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
+.modal-title{font-family:'Tenor Sans','Noto Sans TC',sans-serif;font-size:18px;color:var(--tx-1);margin-bottom:12px;letter-spacing:.1em;text-transform:uppercase}
+.modal-body{font-size:13px;color:var(--tx-2);line-height:1.6;margin-bottom:16px}
+.modal-input{width:100%;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-1);margin-bottom:12px;outline:none}
+.modal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.modal-actions{display:flex;gap:8px}
+.modal-actions button{flex:1;padding:11px;border-radius:var(--r-lg);border:none;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;min-height:40px}
+.modal-cancel{background:var(--br-def);color:var(--tx-1)}
+.modal-cancel:hover{background:var(--br-str)}
+.modal-confirm{background:var(--error);color:#fff}
+.modal-confirm:hover{opacity:0.9}
+.modal-confirm:disabled{opacity:0.5;cursor:not-allowed}
+
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(17,17,16,.2);border-top-color:var(--tx-inv);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -176,8 +194,32 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 
     <div class="logout-row">
       <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+      <button class="delete-account-btn" onclick="showDeleteAccountModal()">Delete Account</button>
     </div>
 
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal-overlay" id="delete-account-modal">
+  <div class="modal-box">
+    <div class="modal-title">Delete Account</div>
+    <div class="modal-body" id="modal-stage-1" style="display:none">
+      <p><strong>⚠️ This action cannot be undone.</strong></p>
+      <p>All your practice logs, photos, videos, and profile data will be permanently deleted. Your account cannot be recovered.</p>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeDeleteAccountModal()">Cancel</button>
+        <button class="modal-confirm" onclick="advanceDeleteModal()">Continue</button>
+      </div>
+    </div>
+    <div id="modal-stage-2" style="display:none">
+      <p class="modal-body">Type <strong>DELETE</strong> to confirm permanent deletion:</p>
+      <input class="modal-input" id="delete-confirm-input" type="text" placeholder="Type DELETE" maxlength="6" oninput="updateDeleteBtn()"/>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeDeleteAccountModal()">Cancel</button>
+        <button class="modal-confirm" id="delete-confirm-btn" onclick="confirmDeleteAccount()" disabled>Delete Account</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -642,10 +684,57 @@ async function saveDisplayName() {
   }
 }
 
-// ── LOGOUT ────────────────────────────────────────────────
+// ── LOGOUT & ACCOUNT DELETION ─────────────────────────────
 async function handleLogout() {
   await db.auth.signOut()
   window.location.href = 'login.html'
+}
+
+function showDeleteAccountModal() {
+  document.getElementById('delete-account-modal').classList.add('show')
+  document.getElementById('modal-stage-1').style.display = 'block'
+  document.getElementById('modal-stage-2').style.display = 'none'
+  document.getElementById('delete-confirm-input').value = ''
+}
+
+function closeDeleteAccountModal() {
+  document.getElementById('delete-account-modal').classList.remove('show')
+}
+
+function advanceDeleteModal() {
+  document.getElementById('modal-stage-1').style.display = 'none'
+  document.getElementById('modal-stage-2').style.display = 'block'
+  document.getElementById('delete-confirm-input').focus()
+}
+
+function updateDeleteBtn() {
+  const input = document.getElementById('delete-confirm-input')
+  const btn = document.getElementById('delete-confirm-btn')
+  btn.disabled = input.value !== 'DELETE'
+}
+
+async function confirmDeleteAccount() {
+  const btn = document.getElementById('delete-confirm-btn')
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div>'
+
+  try {
+    const { error } = await db.from('profiles')
+      .delete()
+      .eq('id', currentUser.id)
+
+    if (error) throw error
+
+    // If profile deletion succeeded, sign out
+    await db.auth.signOut()
+    window.location.href = 'login.html'
+  } catch (err) {
+    console.error('Delete account failed:', err)
+    showToast('Could not delete account. Please try again.')
+    btn.disabled = false
+    btn.innerHTML = 'Delete Account'
+    closeDeleteAccountModal()
+  }
 }
 
 function showToast(msg) {
