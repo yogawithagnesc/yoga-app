@@ -19,8 +19,9 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M4 | Class scheduling & booking framework | §3.5, §8 | ✅ Phase A + Phase B done | Sonnet 5 (+ Opus 4.8 design pass) |
 | M5 | Cross-role community architecture | §3.6 | ✅ Done (schema pending migration run) | Sonnet 5 (+ Opus 4.8 RLS review) |
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
-| M7 | On-demand video catalog | P4 | ✅ Implemented (needs Mux env vars) | Haiku 4.5 / Sonnet 5 |
+| M7 | On-demand video catalog | P4 | ✅ Complete (deployed + verified) | Haiku 4.5 / Sonnet 5 |
 | M7-1 | Legal framework: ToS, Privacy, Data Sharing Agreement | P4 | 🚧 Drafts complete (v0.1) | Opus 4.8 |
+| M7-2 | Post-Launch Polish: UX refinements (signup, quotes, rename/delete, account mgmt) | §3.2, §3.7 | 📋 Planned | Haiku 4.5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -492,6 +493,51 @@ in the governing jurisdiction.** Legal review is required before the documents g
 consent, studio-aggregate-only architecture; (b) satisfy the primary jurisdiction's privacy
 law plus GDPR/CCPA best-practice baseline; (c) are concise and internally consistent; (d) carry
 the attorney-review disclaimer; (e) are wired into the signup + linkage consent flows.
+
+---
+
+## M7-2 — Post-Launch Polish: UX Refinements
+
+**Status:** 📋 Planned (8 enhancement items identified)
+
+**Model:** Haiku 4.5 — mechanical UI fixes and feature additions; no architectural changes.
+
+**Rationale:** Post-launch user feedback + internal QA identified 8 UX pain points and missing
+self-service capabilities. These are not blockers for launch but should be addressed within the
+first post-launch iteration to improve usability and user control.
+
+**Scope — 8 items:**
+
+| # | Item | File(s) | Acceptance |
+|---|---|---|---|
+| 1 | Remove "Agnes" sample from signup name field | `register.html` | Name input shows placeholder (e.g. "Your display name") instead of sample value |
+| 2 | Link ToS + Privacy Policy in the app | `register.html`, `login.html`, `profile.html` | Links point to latest `terms.html` / `privacy.html` (from M8.2) |
+| 3 | Random positive quotes on Home page | `index.html` | Home page cycles through 10+ rotating life/yoga/positive quotes instead of single static quote |
+| 4 | Rename + delete practice types | `lumen-log-practice-3d.html` | Double-click a practice type chip → edit mode; or right-click → delete with confirmation |
+| 5 | Rename + delete practice focus areas | `lumen-log-practice-3d.html` | Double-click or context menu for custom focus areas; deletion blocks if in-use |
+| 6 | Delete messages in Community | `index.html` Community tab | Message cards show a delete button; only the sender can delete; soft-delete or hard-delete per policy |
+| 7 | Change user name in Profile | `profile.html` | Display name is editable (inline edit or modal); save persists to `profiles.display_name` |
+| 8 | Two-stage account deletion | `profile.html` | Stage 1: "Are you sure?" modal + checkbox "I understand all data will be permanently deleted". Stage 2: "Type your email to confirm" + final delete button. Clear warnings shown. |
+
+**Key notes:**
+- **Item 1:** Just remove the hardcoded `value="Agnes"` or replace with a placeholder.
+- **Item 2:** Deferred until M8.2 finalizes `terms.html` / `privacy.html`; then add links here.
+- **Item 3:** Create a `QUOTES` array (10+ strings) in `index.html` and rotate on page load or every N seconds.
+- **Item 4–5:** Reuse the existing contentEditable rename pattern from M2 (drag-drop category rename already works). Add RLS + schema support if needed (likely already exists for custom categories).
+- **Item 6:** Check `feedback` table RLS — confirm sender can delete. Add a delete button + confirmation modal.
+- **Item 7:** Reuse profile-edit pattern (see `profile.html` username section); make display_name editable.
+- **Item 8:** The hardest item. Requires a two-step modal flow + backend confirmation. Users see warnings about permanent deletion and data loss.
+
+**Dependencies:**
+- Item 2 depends on M8.2 completion.
+- Items 4–5 may require schema changes to track custom category/focus ownership (check if already in place).
+- Item 8 requires no schema changes (account cascade deletion already works from `schema.sql`).
+
+**Acceptance:** all 8 items QA'd on desktop and mobile; name field shows no sample, quotes rotate, rename/delete flows work without errors, account deletion shows two-stage flow with clear warnings.
+
+**Deferred/nice-to-have:**
+- Bulk delete (delete multiple messages at once) — Item 6 can start with single-message delete.
+- Account recovery after deletion — once deleted, account is gone (per current schema); recovery not in scope.
 
 ---
 
