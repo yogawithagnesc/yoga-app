@@ -126,7 +126,10 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       <div class="id-row">
         <div class="id-avatar" id="id-avatar">—</div>
         <div style="flex:1">
-          <div class="id-name" id="id-name">—</div>
+          <div style="display:flex;gap:8px;align-items:flex-start">
+            <div class="id-name" id="id-name" style="cursor:pointer;padding:2px;border-radius:4px;transition:background 0.2s" title="Double-click to edit">—</div>
+            <button id="id-name-save-btn" style="display:none;background:var(--accent);color:var(--bg);border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;font-weight:500" onclick="saveDisplayName()">Save</button>
+          </div>
           <div class="id-email" id="id-email">—</div>
           <span class="role-badge" id="id-role">—</span>
         </div>
@@ -202,6 +205,9 @@ let currentUserRole = null
     document.getElementById('id-name').textContent = name
     document.getElementById('id-email').textContent = profile.email || currentUser.email || ''
     document.getElementById('id-role').textContent = currentUserRole
+
+    // Enable double-click to edit display name
+    document.getElementById('id-name').addEventListener('dblclick', enableDisplayNameEdit)
 
     // Load username
     const usernameInput = document.getElementById('username-input')
@@ -537,6 +543,93 @@ async function loadTeacherStudios() {
       '<button class="unlink-btn" onclick="unlink(\'' + link.entity_id + '\')">Unbind</button>'
     el.appendChild(row)
   })
+}
+
+// ── DISPLAY NAME EDIT ─────────────────────────────────────
+function enableDisplayNameEdit() {
+  const nameEl = document.getElementById('id-name');
+  const saveBtn = document.getElementById('id-name-save-btn');
+  const originalValue = nameEl.textContent;
+
+  nameEl.contentEditable = 'true';
+  nameEl.focus();
+  nameEl.style.background = 'var(--bg)';
+  nameEl.style.border = '1px solid var(--accent)';
+  nameEl.style.outline = 'none';
+
+  // Select all text
+  const range = document.createRange();
+  range.selectNodeContents(nameEl);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  saveBtn.style.display = 'inline-block';
+
+  function cancelEdit() {
+    nameEl.contentEditable = 'false';
+    nameEl.textContent = originalValue;
+    nameEl.style.background = '';
+    nameEl.style.border = '';
+    saveBtn.style.display = 'none';
+  }
+
+  // Cancel on Escape
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      cancelEdit();
+      nameEl.removeEventListener('keydown', handleKeyDown);
+    }
+  };
+  nameEl.addEventListener('keydown', handleKeyDown);
+
+  // Cancel on blur if not saved
+  const handleBlur = () => {
+    if (nameEl.contentEditable === 'true') {
+      setTimeout(() => {
+        if (document.activeElement !== saveBtn) {
+          cancelEdit();
+        }
+      }, 100);
+    }
+  };
+  nameEl.addEventListener('blur', handleBlur, { once: true });
+}
+
+async function saveDisplayName() {
+  const nameEl = document.getElementById('id-name');
+  const saveBtn = document.getElementById('id-name-save-btn');
+  const newName = (nameEl.textContent || '').trim();
+
+  if (!newName || newName.length === 0) {
+    showToast('Display name cannot be empty');
+    return;
+  }
+
+  saveBtn.disabled = true;
+
+  const { error } = await db.from('profiles')
+    .update({ display_name: newName })
+    .eq('id', currentUser.id);
+
+  if (error) {
+    console.error('Error saving display name:', error);
+    showToast('Error saving display name');
+    saveBtn.disabled = false;
+    return;
+  }
+
+  nameEl.contentEditable = 'false';
+  nameEl.style.background = '';
+  nameEl.style.border = '';
+  saveBtn.style.display = 'none';
+  saveBtn.disabled = false;
+
+  // Update avatar with new initials
+  const avatarEl = document.getElementById('id-avatar');
+  avatarEl.textContent = newName.charAt(0).toUpperCase();
+
+  showToast('Display name saved! ✦');
 }
 
 // ── LOGOUT ────────────────────────────────────────────────

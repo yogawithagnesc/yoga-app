@@ -133,9 +133,10 @@ Nothing in these Terms excludes liability that cannot be excluded under applicab
 
 ## 10. Governing Law and Disputes
 
-These Terms are governed by the laws of **[GOVERNING JURISDICTION]**, and disputes will be
-subject to the courts of **[FORUM]**, without prejudice to any mandatory consumer-protection
-rights you have where you live.
+These Terms are governed by the laws of **Hong Kong and Singapore** (to be confirmed by counsel
+as to which jurisdiction is primary in case of conflict). Disputes arising under these Terms shall
+be subject to the **courts of Hong Kong and Singapore**, without prejudice to any mandatory
+consumer-protection rights you have where you live.
 
 ## 11. Changes to These Terms
 
