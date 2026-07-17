@@ -30,16 +30,21 @@ async function readJsonBody(req) {
 async function verifyCaller(accessToken) {
   if (!accessToken) return null;
 
-  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  if (!userRes.ok) return null;
-  const user = await userRes.json();
-  if (!user || !user.id) return null;
-  return { userId: user.id };
+  try {
+    const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    if (!userRes.ok) return null;
+    const user = await userRes.json();
+    if (!user || !user.id) return null;
+    return { userId: user.id };
+  } catch (e) {
+    console.error('verifyCaller error:', e);
+    return null;
+  }
 }
 
 module.exports = async function handler(req, res) {
