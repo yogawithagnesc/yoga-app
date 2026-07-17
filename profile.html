@@ -156,7 +156,7 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       <input class="finput" id="join-code-input" type="text" maxlength="6" placeholder="Enter 6-character code" autocapitalize="characters"/>
       <label class="consent-row">
         <input type="checkbox" id="join-consent"/>
-        <span class="consent-text" id="join-consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the Data Sharing Agreement.</span>
+        <span class="consent-text" id="join-consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the <a href="legal/data-sharing-agreement.html" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;cursor:pointer">Data Sharing Agreement</a>.</span>
       </label>
       <button class="btn-primary" id="connect-btn" onclick="submitJoinCode()">Connect</button>
       <div class="form-err" id="connect-err"></div>
@@ -630,6 +630,16 @@ async function saveDisplayName() {
   avatarEl.textContent = newName.charAt(0).toUpperCase();
 
   showToast('Display name saved! ✦');
+
+  // Refetch profile to ensure all UI syncs with database
+  const { data: profile } = await db.from('profiles')
+    .select('display_name')
+    .eq('id', currentUser.id)
+    .single();
+  if (profile) {
+    nameEl.textContent = profile.display_name;
+    avatarEl.textContent = (profile.display_name || 'P').charAt(0).toUpperCase();
+  }
 }
 
 // ── LOGOUT ────────────────────────────────────────────────
