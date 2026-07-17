@@ -166,8 +166,6 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .feedback-author{font-size:12px;font-weight:600;color:var(--tx-1)}
 .feedback-body{font-size:13px;color:var(--tx-2);margin-top:6px;line-height:1.5;flex:1}
 .feedback-time{font-size:10px;color:var(--tx-3);margin-top:6px}
-.feedback-delete-btn{align-self:flex-end;background:none;border:none;color:var(--error);cursor:pointer;font-size:12px;font-weight:500;padding:4px 0;margin-top:8px;transition:all .15s}
-.feedback-delete-btn:hover{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -931,28 +929,8 @@ async function loadFeedbackReceived() {
     timeEl.textContent = new Date(f.created_at).toLocaleString()
     row.appendChild(timeEl)
 
-    const delBtn = document.createElement('button')
-    delBtn.className = 'feedback-delete-btn'
-    delBtn.textContent = 'Delete'
-    delBtn.onclick = () => deleteFeedback(f.id)
-    row.appendChild(delBtn)
-
     el.appendChild(row)
   })
-}
-
-async function deleteFeedback(feedbackId) {
-  if (!confirm('Delete this message?')) return
-  const { error } = await db.from('feedback')
-    .delete()
-    .eq('id', feedbackId)
-    .eq('target_entity_id', currentUser.id)
-  if (error) {
-    console.error('Delete feedback failed:', error)
-    alert('Could not delete message')
-    return
-  }
-  loadFeedbackReceived()
 }
 </script>
 </body>

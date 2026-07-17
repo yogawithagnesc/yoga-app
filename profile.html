@@ -82,8 +82,11 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .unlink-btn:hover{background:rgba(196,112,112,0.2)}
 
 .empty-hint{font-size:12px;color:var(--tx-3);padding:8px 0}
-.teacher-link{display:block;text-align:center;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 0;font-weight:500}
-.teacher-link:hover{text-decoration:underline}
+
+.view-students-btn{width:100%;background:var(--accent);border:none;border-radius:var(--r-lg);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .18s;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:15px;font-weight:600;color:var(--tx-inv)}
+.view-students-btn:hover{background:var(--accent-h);transform:translateY(-1px)}
+.view-students-btn:active{transform:translateY(0)}
+.view-students-arrow{font-size:16px}
 
 /* Username edit */
 .username-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--br-sub)}
@@ -160,12 +163,17 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       </div>
     </div>
 
+    <!-- Teacher/Studio: View My Students (prominent, top of page) -->
+    <button class="view-students-btn" id="view-students-btn" style="display:none" onclick="window.location.href='teacher.html'">
+      <span>👥 View My Students</span>
+      <span class="view-students-arrow">→</span>
+    </button>
+
     <!-- Teacher/Studio: Generate Join Code -->
     <div class="card" id="codes-card" style="display:none">
       <div class="card-title">Generate Join Code</div>
       <div id="codes-list"></div>
       <button class="btn-primary" id="new-code-btn" style="margin-top:6px" onclick="createNewCode()">✦ Generate New Code</button>
-      <a class="teacher-link" href="teacher.html">View My Students →</a>
     </div>
 
     <!-- Student: Link to a Teacher/Studio · Teacher: Bind to a Studio -->
@@ -261,6 +269,7 @@ let currentUserRole = null
 
     // Show/hide sections based on role (synchronous, no flashing)
     if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
+      document.getElementById('view-students-btn').style.display = 'flex'
       document.getElementById('codes-card').style.display = 'block'
       document.getElementById('links-card').style.display = 'block'
       document.getElementById('links-title').textContent = 'Linked Students'
