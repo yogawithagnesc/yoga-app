@@ -1,0 +1,21 @@
+-- ============================================================
+-- LUMEN — Phase 23 Migration: Bulletin DELETE Realtime Fix
+-- Run this in Supabase Dashboard → SQL Editor after schema_phase22
+--
+-- By default Postgres logical replication only includes primary-key
+-- columns in the "old row" of a DELETE event (REPLICA IDENTITY
+-- DEFAULT). index.html's realtime subscription filters DELETE events
+-- on group_bulletins by `group_id=eq.<id>` — but group_id is not the
+-- primary key, so with the default replica identity that column is
+-- never present in the DELETE payload and the filter can never match.
+-- Net effect: a bulletin deleted by its teacher would disappear for
+-- the teacher (direct table delete) but silently NOT disappear live
+-- from an already-open student dashboard.
+--
+-- Setting REPLICA IDENTITY FULL includes every column of the deleted
+-- row in the WAL event, so the group_id filter can match correctly.
+--
+-- Idempotent — safe to re-run.
+-- ============================================================
+
+ALTER TABLE public.group_bulletins REPLICA IDENTITY FULL;

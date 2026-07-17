@@ -142,8 +142,8 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .bulletin-row-main{flex:1;min-width:0}
 .bulletin-body{font-size:13px;color:var(--tx-1);line-height:1.5;word-wrap:break-word}
 .bulletin-time{font-size:10px;color:var(--tx-3);margin-top:4px}
-.bulletin-delete-btn{flex-shrink:0;background:none;border:none;color:var(--tx-3);cursor:pointer;font-size:13px;padding:2px 4px;transition:color .15s}
-.bulletin-delete-btn:hover{color:var(--error)}
+.bulletin-delete-btn{flex-shrink:0;background:rgba(196,112,112,0.1);border:1px solid rgba(196,112,112,0.3);border-radius:var(--r-sm);color:var(--error);cursor:pointer;font-size:11px;font-weight:500;padding:6px 10px;transition:all .15s}
+.bulletin-delete-btn:hover{background:rgba(196,112,112,0.2)}
 .bulletin-compose{display:flex;gap:8px;margin-top:10px}
 .bulletin-compose textarea{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-1);outline:none;resize:none;min-height:44px}
 .bulletin-compose textarea:focus{border-color:var(--accent)}
@@ -690,7 +690,7 @@ function renderBulletinList(groupId, bulletins) {
 
     const delBtn = document.createElement('button')
     delBtn.className = 'bulletin-delete-btn'
-    delBtn.textContent = '✕'
+    delBtn.textContent = 'Delete'
     delBtn.title = 'Delete this bulletin'
     delBtn.onclick = () => deleteBulletin(b.id)
     row.appendChild(delBtn)
