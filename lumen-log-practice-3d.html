@@ -975,10 +975,32 @@ function buildTypeGrid() {
 
     card.appendChild(textDiv);
 
+    const actionDiv = document.createElement('div');
+    actionDiv.style.display = 'flex';
+    actionDiv.style.gap = '6px';
+    actionDiv.style.alignItems = 'center';
+
     const chkDiv=document.createElement('div');
     chkDiv.className='type-chk';
     chkDiv.textContent = selType===t.id?'✓':'';
-    card.appendChild(chkDiv);
+    actionDiv.appendChild(chkDiv);
+
+    // Delete button for custom types
+    if (!t.is_system) {
+      const delBtn = document.createElement('button');
+      delBtn.style.cssText = 'background:none;border:none;color:var(--error);cursor:pointer;font-size:12px;padding:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center;opacity:0.6;transition:opacity .15s';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete this practice type';
+      delBtn.onmouseenter = () => delBtn.style.opacity = '1';
+      delBtn.onmouseleave = () => delBtn.style.opacity = '0.6';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete "${t.name}"?`)) deleteCustomType(t);
+      };
+      actionDiv.appendChild(delBtn);
+    }
+
+    card.appendChild(actionDiv);
 
     // Prevent single clicks on the name from also selecting the card.
     typeNameEl.addEventListener('click', (e) => { e.stopPropagation(); });
@@ -1286,6 +1308,26 @@ async function deleteFocusArea(focus) {
   selFocus.delete(focus.id);
   buildFocus();
   showToast(`"${focus.label}" deleted`);
+}
+
+async function deleteCustomType(type) {
+  if (type.is_system) {
+    showToast('Cannot delete system practice types');
+    return;
+  }
+  const { error } = await db.from('practice_categories')
+    .delete()
+    .eq('id', type.id)
+    .eq('is_system', false);
+  if (error) {
+    console.error('Delete type failed:', error);
+    showToast('Could not delete practice type');
+    return;
+  }
+  CATEGORIES = CATEGORIES.filter(c => c.id !== type.id);
+  if (selType === type.id) selType = null;
+  buildTypeGrid();
+  showToast(`"${type.name}" deleted`);
 }
 
 // ─── MEDIA ───

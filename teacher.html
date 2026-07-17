@@ -159,10 +159,12 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .link-role{font-size:11px;color:var(--tx-3);margin-top:2px;text-transform:capitalize}
 
 /* Feedback received */
-.feedback-row{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:10px}
+.feedback-row{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:10px;display:flex;flex-direction:column}
 .feedback-author{font-size:12px;font-weight:600;color:var(--tx-1)}
-.feedback-body{font-size:13px;color:var(--tx-2);margin-top:6px;line-height:1.5}
+.feedback-body{font-size:13px;color:var(--tx-2);margin-top:6px;line-height:1.5;flex:1}
 .feedback-time{font-size:10px;color:var(--tx-3);margin-top:6px}
+.feedback-delete-btn{align-self:flex-end;background:none;border:none;color:var(--error);cursor:pointer;font-size:12px;font-weight:500;padding:4px 0;margin-top:8px;transition:all .15s}
+.feedback-delete-btn:hover{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -859,11 +861,28 @@ async function loadFeedbackReceived() {
     const authorName = f.profiles ? f.profiles.display_name : 'A student'
     const row = document.createElement('div')
     row.className = 'feedback-row'
-    row.innerHTML =
-      '<div class="feedback-author">' + authorName + '</div>' +
-      '<div class="feedback-body">' + f.body + '</div>' +
-      '<div class="feedback-time">' + new Date(f.created_at).toLocaleString() + '</div>' +
-      '<button class="feedback-delete-btn" onclick="deleteFeedback(\'' + f.id + '\')">Delete</button>'
+
+    const authorEl = document.createElement('div')
+    authorEl.className = 'feedback-author'
+    authorEl.textContent = authorName
+    row.appendChild(authorEl)
+
+    const bodyEl = document.createElement('div')
+    bodyEl.className = 'feedback-body'
+    bodyEl.textContent = f.body
+    row.appendChild(bodyEl)
+
+    const timeEl = document.createElement('div')
+    timeEl.className = 'feedback-time'
+    timeEl.textContent = new Date(f.created_at).toLocaleString()
+    row.appendChild(timeEl)
+
+    const delBtn = document.createElement('button')
+    delBtn.className = 'feedback-delete-btn'
+    delBtn.textContent = 'Delete'
+    delBtn.onclick = () => deleteFeedback(f.id)
+    row.appendChild(delBtn)
+
     el.appendChild(row)
   })
 }

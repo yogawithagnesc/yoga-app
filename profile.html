@@ -719,13 +719,12 @@ async function confirmDeleteAccount() {
   btn.innerHTML = '<div class="spinner"></div>'
 
   try {
-    const { error } = await db.from('profiles')
-      .delete()
-      .eq('id', currentUser.id)
+    // Call RPC to delete profile and cascade delete all user data
+    const { error } = await db.rpc('delete_user_account')
 
     if (error) throw error
 
-    // If profile deletion succeeded, sign out
+    // Sign out and redirect to login
     await db.auth.signOut()
     window.location.href = 'login.html'
   } catch (err) {
