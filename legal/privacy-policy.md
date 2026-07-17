@@ -17,6 +17,8 @@ personal data. Contact us about privacy at **yogawithagnesc@gmail.com**, **[POST
 This policy explains what we collect, why, how we share it, and the rights you have. It applies
 to all account holders — Students, Teachers, and Studios.
 
+> **Note:** Lumen operates in Hong Kong and Singapore; these documents are drafted to comply with both the Hong Kong Personal Data (Privacy) Ordinance (PDPO) and Singapore Personal Data Protection Act (PDPA), with Standard Contractual Clauses for international data transfers.
+
 ## 2. What We Collect
 
 | Category | Examples | Notes |
@@ -82,7 +84,7 @@ integrity of the Service.
 
 ## 5. International Transfers
 
-Our providers may process data in **[REGIONS — confirm per Supabase/Vercel/Mux configuration]**.
+Our providers may process data in **Asia-Pacific (Singapore, Tokyo)**.
 Where data leaves your jurisdiction, we rely on **[appropriate safeguards — e.g. standard
 contractual clauses / adequacy decisions]** as required by applicable law.
 
@@ -90,7 +92,7 @@ contractual clauses / adequacy decisions]** as required by applicable law.
 
 We keep your personal data for as long as your account is active. When you **delete your account**,
 your profile and associated records are deleted, and related records are removed automatically
-through linked deletion, except for limited backups retained for **[RETENTION PERIOD]** and any
+through linked deletion, except for limited backups retained for **90 days** and any
 data we must keep to meet legal obligations.
 
 ## 7. Your Rights
@@ -103,8 +105,7 @@ Depending on where you live, you may have the right to:
 - **port** your data to another service;
 - **withdraw consent** you previously gave (for example, stop sharing with a teacher);
 - **object to or restrict** certain processing;
-- **lodge a complaint** with your data-protection regulator (**[NAME THE REGULATOR PER
-  JURISDICTION]**).
+- **lodge a complaint** with your data-protection regulator (Privacy Commissioner for Personal Data / PCPD in Hong Kong; Personal Data Protection Commission / PDPC in Singapore).
 
 To exercise any of these, contact us at **yogawithagnesc@gmail.com**. Many of these actions —
 making a log private, un-sharing media, disconnecting from a teacher, or deleting your account —
