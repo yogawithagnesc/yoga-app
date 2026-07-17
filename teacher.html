@@ -136,11 +136,14 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .member-chip .m-remove:hover{color:var(--error)}
 .group-add-member{display:flex;gap:8px;margin-top:10px}
 .group-add-member select{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:9px 10px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:12px;color:var(--tx-2)}
-.bulletin-list{margin-top:12px;border-top:1px solid var(--br-sub);padding-top:12px}
-.bulletin-row{padding:8px 0;border-bottom:1px solid var(--br-sub)}
+.bulletin-list{margin-top:12px;border-top:1px solid var(--br-sub);padding-top:12px;max-height:280px;overflow-y:auto}
+.bulletin-row{padding:8px 0;border-bottom:1px solid var(--br-sub);display:flex;gap:10px;align-items:flex-start}
 .bulletin-row:last-child{border-bottom:none}
-.bulletin-body{font-size:13px;color:var(--tx-1);line-height:1.5}
+.bulletin-row-main{flex:1;min-width:0}
+.bulletin-body{font-size:13px;color:var(--tx-1);line-height:1.5;word-wrap:break-word}
 .bulletin-time{font-size:10px;color:var(--tx-3);margin-top:4px}
+.bulletin-delete-btn{flex-shrink:0;background:none;border:none;color:var(--tx-3);cursor:pointer;font-size:13px;padding:2px 4px;transition:color .15s}
+.bulletin-delete-btn:hover{color:var(--error)}
 .bulletin-compose{display:flex;gap:8px;margin-top:10px}
 .bulletin-compose textarea{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-1);outline:none;resize:none;min-height:44px}
 .bulletin-compose textarea:focus{border-color:var(--accent)}
@@ -619,7 +622,7 @@ async function loadGroups() {
       .select('id, body, created_at')
       .eq('group_id', g.id)
       .order('created_at', { ascending: false })
-      .limit(5)
+      .limit(50)
 
     const memberList = members || []
     const memberIds = new Set(memberList.map(m => m.student_id))
@@ -647,19 +650,70 @@ async function loadGroups() {
             '<button class="cat-add-btn" onclick="addMember(\'' + g.id + '\')">Add</button>' +
           '</div>'
         : '') +
-      '<div class="bulletin-list">' +
-        (bulletins && bulletins.length
-          ? bulletins.map(b =>
-              '<div class="bulletin-row"><div class="bulletin-body">' + b.body + '</div><div class="bulletin-time">' + new Date(b.created_at).toLocaleString() + '</div></div>'
-            ).join('')
-          : '<div class="empty-hint">No bulletins sent yet.</div>') +
-        '<div class="bulletin-compose">' +
-          '<textarea id="bulletin-input-' + g.id + '" placeholder="Write a bulletin…" maxlength="2000"></textarea>' +
-          '<button class="bulletin-send" onclick="sendBulletin(\'' + g.id + '\')">Send</button>' +
-        '</div>' +
+      '<div class="bulletin-list" id="bulletin-list-' + g.id + '"></div>' +
+      '<div class="bulletin-compose">' +
+        '<textarea id="bulletin-input-' + g.id + '" placeholder="Write a bulletin…" maxlength="2000"></textarea>' +
+        '<button class="bulletin-send" onclick="sendBulletin(\'' + g.id + '\')">Send</button>' +
       '</div>'
     el.appendChild(card)
+    renderBulletinList(g.id, bulletins || [])
   }
+}
+
+function renderBulletinList(groupId, bulletins) {
+  const listEl = document.getElementById('bulletin-list-' + groupId)
+  if (!listEl) return
+  listEl.innerHTML = ''
+
+  if (!bulletins.length) {
+    listEl.innerHTML = '<div class="empty-hint">No bulletins sent yet.</div>'
+    return
+  }
+
+  bulletins.forEach(b => {
+    const row = document.createElement('div')
+    row.className = 'bulletin-row'
+    row.id = 'bulletin-row-' + b.id
+
+    const main = document.createElement('div')
+    main.className = 'bulletin-row-main'
+
+    const bodyEl = document.createElement('div')
+    bodyEl.className = 'bulletin-body'
+    bodyEl.textContent = b.body
+    main.appendChild(bodyEl)
+
+    const timeEl = document.createElement('div')
+    timeEl.className = 'bulletin-time'
+    timeEl.textContent = new Date(b.created_at).toLocaleString()
+    main.appendChild(timeEl)
+
+    row.appendChild(main)
+
+    const delBtn = document.createElement('button')
+    delBtn.className = 'bulletin-delete-btn'
+    delBtn.textContent = '✕'
+    delBtn.title = 'Delete this bulletin'
+    delBtn.onclick = () => deleteBulletin(b.id)
+    row.appendChild(delBtn)
+
+    listEl.appendChild(row)
+  })
+}
+
+async function deleteBulletin(bulletinId) {
+  if (!confirm('Delete this bulletin? Students will no longer see it.')) return
+  const { error } = await db.from('group_bulletins')
+    .delete()
+    .eq('id', bulletinId)
+    .eq('author_id', currentUser.id)
+  if (error) {
+    console.error('Delete bulletin failed:', error)
+    alert('Could not delete bulletin')
+    return
+  }
+  const row = document.getElementById('bulletin-row-' + bulletinId)
+  if (row) row.remove()
 }
 
 async function addMember(groupId) {

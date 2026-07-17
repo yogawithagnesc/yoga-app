@@ -2387,7 +2387,7 @@ async function loadGroups() {
       .select('id, body, created_at')
       .eq('group_id', g.id)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(50);
 
     var card = document.createElement('div');
     card.className = 'group-card';
@@ -2402,7 +2402,8 @@ async function loadGroups() {
       '</div>';
     el.appendChild(card);
 
-    // Realtime: new bulletins push into this group's card instantly
+    // Realtime: new bulletins push into this group's card instantly;
+    // deleted bulletins (teacher-side removal) disappear live too.
     var ch = db.channel('group-bulletins-' + g.id)
       .on('postgres_changes', {
         event: 'INSERT',
@@ -2414,7 +2415,16 @@ async function loadGroups() {
         if (!listEl) return;
         var empty = listEl.querySelector('.empty-hint');
         if (empty) empty.remove();
-        listEl.insertAdjacentHTML('afterbegin', bulletinItemHtml(payload.new, true));
+        listEl.insertAdjacentElement('afterbegin', bulletinItemEl(payload.new, true));
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'group_bulletins',
+        filter: 'group_id=eq.' + g.id,
+      }, function(payload) {
+        var itemEl = document.getElementById('bulletin-item-' + payload.old.id);
+        if (itemEl) itemEl.remove();
       })
       .subscribe();
     GROUP_CHANNELS.push(ch);
@@ -2422,10 +2432,25 @@ async function loadGroups() {
 }
 
 function bulletinItemHtml(b, isNew) {
-  return '<div class="bulletin-item' + (isNew ? ' new' : '') + '">' +
-    '<div class="bulletin-item-body">' + b.body + '</div>' +
-    '<div class="bulletin-item-time">' + new Date(b.created_at).toLocaleString() + '</div>' +
-    '</div>';
+  return bulletinItemEl(b, isNew).outerHTML;
+}
+
+function bulletinItemEl(b, isNew) {
+  var item = document.createElement('div');
+  item.className = 'bulletin-item' + (isNew ? ' new' : '');
+  item.id = 'bulletin-item-' + b.id;
+
+  var bodyEl = document.createElement('div');
+  bodyEl.className = 'bulletin-item-body';
+  bodyEl.textContent = b.body;
+  item.appendChild(bodyEl);
+
+  var timeEl = document.createElement('div');
+  timeEl.className = 'bulletin-item-time';
+  timeEl.textContent = new Date(b.created_at).toLocaleString();
+  item.appendChild(timeEl);
+
+  return item;
 }
 
 // ── M5: FEEDBACK PORTAL (student → teacher/studio) ────────
