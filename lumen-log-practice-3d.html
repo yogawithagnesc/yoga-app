@@ -89,8 +89,11 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .cat-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:500}
 .cat-tab.drop-target{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
 .cat-tab.add-tab{border-style:dashed;color:var(--accent)}
-.cat-tab-name{outline:none}
+.cat-tab-name{outline:none;flex:1}
 .cat-tab-name[contenteditable="true"]{border-bottom:1px dashed var(--accent);cursor:text}
+.cat-tab-delete{display:none;width:16px;height:16px;padding:0;background:none;border:none;color:var(--error);cursor:pointer;font-size:12px;margin-left:4px;transition:all .15s}
+.cat-tab:not(.add-tab):hover .cat-tab-delete{display:block}
+.cat-tab-delete:hover{color:var(--accent)}
 .type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .type-card{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:10px;touch-action:none;user-select:none}
 .type-card:hover{border-color:var(--br-str)}
@@ -770,6 +773,19 @@ function buildTypes() {
     nameEl.dataset.groupId = g.id;
     btn.appendChild(nameEl);
 
+    // Delete button (only for custom groups, not default_key groups)
+    if (!g.default_key) {
+      const delBtn = document.createElement('button');
+      delBtn.className = 'cat-tab-delete';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete this category';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteGroupWithConfirm(g);
+      };
+      btn.appendChild(delBtn);
+    }
+
     btn.onclick=(e)=>{
       if (btn.dataset.editing === 'true') return; // mid-rename, don't switch tabs
       if (e.target === nameEl) return; // ignore clicks on the name itself during normal interaction
@@ -898,6 +914,33 @@ async function addGroup() {
   showToast(STRINGS.groupAdded(name));
 }
 
+function deleteGroupWithConfirm(group) {
+  if (group.default_key) {
+    showToast('Cannot delete default categories');
+    return;
+  }
+  const msg = `Delete the category "${group.name}"?`;
+  if (confirm(msg)) deleteGroup(group);
+}
+
+async function deleteGroup(group) {
+  const { error } = await db.from('practice_groups')
+    .delete()
+    .eq('id', group.id)
+    .eq('user_id', currentUser.id);
+  if (error) {
+    console.error('Delete group failed:', error);
+    showToast('Could not delete category');
+    return;
+  }
+  GROUPS = GROUPS.filter(g => g.id !== group.id);
+  if (activeGroupId === group.id) {
+    activeGroupId = GROUPS[0]?.id || null;
+  }
+  buildTypes();
+  showToast(`"${group.name}" deleted`);
+}
+
 function buildTypeGrid() {
   const grid=document.getElementById('type-grid'); grid.innerHTML='';
   const list = CATEGORIES
@@ -932,10 +975,32 @@ function buildTypeGrid() {
 
     card.appendChild(textDiv);
 
+    const actionDiv = document.createElement('div');
+    actionDiv.style.display = 'flex';
+    actionDiv.style.gap = '6px';
+    actionDiv.style.alignItems = 'center';
+
     const chkDiv=document.createElement('div');
     chkDiv.className='type-chk';
     chkDiv.textContent = selType===t.id?'✓':'';
-    card.appendChild(chkDiv);
+    actionDiv.appendChild(chkDiv);
+
+    // Delete button for custom types
+    if (!t.is_system) {
+      const delBtn = document.createElement('button');
+      delBtn.style.cssText = 'background:none;border:none;color:var(--error);cursor:pointer;font-size:12px;padding:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center;opacity:0.6;transition:opacity .15s';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete this practice type';
+      delBtn.onmouseenter = () => delBtn.style.opacity = '1';
+      delBtn.onmouseleave = () => delBtn.style.opacity = '0.6';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete "${t.name}"?`)) deleteCustomType(t);
+      };
+      actionDiv.appendChild(delBtn);
+    }
+
+    card.appendChild(actionDiv);
 
     // Prevent single clicks on the name from also selecting the card.
     typeNameEl.addEventListener('click', (e) => { e.stopPropagation(); });
@@ -1184,8 +1249,27 @@ function buildFocus() {
   FOCUS_AREAS.forEach(f=>{
     const chip=document.createElement('div'); chip.className='chip'+(selFocus.has(f.id)?' sel':'');
     const isRecommended = f.visibility === 'linked' && f.created_by && f.created_by !== currentUser.id;
-    chip.innerHTML = f.label + (isRecommended ? '<span class="chip-badge">Recommended</span>' : '');
-    chip.onclick=()=>{ selFocus.has(f.id)?selFocus.delete(f.id):selFocus.add(f.id); chip.classList.toggle('sel'); };
+    const isCustom = f.created_by === currentUser.id;
+    const content = f.label + (isRecommended ? '<span class="chip-badge">Recommended</span>' : '');
+
+    if (isCustom) {
+      chip.style.display = 'inline-flex';
+      chip.style.alignItems = 'center';
+      chip.innerHTML = content + '<span style="margin-left:4px;font-size:11px;cursor:pointer;opacity:0.7" class="focus-delete">✕</span>';
+      const delBtn = chip.querySelector('.focus-delete');
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete "${f.label}"?`)) deleteFocusArea(f);
+      };
+      chip.onclick = (e) => {
+        if (e.target.classList.contains('focus-delete')) return;
+        selFocus.has(f.id)?selFocus.delete(f.id):selFocus.add(f.id);
+        chip.classList.toggle('sel');
+      };
+    } else {
+      chip.innerHTML = content;
+      chip.onclick=()=>{ selFocus.has(f.id)?selFocus.delete(f.id):selFocus.add(f.id); chip.classList.toggle('sel'); };
+    }
     c.appendChild(chip);
   });
 }
@@ -1208,6 +1292,42 @@ async function submitCustomFocus() {
   input.value = '';
   buildFocus();
   showToast(STRINGS.focusAdded(label));
+}
+
+async function deleteFocusArea(focus) {
+  const { error } = await db.from('focus_areas')
+    .delete()
+    .eq('id', focus.id)
+    .eq('created_by', currentUser.id);
+  if (error) {
+    console.error('Delete focus failed:', error);
+    showToast('Could not delete focus area');
+    return;
+  }
+  FOCUS_AREAS = FOCUS_AREAS.filter(f => f.id !== focus.id);
+  selFocus.delete(focus.id);
+  buildFocus();
+  showToast(`"${focus.label}" deleted`);
+}
+
+async function deleteCustomType(type) {
+  if (type.is_system) {
+    showToast('Cannot delete system practice types');
+    return;
+  }
+  const { error } = await db.from('practice_categories')
+    .delete()
+    .eq('id', type.id)
+    .eq('is_system', false);
+  if (error) {
+    console.error('Delete type failed:', error);
+    showToast('Could not delete practice type');
+    return;
+  }
+  CATEGORIES = CATEGORIES.filter(c => c.id !== type.id);
+  if (selType === type.id) selType = null;
+  buildTypeGrid();
+  showToast(`"${type.name}" deleted`);
 }
 
 // ─── MEDIA ───

@@ -82,8 +82,11 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .unlink-btn:hover{background:rgba(196,112,112,0.2)}
 
 .empty-hint{font-size:12px;color:var(--tx-3);padding:8px 0}
-.teacher-link{display:block;text-align:center;font-size:13px;color:var(--accent);text-decoration:none;padding:6px 0;font-weight:500}
-.teacher-link:hover{text-decoration:underline}
+
+.view-students-btn{width:100%;background:var(--accent);border:none;border-radius:var(--r-lg);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .18s;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:15px;font-weight:600;color:var(--tx-inv)}
+.view-students-btn:hover{background:var(--accent-h);transform:translateY(-1px)}
+.view-students-btn:active{transform:translateY(0)}
+.view-students-arrow{font-size:16px}
 
 /* Username edit */
 .username-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--br-sub)}
@@ -101,6 +104,24 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .logout-row{margin-top:8px}
 .logout-btn{width:100%;padding:13px;background:none;border:1px solid var(--br-def);border-radius:var(--r-lg);color:var(--tx-2);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px}
 .logout-btn:hover{border-color:var(--error);color:var(--error)}
+
+.delete-account-btn{width:100%;padding:13px;background:rgba(196,112,112,0.1);border:1px solid var(--error);border-radius:var(--r-lg);color:var(--error);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;min-height:44px;margin-top:8px}
+.delete-account-btn:hover{background:rgba(196,112,112,0.2)}
+
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:none;z-index:300;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:24px;max-width:320px;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
+.modal-title{font-family:'Tenor Sans','Noto Sans TC',sans-serif;font-size:18px;color:var(--tx-1);margin-bottom:12px;letter-spacing:.1em;text-transform:uppercase}
+.modal-body{font-size:13px;color:var(--tx-2);line-height:1.6;margin-bottom:16px}
+.modal-input{width:100%;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:10px 12px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;color:var(--tx-1);margin-bottom:12px;outline:none}
+.modal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.modal-actions{display:flex;gap:8px}
+.modal-actions button{flex:1;padding:11px;border-radius:var(--r-lg);border:none;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;min-height:40px}
+.modal-cancel{background:var(--br-def);color:var(--tx-1)}
+.modal-cancel:hover{background:var(--br-str)}
+.modal-confirm{background:var(--error);color:#fff}
+.modal-confirm:hover{opacity:0.9}
+.modal-confirm:disabled{opacity:0.5;cursor:not-allowed}
 
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(17,17,16,.2);border-top-color:var(--tx-inv);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -142,12 +163,17 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       </div>
     </div>
 
+    <!-- Teacher/Studio: View My Students (prominent, top of page) -->
+    <button class="view-students-btn" id="view-students-btn" style="display:none" onclick="window.location.href='teacher.html'">
+      <span>👥 View My Students</span>
+      <span class="view-students-arrow">→</span>
+    </button>
+
     <!-- Teacher/Studio: Generate Join Code -->
     <div class="card" id="codes-card" style="display:none">
       <div class="card-title">Generate Join Code</div>
       <div id="codes-list"></div>
       <button class="btn-primary" id="new-code-btn" style="margin-top:6px" onclick="createNewCode()">✦ Generate New Code</button>
-      <a class="teacher-link" href="teacher.html">View My Students →</a>
     </div>
 
     <!-- Student: Link to a Teacher/Studio · Teacher: Bind to a Studio -->
@@ -156,7 +182,7 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       <input class="finput" id="join-code-input" type="text" maxlength="6" placeholder="Enter 6-character code" autocapitalize="characters"/>
       <label class="consent-row">
         <input type="checkbox" id="join-consent"/>
-        <span class="consent-text" id="join-consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the Data Sharing Agreement.</span>
+        <span class="consent-text" id="join-consent-text">I agree to share my practice data with this Teacher / Studio in accordance with the <a href="legal/data-sharing-agreement.html" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;cursor:pointer">Data Sharing Agreement</a>.</span>
       </label>
       <button class="btn-primary" id="connect-btn" onclick="submitJoinCode()">Connect</button>
       <div class="form-err" id="connect-err"></div>
@@ -176,8 +202,32 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 
     <div class="logout-row">
       <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+      <button class="delete-account-btn" onclick="showDeleteAccountModal()">Delete Account</button>
     </div>
 
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal-overlay" id="delete-account-modal">
+  <div class="modal-box">
+    <div class="modal-title">Delete Account</div>
+    <div class="modal-body" id="modal-stage-1" style="display:none">
+      <p><strong>⚠️ This action cannot be undone.</strong></p>
+      <p>All your practice logs, photos, videos, and profile data will be permanently deleted. Your account cannot be recovered.</p>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeDeleteAccountModal()">Cancel</button>
+        <button class="modal-confirm" onclick="advanceDeleteModal()">Continue</button>
+      </div>
+    </div>
+    <div id="modal-stage-2" style="display:none">
+      <p class="modal-body">Type <strong>DELETE</strong> to confirm permanent deletion:</p>
+      <input class="modal-input" id="delete-confirm-input" type="text" placeholder="Type DELETE" maxlength="6" oninput="updateDeleteBtn()"/>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeDeleteAccountModal()">Cancel</button>
+        <button class="modal-confirm" id="delete-confirm-btn" onclick="confirmDeleteAccount()" disabled>Delete Account</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -219,6 +269,7 @@ let currentUserRole = null
 
     // Show/hide sections based on role (synchronous, no flashing)
     if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
+      document.getElementById('view-students-btn').style.display = 'flex'
       document.getElementById('codes-card').style.display = 'block'
       document.getElementById('links-card').style.display = 'block'
       document.getElementById('links-title').textContent = 'Linked Students'
@@ -630,12 +681,68 @@ async function saveDisplayName() {
   avatarEl.textContent = newName.charAt(0).toUpperCase();
 
   showToast('Display name saved! ✦');
+
+  // Refetch profile to ensure all UI syncs with database
+  const { data: profile } = await db.from('profiles')
+    .select('display_name')
+    .eq('id', currentUser.id)
+    .single();
+  if (profile) {
+    nameEl.textContent = profile.display_name;
+    avatarEl.textContent = (profile.display_name || 'P').charAt(0).toUpperCase();
+  }
 }
 
-// ── LOGOUT ────────────────────────────────────────────────
+// ── LOGOUT & ACCOUNT DELETION ─────────────────────────────
 async function handleLogout() {
   await db.auth.signOut()
   window.location.href = 'login.html'
+}
+
+function showDeleteAccountModal() {
+  document.getElementById('delete-account-modal').classList.add('show')
+  document.getElementById('modal-stage-1').style.display = 'block'
+  document.getElementById('modal-stage-2').style.display = 'none'
+  document.getElementById('delete-confirm-input').value = ''
+}
+
+function closeDeleteAccountModal() {
+  document.getElementById('delete-account-modal').classList.remove('show')
+}
+
+function advanceDeleteModal() {
+  document.getElementById('modal-stage-1').style.display = 'none'
+  document.getElementById('modal-stage-2').style.display = 'block'
+  document.getElementById('delete-confirm-input').focus()
+}
+
+function updateDeleteBtn() {
+  const input = document.getElementById('delete-confirm-input')
+  const btn = document.getElementById('delete-confirm-btn')
+  btn.disabled = input.value !== 'DELETE'
+}
+
+async function confirmDeleteAccount() {
+  const btn = document.getElementById('delete-confirm-btn')
+  btn.disabled = true
+  btn.innerHTML = '<div class="spinner"></div>'
+
+  try {
+    // Call RPC to delete profile and cascade delete all user data
+    const { error } = await db.rpc('delete_user_account')
+
+    if (error) throw error
+
+    // Sign out and redirect to login
+    await db.auth.signOut()
+    window.location.href = 'login.html'
+  } catch (err) {
+    console.error('Delete account failed:', err)
+    showToast('Could not delete account. Please try again.')
+    btn.disabled = false
+    btn.innerHTML = 'Delete Account'
+    closeDeleteAccountModal()
+  }
 }
 
 function showToast(msg) {
