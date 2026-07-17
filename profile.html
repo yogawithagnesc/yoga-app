@@ -729,12 +729,15 @@ async function confirmDeleteAccount() {
 
   try {
     // Call RPC to delete profile and cascade delete all user data
-    const { error } = await db.rpc('delete_user_account')
-    if (error) throw error
+    const { error: rpcError } = await db.rpc('delete_user_account')
+    if (rpcError) {
+      console.error('RPC error:', rpcError)
+      throw rpcError
+    }
 
     // Get access token for API call
     const { data: { session } } = await db.auth.getSession()
-    if (!session) throw new Error('No session')
+    if (!session) throw new Error('No session found')
 
     // Call API to delete auth.users record (makes email/password unusable)
     const apiRes = await fetch('/api/delete-user', {
@@ -745,17 +748,17 @@ async function confirmDeleteAccount() {
       },
     })
 
+    const apiData = await apiRes.json()
     if (!apiRes.ok) {
-      const detail = await apiRes.json()
-      console.error('Auth deletion failed:', detail)
-      throw new Error('Could not complete account deletion')
+      console.error(`API error (${apiRes.status}):`, apiData)
+      throw new Error(apiData.error || `API error: ${apiRes.status}`)
     }
 
     // Sign out and redirect to login
     await db.auth.signOut()
     window.location.href = 'login.html'
   } catch (err) {
-    console.error('Delete account failed:', err)
+    console.error('Delete account failed:', err.message || err)
     showToast('Could not delete account. Please try again.')
     btn.disabled = false
     btn.innerHTML = 'Delete Account'
