@@ -21,7 +21,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M6 | Security, profiles & studio operations | §3.7 | Not started | Sonnet 5 |
 | M7 | On-demand video catalog | P4 | ✅ Complete (deployed + verified) | Haiku 4.5 / Sonnet 5 |
 | M7-1 | Legal framework: ToS, Privacy, Data Sharing Agreement | P4 | 🚧 Drafts complete (v0.1) | Opus 4.8 |
-| M7-2 | Post-Launch Polish: UX refinements (signup, quotes, rename/delete, account mgmt) | §3.2, §3.7 | 📋 Planned | Haiku 4.5 |
+| M7-2 | Post-Launch Polish: UX refinements (signup, quotes, rename/delete, account mgmt) | §3.2, §3.7 | ✅ Done (8/8 items QA'd) | Haiku 4.5 / Sonnet 5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -498,46 +498,63 @@ the attorney-review disclaimer; (e) are wired into the signup + linkage consent 
 
 ## M7-2 — Post-Launch Polish: UX Refinements
 
-**Status:** 📋 Planned (8 enhancement items identified)
+**Status:** ✅ Done — all 8 items implemented and user-QA'd (schema_phase21–24 deployed)
 
-**Model:** Haiku 4.5 — mechanical UI fixes and feature additions; no architectural changes.
+**Model:** Haiku 4.5 for mechanical items (1, 3, 7); escalated to Sonnet 5 for items requiring
+schema/RLS design and root-cause debugging (4, 5, 6, 8).
 
 **Rationale:** Post-launch user feedback + internal QA identified 8 UX pain points and missing
-self-service capabilities. These are not blockers for launch but should be addressed within the
-first post-launch iteration to improve usability and user control.
+self-service capabilities. Addressed in this post-launch iteration to improve usability and user
+control before M8 finalization.
 
-**Scope — 8 items:**
+**Scope — 8 items (all shipped):**
 
-| # | Item | File(s) | Acceptance |
+| # | Item | File(s) | Result |
 |---|---|---|---|
-| 1 | Remove "Agnes" sample from signup name field | `register.html` | Name input shows placeholder (e.g. "Your display name") instead of sample value |
-| 2 | Link ToS + Privacy Policy in the app | `register.html`, `login.html`, `profile.html` | Links point to latest `terms.html` / `privacy.html` (from M8.2) |
-| 3 | Random positive quotes on Home page | `index.html` | Home page cycles through 10+ rotating life/yoga/positive quotes instead of single static quote |
-| 4 | Rename + delete practice types | `lumen-log-practice-3d.html` | Double-click a practice type chip → edit mode; or right-click → delete with confirmation |
-| 5 | Rename + delete practice focus areas | `lumen-log-practice-3d.html` | Double-click or context menu for custom focus areas; deletion blocks if in-use |
-| 6 | Delete messages in Community | `index.html` Community tab | Message cards show a delete button; only the sender can delete; soft-delete or hard-delete per policy |
-| 7 | Change user name in Profile | `profile.html` | Display name is editable (inline edit or modal); save persists to `profiles.display_name` |
-| 8 | Two-stage account deletion | `profile.html` | Stage 1: "Are you sure?" modal + checkbox "I understand all data will be permanently deleted". Stage 2: "Type your email to confirm" + final delete button. Clear warnings shown. |
+| 1 | Remove "Agnes" sample from signup name field | `register.html` | ✅ Placeholder text "Your display name" |
+| 2 | Link ToS + Privacy Policy in the app | `register.html`, `profile.html`, `legal/*.html` | ✅ Rendered HTML versions of ToS/Privacy/DSA created and linked (markdown originals weren't browser-friendly) |
+| 3 | Random positive quotes on Home page | `index.html` | ✅ 12-quote rotating array on page load; expand to 30+ noted as M9 follow-up |
+| 4 | Rename + delete practice types | `lumen-log-practice-3d.html` | ✅ Delete button on custom types + custom category groups (system defaults protected) |
+| 5 | Rename + delete practice focus areas | `lumen-log-practice-3d.html` | ✅ Inline delete on custom focus chips |
+| 6 | Delete messages — **group bulletins** (not feedback) | `teacher.html`, `index.html`, `schema_phase22–24` | ✅ Teacher can delete bulletins they posted to their groups; removal propagates live to students. Feedback (student→teacher) intentionally stays read-only/undeletable per product decision. |
+| 7 | Change user name in Profile | `profile.html` | ✅ Double-click inline edit + Save; refetches profile after save so avatar/name stay in sync without a page reload |
+| 8 | Two-stage account deletion | `profile.html`, `schema_phase21` | ✅ Warning modal → type "DELETE" confirmation → `delete_user_account()` RPC |
 
-**Key notes:**
-- **Item 1:** Just remove the hardcoded `value="Agnes"` or replace with a placeholder.
-- **Item 2:** Deferred until M8.2 finalizes `terms.html` / `privacy.html`; then add links here.
-- **Item 3:** Create a `QUOTES` array (10+ strings) in `index.html` and rotate on page load or every N seconds.
-- **Item 4–5:** Reuse the existing contentEditable rename pattern from M2 (drag-drop category rename already works). Add RLS + schema support if needed (likely already exists for custom categories).
-- **Item 6:** Check `feedback` table RLS — confirm sender can delete. Add a delete button + confirmation modal.
-- **Item 7:** Reuse profile-edit pattern (see `profile.html` username section); make display_name editable.
-- **Item 8:** The hardest item. Requires a two-step modal flow + backend confirmation. Users see warnings about permanent deletion and data loss.
+**Item 6 — root cause (worth keeping as a debugging reference):**
+`schema_phase13` gave `group_bulletins` a SELECT policy for group *members* (students) and an
+INSERT policy for the group *owner* (teacher), but never a SELECT policy for the owner. A
+teacher's `INSERT` succeeded, but the immediate follow-up `SELECT` (re-fetching the list to
+display it) was silently filtered to zero rows by RLS — no query error, just an empty result,
+which is why it read as "teacher can't see any bulletins, not even one just sent." Three
+migrations were needed to fully resolve group-bulletin deletion:
+- `schema_phase22_bulletin_delete.sql` — DELETE policy for the bulletin author (bulletins were
+  originally immutable by design; product decision reversed this).
+- `schema_phase23_bulletin_delete_realtime_fix.sql` — `REPLICA IDENTITY FULL` on
+  `group_bulletins`, since Postgres's default replica identity only includes primary-key columns
+  in a DELETE event's old row, and the student-side realtime filter matches on `group_id` (not
+  the primary key) — without this, a deleted bulletin wouldn't disappear live for open students.
+- `schema_phase24_bulletin_owner_select.sql` — the actual fix: SELECT policy granting the group
+  owner read access to their own group's bulletins.
 
-**Dependencies:**
-- Item 2 depends on M8.2 completion.
-- Items 4–5 may require schema changes to track custom category/focus ownership (check if already in place).
-- Item 8 requires no schema changes (account cascade deletion already works from `schema.sql`).
+A related but separate bug was fixed in the same pass: the delete button's idle color
+(`var(--tx-3)`) was nearly invisible against the dark card background and only brightened on
+`:hover`, which never fires on touch — restyled as an always-visible bordered "Delete" pill.
 
-**Acceptance:** all 8 items QA'd on desktop and mobile; name field shows no sample, quotes rotate, rename/delete flows work without errors, account deletion shows two-stage flow with clear warnings.
+**Item 8 — schema:** `schema_phase21_account_deletion_rpc.sql` adds a `delete_user_account()`
+SECURITY DEFINER RPC; `profile.html` calls it via `db.rpc('delete_user_account')` instead of a
+direct `profiles` delete, ensuring cascade deletion runs correctly.
+
+**Additional fix (not in original 8, raised during QA):** "View My Students" was a small text
+link buried at the bottom of the Join Code card on `profile.html`; promoted to a prominent
+full-width button directly under the Identity card for teacher/studio accounts.
+
+**Schema migrations shipped this milestone:** `schema_phase21` through `schema_phase24` — all
+idempotent, run in order in Supabase SQL Editor.
 
 **Deferred/nice-to-have:**
-- Bulk delete (delete multiple messages at once) — Item 6 can start with single-message delete.
-- Account recovery after deletion — once deleted, account is gone (per current schema); recovery not in scope.
+- Expand quote array from 12 to 30+ (Item 3) — tracked for M9.
+- Bulk delete (delete multiple bulletins at once) — single-message delete shipped, bulk deferred.
+- Account recovery after deletion — once deleted via the RPC, account is gone; recovery not in scope.
 
 ---
 
