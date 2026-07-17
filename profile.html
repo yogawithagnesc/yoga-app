@@ -730,8 +730,26 @@ async function confirmDeleteAccount() {
   try {
     // Call RPC to delete profile and cascade delete all user data
     const { error } = await db.rpc('delete_user_account')
-
     if (error) throw error
+
+    // Get access token for API call
+    const { data: { session } } = await db.auth.getSession()
+    if (!session) throw new Error('No session')
+
+    // Call API to delete auth.users record (makes email/password unusable)
+    const apiRes = await fetch('/api/delete-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+
+    if (!apiRes.ok) {
+      const detail = await apiRes.json()
+      console.error('Auth deletion failed:', detail)
+      throw new Error('Could not complete account deletion')
+    }
 
     // Sign out and redirect to login
     await db.auth.signOut()
