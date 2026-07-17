@@ -747,7 +747,7 @@ async function sendBulletin(groupId) {
     author_id: currentUser.id,
     body,
   })
-  if (error) { console.error('Send bulletin failed:', error); return }
+  if (error) { console.error('Send bulletin failed:', error); alert('Could not send bulletin — please try again'); return }
   input.value = ''
   await loadGroups()
 }
