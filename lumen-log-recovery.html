@@ -861,8 +861,14 @@ async function saveRecovery() {
     : await db.from('recovery_logs').insert(payload);
 
   if (error) {
-    console.error('Save error:', error);
-    showToast(STRINGS.saveFailed);
+    console.error('Save error:', error.message || error, error);
+    let msg = STRINGS.saveFailed;
+    if (error.code === '42P01' || /relation .* does not exist/i.test(error.message || '')) {
+      msg = 'Recovery logging isn\'t set up yet on the server (missing database table). Please contact support.';
+    } else if (error.message) {
+      msg = 'Save failed: ' + error.message;
+    }
+    showToast(msg);
     btn.disabled = false;
     btn.innerHTML = editSessionId ? 'Update Recovery ✎' : 'Save Recovery ✦';
     return;
