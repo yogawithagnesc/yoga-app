@@ -1,6 +1,7 @@
-# Attribution — 3D Anatomy Model (M7-4)
+# Attribution — 3D Anatomy Model (M7-4/M7-5)
 
-`muscles.glb` is derived from open-source anatomical data, reprocessed by the
+`muscles.glb` and `skeleton.glb` are derived from open-source anatomical
+data, reprocessed by the
 [BodyExplorer](https://github.com/JohanBellander/BodyExplorer) project
 (MIT-licensed source code) from two upstream datasets. Per the terms of
 those datasets, this attribution must be preserved wherever the model is
@@ -24,14 +25,17 @@ displayed or redistributed.
   unrelated assets — CC BY-SA's copyleft applies to the derivative mesh
   asset, not the surrounding codebase.
 - Source processing pipeline: `tools/anatomy3d/build_anatomy_glb.sh`
-  (fetches BodyExplorer's `public/anatomy.glb` and Draco-compresses it,
-  preserving all 467 individually-named muscle meshes).
+  (fetches BodyExplorer's `public/anatomy.glb` + `public/skeleton.glb` and
+  Draco-compresses both, preserving all individually-named meshes/bones).
 
 ## Provenance chain
 
 1. **BodyParts3D** (401 meshes) + **Z-Anatomy** (66 meshes) — raw anatomical
    source data.
 2. **BodyExplorer** (`JohanBellander/BodyExplorer`, MIT) — reprocessed,
-   decimated (~4000 faces/mesh), and assembled into `anatomy.glb`.
-3. **Lumen** (`tools/anatomy3d/build_anatomy_glb.sh`) — Draco-compressed for
-   web delivery (25 MB → ~4.8 MB), no mesh merging or renaming.
+   decimated (~4000 faces/mesh), and assembled into `anatomy.glb` (muscles)
+   and `skeleton.glb` (201 named bones, M7-5).
+3. **Lumen** (`tools/anatomy3d/build_anatomy_glb.sh`) — pruned to only
+   Lumen-tracked meshes (muscles only; skeleton kept in full) and
+   Draco-compressed for web delivery: muscles 25 MB → ~1.6 MB, skeleton
+   9.8 MB → ~1.8 MB. No mesh merging or renaming.

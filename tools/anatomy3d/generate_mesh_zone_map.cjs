@@ -238,9 +238,56 @@ Object.entries(meshToZone).forEach(([rawName, zone]) => {
   sanitizedMeshToZone[sanitizeNodeName(rawName)] = zone;
 });
 
+// ── 4c. Superficial / deep layer classification (M7-5) ──
+// Standard gross-anatomy classification: whether a muscle is visible at the
+// body's surface ("superficial") or lies beneath another muscle and is only
+// exposed once the superficial layer is removed/hidden ("deep"). This lets
+// the viewer offer a "peel back the superficial layer" toggle — a real
+// anatomical layering, not a fabricated one. Classification follows
+// standard anatomy references (e.g. rotator cuff muscles — infraspinatus,
+// teres minor, subscapularis, supraspinatus — are always deep; erector
+// spinae, rhomboids, serratus anterior, and soleus are classic deep-layer
+// examples; deltoid/pec major/lat dorsi/trapezius/rectus abdominis/gluteus
+// maximus/gastrocnemius are classic superficial examples). Keyed by the
+// same base zone name as MUSCLE_LIST (no L/R prefix — layer is a property
+// of the muscle itself, not its side). Any zone not listed defaults to
+// 'superficial' (the safer default — deep-only zones are the exception).
+const DEEP_LAYER_ZONES = new Set([
+  // Neck strap muscles (deep to sternocleidomastoid)
+  'Omohyoid', 'Sternohyoid',
+  // Rotator cuff + scapular stabilizers (deep to deltoid/trapezius)
+  'Infraspinatus', 'Teres Minor', 'Serratus Anterior',
+  // Deep back (deep to trapezius/latissimus dorsi)
+  'Rhomboid Major', 'Erector Spinae',
+  // Deep upper-arm (deep to biceps)
+  'Brachialis',
+  // Deep forearm (deep to the superficial flexor/extensor mass)
+  'Abductor Pollicis Longus', 'Extensor Pollicis Brevis', 'Extensor Pollicis Longus',
+  // Deep hip/thigh
+  'Pectineus', 'Adductor Magnus', 'Semimembranosus',
+  // Deep calf (deep to gastrocnemius)
+  'Soleus', 'Peroneus Brevis', 'Flexor Hallucis Longus', 'Extensor Digitorum Longus',
+  // Deep glute (deep to gluteus maximus)
+  'Gluteus Medius',
+]);
+
 // ── 5. Write outputs ──
 const gapZones = coverage.filter(c => c.status === 'GAP').map(c => c.zone);
 const partialZones = coverage.filter(c => c.status === 'PARTIAL').map(c => c.zone);
+
+// Build MUSCLE_LAYER keyed by the same canonical zone names used in
+// MESH_TO_ZONE's values (i.e. with "L "/"R " prefix for bilateral zones,
+// matching how the viewer looks up a zone after a raycast hit resolves it).
+const muscleLayer = {};
+Array.from(zoneEntries.values()).forEach(entry => {
+  const layer = DEEP_LAYER_ZONES.has(entry.zone) ? 'deep' : 'superficial';
+  if (entry.bilateral) {
+    muscleLayer['L ' + entry.zone] = layer;
+    muscleLayer['R ' + entry.zone] = layer;
+  } else {
+    muscleLayer[entry.zone] = layer;
+  }
+});
 
 const header = `// ============================================================
 // LUMEN M7-4 — Mesh-to-Zone Taxonomy Map (GENERATED — do not hand-edit)
@@ -266,6 +313,11 @@ ${partialZones.length ? `//
 window.MESH_TO_ZONE = ${JSON.stringify(sanitizedMeshToZone, null, 2)};
 
 window.ANATOMY3D_GAPS = ${JSON.stringify(gapZones, null, 2)};
+
+// M7-5: 'superficial' | 'deep' per canonical zone (see DEEP_LAYER_ZONES in
+// the generator for the anatomical rationale). Lets the 3D viewer offer a
+// "peel back superficial muscles" toggle to reveal deep-layer structures.
+window.MUSCLE_LAYER = ${JSON.stringify(muscleLayer, null, 2)};
 `;
 fs.writeFileSync(OUT_PATH, header);
 

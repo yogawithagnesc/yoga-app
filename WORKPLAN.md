@@ -24,6 +24,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M7-2 | Post-Launch Polish: UX refinements (signup, quotes, rename/delete, account mgmt) | §3.2, §3.7 | ✅ Done (8/8 items QA'd) | Haiku 4.5 / Sonnet 5 |
 | M7-3 | Recovery & Treatment Log (massage/physio/needling as a mitigating factor) | §3.2.3 | 🚧 Implemented (pending migration run + live test) | Sonnet 5 |
 | M7-4 | Interactive 3D Anatomy Viewer (rotatable body-map, click-to-select) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
+| M7-5 | 3D Anatomy Layers (skeleton overlay, superficial/deep muscle toggle) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -713,6 +714,81 @@ commit. Full interactive/mobile QA still recommended once deployed.
 
 **Attribution:** `assets/anatomy3d/ATTRIBUTION.md` — CC BY-SA 2.1 JP (BodyParts3D) / CC BY-SA
 4.0 (Z-Anatomy) credit, also surfaced in-app in the 3D mode footer.
+
+---
+
+## M7-5 — 3D Anatomy Layers (Skeleton Overlay + Superficial/Deep Muscle Toggle)
+
+**Status:** ✅ Implemented + verified (headless browser E2E on both log pages, real UI clicks)
+
+**Model:** Sonnet 5 — a genuine feature extension with real engineering risk (a subtle
+three.js API gotcha was caught during testing, see below).
+
+**Rationale (user request):** after trying M7-4, the user found the 3D model "doesn't look
+like a real body" and asked to brainstorm improvements, then chose the medium-effort option:
+see different muscles in various layers. There is no skin mesh in the open-source dataset
+(BodyExplorer ships muscles + a full skeleton, no integument), so rather than fake a skin
+layer, this milestone delivers what's genuinely available and anatomically real: a
+**skeleton overlay** visible through translucent muscles, and a **superficial/deep muscle
+layer toggle** (hide the outer muscle layer to reveal what's underneath — rotator cuff,
+erector spinae, serratus anterior, etc.) — literally "different muscles in various layers."
+
+**Asset pipeline addition:** confirmed `public/skeleton.glb` exists in BodyExplorer's source
+(201 individually-named bones — the retired old 3D model, by contrast, was only 3 unnamed
+merged blobs, confirming it could never have supported this). Verified the skeleton and
+muscle meshes share the same bounding-box origin/scale/axes (both come from the same source
+pipeline), so no coordinate reconciliation was needed. Draco-compressed 9.8 MB → 1.8 MB (kept
+in full — bones are visual context only, not individually clickable, so no pruning needed).
+Both assets are independently lazy-loaded: opening the 3D view costs ~1.6 MB (muscles only);
+the skeleton's extra ~1.8 MB only downloads if a user actually toggles it on.
+
+**Superficial/deep classification:** `tools/anatomy3d/generate_mesh_zone_map.cjs` now also
+emits `MUSCLE_LAYER` (superficial | deep) for every canonical zone, based on standard gross
+anatomy — e.g. rotator cuff muscles (infraspinatus, teres minor), erector spinae, rhomboid
+major, serratus anterior, and soleus are classic deep-layer examples; deltoid, pectoralis
+major, latissimus dorsi, trapezius, rectus abdominis, gluteus maximus, and gastrocnemius are
+classic superficial examples. 37 of 114 zone-entries classified deep.
+
+**Viewer additions (`assets/anatomy3d/anatomy-viewer.js`):**
+- `setSkeletonVisible(show)` — lazy-loads `skeleton.glb` on first use, adds it under the same
+  rotation as the muscle model, and fades muscle opacity (1.0 → 0.4) so bones show through.
+- `setDeepLayerOnly(show)` — hides superficial-layer meshes to expose deep ones.
+- Per-layer base coloring: superficial muscles keep the warm-tan tone; deep muscles render in
+  a distinct deeper red-brown tone (independent of the feeling/relief color overlay), so the
+  two layers read as anatomically different tissue even before any toggle is touched.
+- Added a rim light (in addition to the existing key + fill lights) — the single biggest
+  lighting change for making the model read as anatomical form rather than a flat, unshaded
+  "plastic" surface, since rim lighting is what separates overlapping muscle bellies visually.
+
+**Critical bug caught during testing — `.visible` does not affect raycasting.** Three.js's
+`Raycaster.intersectObject()` only checks `object.layers`, never `object.visible` — a
+genuine, easy-to-miss characteristic of the library (confirmed by reading the vendored
+three.js source directly). Setting `mesh.visible = false` on superficial meshes correctly
+hid them visually, but the raycaster kept "hitting" them anyway, so tapping where a hidden
+superficial muscle used to be still (incorrectly) resolved to that hidden zone instead of the
+now-exposed deep one underneath. Fixed by explicitly filtering raycaster hits by
+`.object.visible` in the click handler. Caught via a targeted headless-browser regression
+test (find a superficial zone by click → enable deep-only → click the same point → assert
+the previous zone never resolves again) before this reached the user — not something code
+review alone would have caught, since the bug is a library API characteristic, not a typo.
+
+**UI:** both log pages gained two independent toggle buttons (🦴 Skeleton, 🔬 Deep Layer)
+alongside the existing Front/Back camera presets in 3D mode. Buttons reset to off each time
+the viewer is freshly mounted (layer state doesn't persist across 3D-mode close/reopen,
+keeping the mental model simple).
+
+**Verification:** headless Chromium E2E via real UI clicks (not direct API calls) on both
+pages — mount, Skeleton button toggle, Deep Layer button toggle, click-to-select against an
+exposed deep muscle (resolved correctly, e.g. "Right Rhomboid Major"), and the full
+mount → toggle layers → switch to 2D → close lifecycle, all confirmed with zero errors before
+commit. A broader grid-click regression test confirmed 9 distinct deep zones remain
+clickable and *only* deep zones resolve while deep-layer-only mode is active.
+
+**Deferred / follow-up:**
+- Mobile-specific opacity/lighting tuning once live on real devices.
+- A "peel" animation (rather than an instant show/hide) for the deep-layer toggle.
+- Per-muscle-group coloring (beyond the two-tone superficial/deep split) if further visual
+  differentiation is wanted.
 
 ---
 

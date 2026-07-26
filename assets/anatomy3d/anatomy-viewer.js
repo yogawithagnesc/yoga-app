@@ -1,5 +1,5 @@
 // ============================================================
-// LUMEN M7-4 — Interactive 3D Anatomy Viewer
+// LUMEN M7-4/M7-5 — Interactive 3D Anatomy Viewer
 //
 // A reusable THREE.js body-map component shared by
 // lumen-log-practice-3d.html and lumen-log-recovery.html (mirrors
@@ -17,23 +17,26 @@
 // recovery's 4-state RELIEF) keep working untouched. The 3D viewer is
 // purely an alternate INPUT method — it never duplicates that logic.
 //
-// Asset: muscles.glb (135 individually-named muscle meshes, pruned +
-// Draco-compressed from BodyExplorer/Z-Anatomy/BodyParts3D — see
-// ATTRIBUTION.md). mesh-zone-map.js resolves each mesh name to the
-// exact canonical `zone` key used everywhere else in the app.
+// Assets: muscles.glb (135 individually-named muscle meshes) +
+// skeleton.glb (201 named bones, M7-5), both pruned/Draco-compressed
+// from BodyExplorer/Z-Anatomy/BodyParts3D — see ATTRIBUTION.md.
+// mesh-zone-map.js resolves each muscle mesh name to the exact
+// canonical `zone` key used everywhere else in the app, and classifies
+// each zone as 'superficial' or 'deep' (MUSCLE_LAYER) so the viewer can
+// offer a real anatomical layering — peel back the superficial muscles
+// to reveal what's underneath, same as an anatomy atlas.
 //
-// Lazy-loaded: nothing in this file downloads anything until mount()
-// is called, which only happens when the user opens the 3D view — the
-// old retired 3D model was pulled from the DEFAULT path for exactly
-// this reason (16 MB loading unconditionally on page load).
+// Lazy-loaded: nothing downloads until mount() is called (muscles) or a
+// layer is actually toggled on (skeleton) — the old retired 3D model
+// was pulled from the default path for loading 16 MB unconditionally.
 // ============================================================
 // Bare specifiers ('three', 'three/addons/…') — GLTFLoader/OrbitControls
 // internally import 'three' the same way, so resolution depends on an
 // <script type="importmap"> in the HOST PAGE mapping those specifiers to
-// the CDN (see the importmap block added alongside this script's <script
-// type="module" src="..."> tag in lumen-log-practice-3d.html /
-// lumen-log-recovery.html). This file does not (and cannot) define its own
-// import map — that has to live in the document that loads it.
+// the CDN (see the importmap block added alongside this script's
+// script-src tag in lumen-log-practice-3d.html / lumen-log-recovery.html).
+// This file does not (and cannot) define its own import map — that has
+// to live in the document that loads it.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
@@ -41,46 +44,74 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const ASSET_BASE = 'assets/anatomy3d/';
 const GLB_URL = ASSET_BASE + 'muscles.glb';
+const SKELETON_URL = ASSET_BASE + 'skeleton.glb';
 const DRACO_DECODER_URL = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/';
 
-const NEUTRAL_COLOR = 0xc9a98a; // unmarked-muscle tone (warm neutral, reads clearly on both light/dark UI)
+// Superficial vs. deep get distinct base tones (independent of the
+// feeling/relief color overlay) so the two layers read as anatomically
+// different tissue even before any toggle is touched — deep muscles
+// look like the more vascular, deeper-red tissue they anatomically are.
+const SUPERFICIAL_COLOR = 0xc9a98a; // warm neutral tan
+const DEEP_COLOR = 0xa8594f;        // deeper red-brown ("raw muscle" tone)
 const HOVER_EMISSIVE = 0x332211;
+const BONE_COLOR = 0xe8dfc8;        // ivory/bone tone
+const MUSCLE_OPACITY_WITH_SKELETON = 0.4; // see-through so bones show underneath
 
 // Loaded once per page (not per mount) — GLTFLoader result is reused if the
-// viewer is closed and reopened in the same session.
-let _cachedGltfScene = null;
-let _loadPromise = null;
+// viewer is closed and reopened in the same session. Muscles and skeleton
+// are cached independently since skeleton is opt-in (layer toggle).
+let _cachedMuscleScene = null;
+let _muscleLoadPromise = null;
+let _cachedSkeletonScene = null;
+let _skeletonLoadPromise = null;
 
-function loadModel() {
-  if (_cachedGltfScene) return Promise.resolve(_cachedGltfScene);
-  if (_loadPromise) return _loadPromise;
-
+function makeLoader() {
   const dracoLoader = new DRACOLoader();
   dracoLoader.setDecoderPath(DRACO_DECODER_URL);
-
   const loader = new GLTFLoader();
   loader.setDRACOLoader(dracoLoader);
+  return loader;
+}
 
-  _loadPromise = new Promise((resolve, reject) => {
-    loader.load(
+function loadModel() {
+  if (_cachedMuscleScene) return Promise.resolve(_cachedMuscleScene);
+  if (_muscleLoadPromise) return _muscleLoadPromise;
+  _muscleLoadPromise = new Promise((resolve, reject) => {
+    makeLoader().load(
       GLB_URL,
-      (gltf) => { _cachedGltfScene = gltf.scene; resolve(gltf.scene); },
+      (gltf) => { _cachedMuscleScene = gltf.scene; resolve(gltf.scene); },
       undefined,
       (err) => reject(err)
     );
   });
-  return _loadPromise;
+  return _muscleLoadPromise;
 }
 
-// mesh-zone-map.js sets window.MESH_TO_ZONE + window.ANATOMY3D_GAPS as a
-// classic (non-module) script; fetch+eval it here as a one-time side effect
-// so both this module and the host page's classic script can read it.
+// M7-5: skeleton is only fetched the first time a viewer instance actually
+// enables the skeleton layer — most sessions never touch it.
+function loadSkeleton() {
+  if (_cachedSkeletonScene) return Promise.resolve(_cachedSkeletonScene);
+  if (_skeletonLoadPromise) return _skeletonLoadPromise;
+  _skeletonLoadPromise = new Promise((resolve, reject) => {
+    makeLoader().load(
+      SKELETON_URL,
+      (gltf) => { _cachedSkeletonScene = gltf.scene; resolve(gltf.scene); },
+      undefined,
+      (err) => reject(err)
+    );
+  });
+  return _skeletonLoadPromise;
+}
+
+// mesh-zone-map.js sets window.MESH_TO_ZONE / ANATOMY3D_GAPS / MUSCLE_LAYER
+// as a classic (non-module) script; fetch+eval it here as a one-time side
+// effect so both this module and the host page's classic script can read it.
 let _mapLoaded = false;
 function ensureMapLoaded() {
   if (_mapLoaded || window.MESH_TO_ZONE) { _mapLoaded = true; return Promise.resolve(); }
   return fetch(ASSET_BASE + 'mesh-zone-map.js')
     .then((r) => r.text())
-    .then((src) => { (0, eval)(src); _mapLoaded = true; }); // runs in global scope, sets window.MESH_TO_ZONE
+    .then((src) => { (0, eval)(src); _mapLoaded = true; }); // runs in global scope
 }
 
 /**
@@ -90,7 +121,10 @@ function ensureMapLoaded() {
  * @param {(zone: string, label: string) => void} callbacks.onZoneTap - called when a mapped mesh is clicked
  * @param {(feeling: string) => string|null} callbacks.getFeelingColor - hex color string (e.g. '#C77B4A') for a feeling key, or null
  * @param {() => Record<string,string>} callbacks.getMuscleStates - returns the host's current { zone: feeling } map
- * @returns {Promise<{ setView(view:'front'|'back'):void, refresh():void, resize():void, dispose():void }>}
+ * @returns {Promise<{
+ *   setView(view:'front'|'back'):void, refresh():void, resize():void, dispose():void,
+ *   setSkeletonVisible(show:boolean):Promise<void>, setDeepLayerOnly(show:boolean):void
+ * }>}
  */
 function mount(container, callbacks) {
   return Promise.all([loadModel(), ensureMapLoaded()]).then(([sourceScene]) => {
@@ -108,13 +142,20 @@ function mount(container, callbacks) {
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const key = new THREE.DirectionalLight(0xffffff, 0.9);
+    // Lighting: key + fill + a subtle back rim light. The rim light is what
+    // actually reads as "anatomical form" rather than a flat plastic blob —
+    // it catches the edges of muscle bellies and separates overlapping
+    // structures visually, similar to how anatomy-atlas photography is lit.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 0.95);
     key.position.set(2, 3, 4);
     scene.add(key);
-    const fill = new THREE.DirectionalLight(0xffffff, 0.4);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.35);
     fill.position.set(-3, 1, -2);
     scene.add(fill);
+    const rim = new THREE.DirectionalLight(0xfff0e0, 0.55);
+    rim.position.set(-1, 2, -4);
+    scene.add(rim);
 
     // Clone the cached scene per mount so multiple opens don't share mutated
     // materials, and so disposing one viewer instance never breaks another.
@@ -132,9 +173,10 @@ function mount(container, callbacks) {
     model.traverse((node) => {
       if (!node.isMesh) return;
       // Give every mesh its own material instance — required since each
-      // mesh's color is independently driven by its own feeling state.
+      // mesh's color/opacity is independently driven by its feeling state
+      // and layer (superficial/deep).
       node.material = new THREE.MeshStandardMaterial({
-        color: NEUTRAL_COLOR, roughness: 0.65, metalness: 0.05,
+        color: SUPERFICIAL_COLOR, roughness: 0.6, metalness: 0.05,
       });
       meshByName.set(node.name, node);
     });
@@ -159,6 +201,61 @@ function mount(container, callbacks) {
     controls.maxDistance = dist * 2.5;
     controls.update();
 
+    // ── M7-5: SKELETON LAYER (lazy-loaded on first toggle-on) ──
+    // Mounted as a sibling of `model` under the same rotation so it shares
+    // the muscle mesh's coordinate frame (verified: both assets come from
+    // the same source pipeline and share bounding-box origin/scale/axes).
+    let skeletonGroup = null;
+    let skeletonVisible = false;
+
+    function setSkeletonVisible(show) {
+      skeletonVisible = show;
+      if (!show) {
+        if (skeletonGroup) skeletonGroup.visible = false;
+        setMusclesTranslucent(false);
+        return Promise.resolve();
+      }
+      setMusclesTranslucent(true);
+      if (skeletonGroup) { skeletonGroup.visible = true; return Promise.resolve(); }
+      return loadSkeleton().then((skeletonSource) => {
+        skeletonGroup = skeletonSource.clone(true);
+        skeletonGroup.rotation.x = -Math.PI / 2;
+        skeletonGroup.traverse((node) => {
+          if (!node.isMesh) return;
+          node.material = new THREE.MeshStandardMaterial({
+            color: BONE_COLOR, roughness: 0.5, metalness: 0.1,
+          });
+        });
+        scene.add(skeletonGroup);
+      }).catch((err) => {
+        console.error('Skeleton layer failed to load:', err);
+        skeletonVisible = false;
+        setMusclesTranslucent(false);
+      });
+    }
+
+    function setMusclesTranslucent(translucent) {
+      meshByName.forEach((mesh) => {
+        mesh.material.transparent = translucent;
+        mesh.material.opacity = translucent ? MUSCLE_OPACITY_WITH_SKELETON : 1;
+      });
+    }
+
+    // ── M7-5: SUPERFICIAL / DEEP LAYER TOGGLE ──
+    // Hiding (not just fading) superficial meshes means the raycaster
+    // naturally skips them too (three.js's Raycaster respects .visible),
+    // so click-to-select automatically re-targets the now-exposed deep
+    // muscles with no extra filtering logic needed.
+    let deepLayerOnly = false;
+    function setDeepLayerOnly(show) {
+      deepLayerOnly = show;
+      meshByName.forEach((mesh, name) => {
+        const zone = window.MESH_TO_ZONE[name];
+        const layer = zone && window.MUSCLE_LAYER ? window.MUSCLE_LAYER[zone] : 'superficial';
+        mesh.visible = !show || layer === 'deep';
+      });
+    }
+
     // ── Click-to-select (movement-threshold click-vs-drag, matching the
     // codebase's existing pointer-capture discipline — see CLAUDE.md's
     // note on deferring pointer capture until real dragging is confirmed) ──
@@ -182,7 +279,14 @@ function mount(container, callbacks) {
 
       setPointerFromEvent(ev);
       raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects(model.children, true);
+      // Only the muscle mesh is clickable — the skeleton is visual context.
+      // NOTE: three.js's Raycaster only checks object.layers, never
+      // .visible (a real, easy-to-miss API characteristic — see
+      // three.js's core/Raycaster.js intersectObject()). Meshes hidden by
+      // setDeepLayerOnly() would otherwise still register hits, so we must
+      // filter by .visible ourselves to make hiding actually exclude a mesh
+      // from click-selection, not just from rendering.
+      const hits = raycaster.intersectObjects(model.children, true).filter((h) => h.object.visible);
       if (!hits.length) return;
 
       const mesh = hits[0].object;
@@ -198,14 +302,16 @@ function mount(container, callbacks) {
     renderer.domElement.addEventListener('pointerdown', onPointerDown);
     renderer.domElement.addEventListener('pointerup', onPointerUp);
 
-    // ── Recolor meshes from the host's current muscleStates ──
+    // ── Recolor meshes from the host's current muscleStates + layer tone ──
     function refresh() {
       const states = callbacks.getMuscleStates() || {};
       meshByName.forEach((mesh, name) => {
         const zone = window.MESH_TO_ZONE[name];
         const feeling = zone ? states[zone] : null;
         const hex = feeling ? callbacks.getFeelingColor(feeling) : null;
-        mesh.material.color.set(hex || NEUTRAL_COLOR);
+        const layer = zone && window.MUSCLE_LAYER ? window.MUSCLE_LAYER[zone] : 'superficial';
+        const baseColor = layer === 'deep' ? DEEP_COLOR : SUPERFICIAL_COLOR;
+        mesh.material.color.set(hex || baseColor);
         mesh.material.emissive.set(hex ? HOVER_EMISSIVE : 0x000000);
       });
     }
@@ -245,11 +351,18 @@ function mount(container, callbacks) {
         mesh.geometry && mesh.geometry.dispose();
         mesh.material && mesh.material.dispose();
       });
+      if (skeletonGroup) {
+        skeletonGroup.traverse((node) => {
+          if (!node.isMesh) return;
+          node.geometry && node.geometry.dispose();
+          node.material && node.material.dispose();
+        });
+      }
       renderer.dispose();
       container.innerHTML = '';
     }
 
-    return { setView, refresh, resize, dispose };
+    return { setView, refresh, resize, dispose, setSkeletonVisible, setDeepLayerOnly };
   });
 }
 
