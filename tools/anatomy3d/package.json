@@ -1,0 +1,14 @@
+{
+  "name": "lumen-anatomy3d-build-tools",
+  "private": true,
+  "description": "Build-time only: regenerates assets/anatomy3d/muscles.glb + mesh-zone-map.js. Not part of the shipped app.",
+  "type": "module",
+  "scripts": {
+    "build": "bash build_anatomy_glb.sh"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.0.0",
+    "@gltf-transform/core": "^4.0.0",
+    "@gltf-transform/functions": "^4.0.0"
+  }
+}

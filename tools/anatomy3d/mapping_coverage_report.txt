@@ -1,0 +1,63 @@
+Mesh-to-Zone Mapping Coverage Report
+Generated: 2026-07-26T08:08:16.609Z
+Zones: 59 | Mapped mesh entries: 135 / 467 total meshes
+
+[OK (override)] Deltoid Anterior Head (bilateral) <- 2 mesh(es): clavicular part of left deltoid | clavicular part of right deltoid
+[OK (override)] Deltoid Middle Head (bilateral) <- 2 mesh(es): acromial part of left deltoid | acromial part of right deltoid
+[OK (override)] Deltoid Posterior Head (bilateral) <- 2 mesh(es): spinal part of left deltoid | spinal part of right deltoid
+[OK (override)] Pectoralis Major Sternal Head (bilateral) <- 2 mesh(es): sternocostal part of left pectoralis major | sternocostal part of right pectoralis major
+[OK (override)] Erector Spinae <- 15 mesh(es): left iliocostalis cervicis | left iliocostalis lumborum | left iliocostalis thoracis | …
+[OK (override)] Forearm Extensors (bilateral) <- 8 mesh(es): left extensor carpi radialis brevis | left extensor carpi radialis longus | left extensor digitorum | …
+[OK] Omohyoid (bilateral) <- 2 mesh(es): left omohyoid | right omohyoid
+[OK] Sternohyoid (bilateral) <- 2 mesh(es): left sternohyoid | right sternohyoid
+[OK] Sternocleidomastoid (bilateral) <- 2 mesh(es): left sternocleidomastoid | right sternocleidomastoid
+[OK] Trapezius <- 6 mesh(es): ascending part of left trapezius | ascending part of right trapezius | descending part of left trapezius | …
+[OK] Pectoralis Major Clavicular Head (bilateral) <- 2 mesh(es): clavicular part of left pectoralis major | clavicular part of right pectoralis major
+[OK] Biceps Brachii Short Head (bilateral) <- 2 mesh(es): short head of left biceps brachii | short head of right biceps brachii
+[OK] Biceps Brachii Long Head (bilateral) <- 2 mesh(es): long head of left biceps brachii | long head of right biceps brachii
+[OK] Brachialis (bilateral) <- 2 mesh(es): left brachialis | right brachialis
+[OK] Brachioradialis (bilateral) <- 2 mesh(es): left brachioradialis | right brachioradialis
+[OK] Palmaris Longus (bilateral) <- 2 mesh(es): left palmaris longus | right palmaris longus
+[OK] Extensor Carpi Ulnaris (bilateral) <- 4 mesh(es): left extensor carpi ulnaris | left extensor carpi ulnaris (2) | right extensor carpi ulnaris | …
+[OK] Flexor Carpi Radialis (bilateral) <- 2 mesh(es): left flexor carpi radialis | right flexor carpi radialis
+[OK] Abductor Pollicis Longus (bilateral) <- 2 mesh(es): left abductor pollicis longus | right abductor pollicis longus
+[OK] Extensor Pollicis Brevis (bilateral) <- 2 mesh(es): left extensor pollicis brevis | right extensor pollicis brevis
+[OK] Extensor Pollicis Longus (bilateral) <- 2 mesh(es): left extensor pollicis longus | right extensor pollicis longus
+[OK] Serratus Anterior (bilateral) <- 2 mesh(es): left serratus anterior | right serratus anterior
+[OK] External Oblique (bilateral) <- 2 mesh(es): left external oblique | right external oblique
+[GAP] Tendinous Inscriptions <- 0 mesh(es)
+[OK] Rectus Abdominis <- 2 mesh(es): left rectus abdominis | right rectus abdominis
+[OK] Vastus Lateralis (bilateral) <- 2 mesh(es): left vastus lateralis | right vastus lateralis
+[OK] Vastus Medialis (bilateral) <- 2 mesh(es): left vastus medialis | right vastus medialis
+[OK] Rectus Femoris (bilateral) <- 2 mesh(es): left rectus femoris | right rectus femoris
+[OK] Tensor Fasciae Latae (bilateral) <- 2 mesh(es): left tensor fasciae latae | right tensor fasciae latae
+[OK] Sartorius (bilateral) <- 2 mesh(es): left sartorius | right sartorius
+[OK] Pectineus (bilateral) <- 2 mesh(es): left pectineus | right pectineus
+[OK] Adductors (bilateral) <- 2 mesh(es): left adductor longus | right adductor longus
+[OK] Gracilis (bilateral) <- 2 mesh(es): left gracilis | right gracilis
+[GAP] Iliotibial Band (bilateral) <- 0 mesh(es)
+[OK] Biceps Femoris Long Head (bilateral) <- 2 mesh(es): long head of left biceps femoris | long head of right biceps femoris
+[OK] Semitendinosus (bilateral) <- 2 mesh(es): left semitendinosus | right semitendinosus
+[OK] Adductor Magnus (bilateral) <- 2 mesh(es): left adductor magnus | right adductor magnus
+[OK] Semimembranosus (bilateral) <- 2 mesh(es): left semimembranosus | right semimembranosus
+[OK] Gastrocnemius (bilateral) <- 4 mesh(es): lateral head of left gastrocnemius | lateral head of right gastrocnemius | medial head of left gastrocnemius | …
+[OK] Tibialis Anterior (bilateral) <- 2 mesh(es): left tibialis anterior | right tibialis anterior
+[OK] Peroneus Longus (bilateral) <- 2 mesh(es): left fibularis longus | right fibularis longus
+[OK] Extensor Digitorum Longus (bilateral) <- 2 mesh(es): left extensor digitorum longus | right extensor digitorum longus
+[OK] Soleus (bilateral) <- 2 mesh(es): left soleus | right soleus
+[OK] Peroneus Brevis (bilateral) <- 2 mesh(es): left fibularis brevis | right fibularis brevis
+[OK] Flexor Hallucis Longus (bilateral) <- 2 mesh(es): left flexor hallucis longus | right flexor hallucis longus
+[OK] Splenius Capitis (bilateral) <- 2 mesh(es): left splenius capitis | right splenius capitis
+[OK] Rhomboid Major (bilateral) <- 2 mesh(es): left rhomboid major | right rhomboid major
+[OK] Teres Minor (bilateral) <- 2 mesh(es): left teres minor | right teres minor
+[OK] Infraspinatus (bilateral) <- 2 mesh(es): left infraspinatus muscle | right infraspinatus muscle
+[OK] Latissimus Dorsi (bilateral) <- 2 mesh(es): left latissimus dorsi | right latissimus dorsi
+[OK] Teres Major (bilateral) <- 2 mesh(es): left teres major | right teres major
+[OK] Triceps Long Head (bilateral) <- 2 mesh(es): long head of left triceps brachii | long head of right triceps brachii
+[OK] Triceps Lateral Head (bilateral) <- 2 mesh(es): lateral head of left triceps brachii | lateral head of right triceps brachii
+[OK] Triceps Medial Head (bilateral) <- 2 mesh(es): medial head of left triceps brachii | medial head of right triceps brachii
+[OK] Gluteus Maximus (bilateral) <- 2 mesh(es): left gluteus maximus | right gluteus maximus
+[OK] Gluteus Medius (bilateral) <- 2 mesh(es): left gluteus medius | right gluteus medius
+[OK] Gastrocnemius Medial Head (bilateral) <- 2 mesh(es): medial head of left gastrocnemius | medial head of right gastrocnemius
+[OK] Gastrocnemius Lateral Head (bilateral) <- 2 mesh(es): lateral head of left gastrocnemius | lateral head of right gastrocnemius
+[GAP] Achilles (bilateral) <- 0 mesh(es)

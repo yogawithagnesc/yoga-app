@@ -253,6 +253,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   const SUPABASE_KEY = 'sb_publishable_Xkhwx_hNFyRGNp0Njqne3g_qD9VdFHy'
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 </script>
+<!-- M7-4: 3D Anatomy Viewer — GLTFLoader/OrbitControls are ES-module-only in
+     three.js, so they resolve via this import map rather than a classic
+     script-src tag. See assets/anatomy3d/anatomy-viewer.js for details. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="assets/anatomy3d/anatomy-viewer.js"></script>
 </head>
 <body>
 
@@ -386,20 +398,41 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <button class="am-close" onclick="closeFullAnatomy()">✕</button>
       </div>
       <div class="am-body">
-        <div class="svg-view-toggle" id="svg-view-toggle-full">
-          <button class="svg-toggle-btn active" data-view="front">Front</button>
-          <button class="svg-toggle-btn" data-view="back">Back</button>
+        <!-- M7-4: 2D List / 3D Model mode toggle -->
+        <div class="svg-view-toggle" id="anatomy-mode-toggle">
+          <button class="svg-toggle-btn active" data-mode="list">☰ List</button>
+          <button class="svg-toggle-btn" data-mode="3d">🧊 3D Model</button>
         </div>
-        <img id="bodymap-photo-full" class="bodymap-photo-full" src="assets/bodymap-front.png" alt="Body map">
 
-        <!-- Feeling picker (shown after clicking a muscle name) -->
+        <!-- 2D mode (M3c, default) -->
+        <div id="anatomy-2d-wrap" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:14px">
+          <div class="svg-view-toggle" id="svg-view-toggle-full">
+            <button class="svg-toggle-btn active" data-view="front">Front</button>
+            <button class="svg-toggle-btn" data-view="back">Back</button>
+          </div>
+          <img id="bodymap-photo-full" class="bodymap-photo-full" src="assets/bodymap-front.png" alt="Body map">
+          <div class="muscle-list" id="muscle-list"></div>
+        </div>
+
+        <!-- 3D mode (M7-4) -->
+        <div id="anatomy-3d-wrap" style="width:100%;display:none;flex-direction:column;align-items:center;gap:10px">
+          <div class="svg-view-toggle" id="anatomy3d-view-toggle">
+            <button class="svg-toggle-btn active" data-view3d="front">Front</button>
+            <button class="svg-toggle-btn" data-view3d="back">Back</button>
+          </div>
+          <div id="anatomy3d-container" style="width:100%;max-width:420px;height:420px;border-radius:var(--r-md);overflow:hidden;background:var(--bg-el)"></div>
+          <div id="anatomy3d-loading" style="font-size:12px;color:var(--tx-3)">Loading 3D model…</div>
+          <div class="info-note" style="text-align:center">Drag to rotate · Tap a muscle to mark it · <span id="anatomy3d-gaps-note"></span></div>
+          <div class="info-note" style="text-align:center;opacity:.6">3D anatomy data: BodyParts3D / Z-Anatomy (CC BY-SA)</div>
+        </div>
+
+        <!-- Feeling picker (shown after clicking a muscle, either mode) -->
         <div class="feel-pick" id="feel-pick-full" style="width:100%;max-width:420px">
           <div class="fp-title" id="fp-muscle-name-full">—</div>
           <div class="fp-row" id="fp-row-full"></div>
         </div>
 
-        <div class="muscle-list" id="muscle-list"></div>
-        <div class="am-footer">🖐 Tap a muscle name to mark</div>
+        <div class="am-footer" id="anatomy-footer-hint">🖐 Tap a muscle name to mark</div>
       </div>
     </div>
 
@@ -1758,9 +1791,60 @@ function closeFullAnatomy() {
   bodymapViewCompact = bodymapViewFull;
   document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
   syncCompactToggleUI();
+  disposeAnatomy3D(); // reclaim the WebGL context; muscles.glb itself stays cached for next open
 }
 window.openFullAnatomy = openFullAnatomy;
 window.closeFullAnatomy = closeFullAnatomy;
+
+// ─── M7-4: 2D LIST / 3D MODEL MODE TOGGLE ───
+let anatomy3DViewer = null; // mounted viewer instance, or null when not in 3D mode
+
+document.querySelectorAll('#anatomy-mode-toggle .svg-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const mode = e.currentTarget.getAttribute('data-mode');
+    document.querySelectorAll('#anatomy-mode-toggle .svg-toggle-btn').forEach(b => b.classList.toggle('active', b === e.currentTarget));
+    document.getElementById('anatomy-2d-wrap').style.display = mode === 'list' ? 'flex' : 'none';
+    document.getElementById('anatomy-3d-wrap').style.display = mode === '3d' ? 'flex' : 'none';
+    document.getElementById('anatomy-footer-hint').textContent = mode === '3d'
+      ? '🖐 Drag to rotate · Tap a muscle to mark'
+      : '🖐 Tap a muscle name to mark';
+    if (mode === '3d') mountAnatomy3D(); else disposeAnatomy3D();
+  });
+});
+
+function mountAnatomy3D() {
+  if (anatomy3DViewer || !window.LumenAnatomyViewer) return; // already mounted, or module still loading
+  const loadingEl = document.getElementById('anatomy3d-loading');
+  loadingEl.style.display = 'block';
+
+  window.LumenAnatomyViewer.mount(document.getElementById('anatomy3d-container'), {
+    onZoneTap: (zone, label) => muscleTap(zone, label),
+    getFeelingColor: (feeling) => (FEELINGS[feeling] ? FEELINGS[feeling].color : null),
+    getMuscleStates: () => muscleStates,
+  }).then((viewer) => {
+    anatomy3DViewer = viewer;
+    loadingEl.style.display = 'none';
+    const gaps = window.ANATOMY3D_GAPS || [];
+    document.getElementById('anatomy3d-gaps-note').textContent = gaps.length
+      ? `Not shown in 3D: ${gaps.join(', ')} — use the List view for these` : '';
+  }).catch((err) => {
+    console.error('3D anatomy viewer failed to load:', err);
+    loadingEl.textContent = 'Could not load the 3D model — please use List view';
+  });
+}
+
+function disposeAnatomy3D() {
+  if (!anatomy3DViewer) return;
+  anatomy3DViewer.dispose();
+  anatomy3DViewer = null;
+}
+
+document.querySelectorAll('#anatomy3d-view-toggle .svg-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('#anatomy3d-view-toggle .svg-toggle-btn').forEach(b => b.classList.toggle('active', b === e.currentTarget));
+    if (anatomy3DViewer) anatomy3DViewer.setView(e.currentTarget.getAttribute('data-view3d'));
+  });
+});
 
 function syncCompactToggleUI() {
   document.querySelectorAll('#svg-view-toggle .svg-toggle-btn').forEach(b => {
@@ -1908,6 +1992,7 @@ window.applyFeeling = function(feeling) {
   window.pendingZone = null;
   renderMuscleList(bodymapViewFull);
   renderAreaTags();
+  if (anatomy3DViewer) anatomy3DViewer.refresh(); // keep 3D colors in sync regardless of which mode was used to set this
   showToast(feeling ? `${label}: ${FEELINGS[feeling].label}` : `${label} cleared`);
 };
 

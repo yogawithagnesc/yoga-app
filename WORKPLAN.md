@@ -22,6 +22,8 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M7 | On-demand video catalog | P4 | ✅ Complete (deployed + verified) | Haiku 4.5 / Sonnet 5 |
 | M7-1 | Legal framework: ToS, Privacy, Data Sharing Agreement | P4 | 🚧 Drafts complete (v0.1) | Opus 4.8 |
 | M7-2 | Post-Launch Polish: UX refinements (signup, quotes, rename/delete, account mgmt) | §3.2, §3.7 | ✅ Done (8/8 items QA'd) | Haiku 4.5 / Sonnet 5 |
+| M7-3 | Recovery & Treatment Log (massage/physio/needling as a mitigating factor) | §3.2.3 | 🚧 Implemented (pending migration run + live test) | Sonnet 5 |
+| M7-4 | Interactive 3D Anatomy Viewer (rotatable body-map, click-to-select) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -555,6 +557,162 @@ idempotent, run in order in Supabase SQL Editor.
 - Expand quote array from 12 to 30+ (Item 3) — tracked for M9.
 - Bulk delete (delete multiple bulletins at once) — single-message delete shipped, bulk deferred.
 - Account recovery after deletion — once deleted via the RPC, account is gone; recovery not in scope.
+
+---
+
+## M7-3 — Recovery & Treatment Log
+
+**Status:** 🚧 Implemented (schema_phase25 pending Supabase migration run + live QA)
+
+**Model:** Sonnet 5 — a genuine feature milestone (new table + RLS + realtime, a new
+single-file entry page, and the body-status "mitigating factor" math, which carries the only
+real logic risk). Mechanical sub-tasks (page scaffolding, WORKPLAN doc) could drop to Haiku 4.5.
+
+**Rationale (user request):** Practitioners supplement training with recovery work — sports
+massage, physiotherapy, chiropractic, dry needling, acupuncture, stretch therapy, self-care.
+A treatment is semantically the *opposite* of a practice: a hard session **adds** load/soreness,
+a treatment **relieves** it. Users want to log treatments clearly and distinctly from practice,
+and have them act as a mitigating factor that offsets accumulated strain in the Body Status /
+Rest engine.
+
+**Design decision — separate table, shared taxonomy, integrated display:** recovery gets its own
+`recovery_logs` entity (keeps practice analytics pure and avoids overloading `intensity` /
+`muscle_feelings` with reversed meaning) but reuses the exact canonical muscle-zone keys so it
+interacts with `BODY_ZONE_MAP` and the rest engine. Mirrors how `classes` and `videos` each got
+their own tables rather than overloading `practice_logs`.
+
+**Scope (all implemented):**
+1. ✅ `schema_phase25_recovery_logs.sql` — `recovery_logs` table (treatment_type, practitioner,
+   treatment_date, start_time, duration_minutes, `areas_treated` JSONB `[{zone, relief}]`,
+   relief_rating, soreness_before/after, notes, media_urls[], follow_up_date, is_private,
+   notes_shared); RLS mirroring `practice_logs` (self CRUD + linked non-private SELECT);
+   `REPLICA IDENTITY FULL` + realtime publication; `updated_at` trigger. Idempotent.
+2. ✅ `lumen-log-recovery.html` — dedicated entry page. Reuses the M3c reference-photo + clickable
+   muscle-name body-map component (same zone taxonomy) with a recovery-oriented **relief** scale
+   (Full / Some / Worked On / Still Tender) in place of the practice feeling scale. Treatment-type
+   chips (+ custom "Other"), practitioner, relief slider, optional soreness before/after, next
+   appointment, notes, media (stored to the `practice-media` bucket via `media_urls[]`, no
+   `session_media` coupling), privacy + note-sharing toggles, and full `?edit=<id>` support.
+3. ✅ Log chooser — Home screen now offers "＋ Log Today's Practice" plus a secondary
+   "🩹 Log Recovery / Treatment" button.
+4. ✅ Body Status / Rest engine mitigation (simple-credit model, per user decision):
+   - `computeBodyStatus()` subtracts a recency-decayed recovery credit per body category
+     (`2.0 × reliefFactor × recencyWeight`, same recency buckets as load), floored at 0.
+   - `computeRestNeeds()` reduces a treated zone's serious-flag count by the number of treatments
+     in the window, so a sore-but-since-treated muscle stops triggering the rest alarm.
+5. ✅ Calendar + day-modal — recovery days get a sage marker (distinct from the gold practice
+   fill), are clickable even on recovery-only days, and list treatments (🩹) alongside practices
+   in the day modal with edit (→ recovery page) and delete.
+
+**Decisions locked with user:** simple-credit mitigation (not the richer before/after model);
+cost/spend tracking deferred.
+
+**Deferred / follow-up:**
+- Refinement: only credit treatments dated *after* the sore hits they offset (current cut credits
+  any treatment in the 14-day window).
+- Cost/spend tracking (optional cost + currency per treatment, recovery-spend total).
+- A dedicated "Recovery" perspective filter (currently recovery mitigates in both Global and Yoga
+  perspectives).
+- Broadcasting recovery to the community feed / linked-teacher recovery view.
+
+**Acceptance:** run `schema_phase25` in Supabase SQL Editor, then verify: (a) a teacher/student can
+log a treatment with areas marked; (b) it appears on the calendar (sage) and day modal; (c) logging
+a treatment on a sore muscle visibly dials down that zone's Body Status / rest suggestion;
+(d) edit + delete round-trip; (e) private-by-default, linked teacher sees only non-private ones.
+
+---
+
+## M7-4 — Interactive 3D Anatomy Viewer
+
+**Status:** ✅ Implemented + verified (headless browser E2E on both log pages)
+
+**Model:** Sonnet 5 — a genuine feature build (new rendering stack integration, asset
+pipeline, and a taxonomy-mapping layer with real correctness risk).
+
+**Rationale (user request):** the existing M3c body map (a flat 2D reference photo +
+clickable muscle-name list) works but doesn't let users locate muscles by true spatial
+position, depth/layer, or size the way a rotatable 3D model would. **Critical history:**
+Lumen already shipped a 3D model once — a 16 MB Sketchfab mesh (`scene.bin`, THREE.js +
+GLTFLoader) — and deliberately **retired it** for phone-performance reasons (WORKPLAN M3,
+`Lumen_PRD.md` §140/290/338). Investigation confirmed that retired mesh was only 3 merged
+blobs with no per-muscle names anyway — it could never have supported click-to-select.
+User-confirmed decision drivers before building: **accuracy/richness** as the priority, and
+willingness to reintroduce real 3D **provided it's optimized** (not a repeat of the 16 MB
+mistake).
+
+**Solution (per the M7-4 research/advisory, see prior turn): build on open-source anatomy
+meshes** (BodyParts3D CC BY-SA 2.1 JP + Z-Anatomy CC BY-SA 4.0, reprocessed by
+`JohanBellander/BodyExplorer`, MIT code) rather than a paid API (BioDigital — recurring
+cost, privacy touchpoint for health-adjacent data) or a 2.5D compromise (wouldn't deliver
+real depth/rotation).
+
+**Asset pipeline (`tools/anatomy3d/`, reproducible, build-time-only tooling):**
+1. Fetch BodyExplorer's `anatomy.glb` (467 individually-named muscle/tendon meshes, ~25 MB).
+2. Generate `mesh-zone-map.js` — maps each mesh name to Lumen's canonical `zone` keys
+   (`MUSCLE_LIST` in `lumen-log-practice-3d.html`), via token-normalized matching plus
+   explicit overrides for anatomically-real-but-differently-termed cases (Lumen's
+   Anterior/Middle/Posterior deltoid heads ↔ the mesh set's Clavicular/Acromial/Spinal
+   parts; Lumen's single Erector Spinae zone ↔ the constituent iliocostalis/longissimus/
+   spinalis muscles). **56 of 59 zones mapped** (95%); the 3 gaps (Achilles, Iliotibial
+   Band, Tendinous Inscriptions) are tendon/fascia structures absent from this muscle-only
+   mesh set and remain 2D-list-only.
+3. Prune the raw GLB down to only the 135 mapped meshes (removes untracked structures —
+   face muscles, hand/foot intrinsics, organs — that would otherwise be dead clicks).
+4. Draco-compress (mesh-name-preserving — **not** gltf-transform's full `optimize` preset,
+   whose `join` step merges meshes and destroys per-muscle click resolution).
+5. Result: **25 MB → 1.6 MB** — an order of magnitude under the 16 MB ceiling that got the
+   old model retired, while keeping full per-muscle click-to-select. Verified reproducible
+   end-to-end via `tools/anatomy3d/build_anatomy_glb.sh`.
+
+**Critical bug caught during testing — mesh name sanitization:** three.js's GLTFLoader
+unconditionally renames every loaded mesh via `PropertyBinding.sanitizeNodeName()`
+(`name.replace(/\s/g,'_').replace(/[[\].:/]/g,'')`) — e.g. `"left brachioradialis"` becomes
+`"left_brachioradialis"` at runtime, regardless of whether the model has animations. The
+mesh-zone-map generator initially emitted space-separated keys (matching the raw glTF JSON),
+which silently never matched live `Mesh.name` values — raycasting worked and correctly
+resolved meshes, but every `MESH_TO_ZONE` lookup failed, so tapping a muscle in 3D did
+nothing. Fixed by sanitizing map keys identically at generation time (and re-sanitizing
+raw names identically in the prune script, which reads/writes untouched glTF JSON where
+names are *not* sanitized). This is exactly the kind of integration bug that only surfaces
+under real rendering — caught via headless-browser testing before shipping, not by code
+review alone.
+
+**Viewer (`assets/anatomy3d/anatomy-viewer.js`):** a THREE.js module (GLTFLoader +
+DRACOLoader + OrbitControls, loaded via `<script type="importmap">` since those are
+ES-module-only in modern three.js) exposing `window.LumenAnatomyViewer.mount(container,
+callbacks)`. Lazy-loaded — nothing downloads until a user opens the 3D view, preserving the
+performance rationale that retired the old model. Source data is Z-up (medical/CAD
+convention); corrected to three.js's Y-up via a −90° X rotation (verified against the mesh's
+actual bounding box). Click-to-select uses a movement-threshold tap-vs-drag distinction
+(matches the codebase's existing pointer-capture discipline, CLAUDE.md). The viewer is a
+pure alternate **input** method — `onZoneTap` calls the host page's existing `muscleTap()`,
+so the same feeling-picker UI, save/edit logic, and per-page palette (practice's 7-state
+FEELINGS vs. recovery's 4-state RELIEF) are reused unchanged, with zero duplicated logic.
+
+**Integration:** both `lumen-log-practice-3d.html` and `lumen-log-recovery.html` (which
+already shared the M3c 2D component) gained a **☰ List / 🧊 3D Model** toggle inside the
+body-map modal. Switching modes mounts/disposes the viewer (avoids leaking WebGL contexts
+across repeated open/close cycles — GLTFLoader's parsed scene stays cached across mounts, so
+re-opening is cheap after the first load). `applyFeeling()` now also calls `viewer.refresh()`
+so 2D and 3D always show consistent state regardless of which mode was used to mark a zone —
+verified end-to-end: tapping a muscle in 3D → feeling picker → applied feeling → shows in
+`area-tags` → shows marked in the 2D list's matching front/back view.
+
+**Verification:** headless Chromium (Playwright) end-to-end on both log pages — asset
+pipeline mesh-count self-check, click→raycast→zone resolution across a grid of screen
+points, mode-toggle mount/dispose, and 2D↔3D state sync, all confirmed working prior to
+commit. Full interactive/mobile QA still recommended once deployed.
+
+**Deferred / follow-up:**
+- Mobile touch/pinch-zoom gesture tuning (OrbitControls' defaults were used; no
+  device-specific tuning yet).
+- Thumbnail/loading-skeleton polish for the 3D load state.
+- Skeleton/bone overlay (BodyExplorer ships one; not pulled in for this v1 — muscles only).
+- Extending the 3-zone gap (Achilles, IT Band, Tendinous Inscriptions) if a suitable
+  tendon/fascia mesh source is found later.
+
+**Attribution:** `assets/anatomy3d/ATTRIBUTION.md` — CC BY-SA 2.1 JP (BodyParts3D) / CC BY-SA
+4.0 (Z-Anatomy) credit, also surfaced in-app in the 3D mode footer.
 
 ---
 

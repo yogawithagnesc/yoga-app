@@ -135,6 +135,12 @@
   }
   .log-btn:hover { background: var(--accent-hover); }
   .log-btn:active { background: var(--accent-pressed); transform: scale(0.98); }
+  .log-btn.secondary {
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--br-def); margin-top: 10px; font-size: 14px; padding: 14px;
+  }
+  .log-btn.secondary:hover { background: var(--accent-dim); border-color: var(--accent); }
+  .log-btn.secondary:active { background: var(--accent-dim); transform: scale(0.98); }
 
   /* Dual-perspective toggle */
   .perspective-toggle {
@@ -180,6 +186,10 @@
   .cal-cell.done { background: var(--accent); color: var(--bg); }
   .cal-cell.today { border-color: var(--tx-2); font-weight: 600; }
   .cal-cell.done.today { background: var(--accent); border-color: var(--accent-hover); color: var(--bg); }
+  /* M7-3: recovery/treatment day marker (sage ring; distinct from gold practice fill) */
+  .cal-cell.recovery { border-color: var(--success); }
+  .cal-cell.recovery.done { border-color: var(--success); }
+  .cal-cell.recovery:not(.done) { color: var(--success); }
 
   /* Courses */
   .courses-scroll { display: flex; gap: 14px; overflow-x: auto; padding: 0 28px 4px; margin-bottom: 24px; scrollbar-width: none; }
@@ -664,6 +674,7 @@
 
       <div class="log-wrap">
         <button class="log-btn" onclick="window.location.href='lumen-log-practice-3d.html'">＋  Log Today's Practice</button>
+        <button class="log-btn secondary" onclick="window.location.href='lumen-log-recovery.html'">🩹  Log Recovery / Treatment</button>
       </div>
 
       <!-- Continue Watching — shown only when the user has videos in progress -->
@@ -1085,7 +1096,10 @@ const STATE = {
   practicedYoga: new Set(),
   dayLogs: {},
   dayLogsYoga: {},
+  recoveryDays: new Set(),
+  dayRecovery: {},
   bodyRaw: [],
+  recoveryRaw: [],
   perspective: localStorage.getItem('lumen_perspective') === 'yoga' ? 'yoga' : 'global',
   likes: {}, // keyed by community_feeds.id — { liked, count }, persisted via feed_likes table
   style: 'Hatha',
@@ -1185,15 +1199,20 @@ function buildCalendar() {
   }
 
   var practicedSet = STATE.perspective === 'yoga' ? STATE.practicedYoga : STATE.practiced;
+  // Recovery markers are perspective-independent (a treatment isn't a practice type).
+  var recoverySet = STATE.recoveryDays || new Set();
 
   for (var d = 1; d <= daysInMonth; d++) {
     var el = document.createElement('div');
     var classes = ['cal-cell'];
-    if (practicedSet.has(d)) classes.push('done');
+    var hasPractice = practicedSet.has(d);
+    var hasRecovery = recoverySet.has(d);
+    if (hasPractice) classes.push('done');
+    if (hasRecovery) classes.push('recovery');
     if (d === today) classes.push('today');
     el.className = classes.join(' ');
     el.textContent = d;
-    if (practicedSet.has(d)) {
+    if (hasPractice || hasRecovery) {
       el.addEventListener('click', (function(day) {
         return function() { openDayLogs(day); };
       })(d));
@@ -1239,6 +1258,27 @@ async function loadMonthLogs() {
       }
     });
   }
+
+  // M7-3: recovery/treatment sessions for the same month — surfaced on the
+  // calendar (sage marker) and in the day-logs modal alongside practices.
+  var recovery = await db
+    .from('recovery_logs')
+    .select('id, treatment_date, treatment_type, practitioner, duration_minutes, is_private')
+    .eq('user_id', currentUser.id)
+    .gte('treatment_date', start)
+    .lte('treatment_date', end);
+
+  STATE.recoveryDays = new Set();
+  STATE.dayRecovery  = {};
+  if (recovery.data) {
+    recovery.data.forEach(function(log) {
+      var day = new Date(log.treatment_date + 'T00:00:00').getDate();
+      STATE.recoveryDays.add(day);
+      if (!STATE.dayRecovery[day]) STATE.dayRecovery[day] = [];
+      STATE.dayRecovery[day].push(log);
+    });
+  }
+
   buildCalendar();
 }
 
@@ -1749,7 +1789,66 @@ async function loadBodyStatus() {
     .lte('practice_date', end);
 
   STATE.bodyRaw = result.data || [];
+
+  // M7-3: recovery/treatment logs act as a mitigating factor in the body-status
+  // and rest engine — a treatment on a zone offsets accumulated soreness there.
+  var recovery = await db
+    .from('recovery_logs')
+    .select('treatment_date, areas_treated')
+    .eq('user_id', currentUser.id)
+    .gte('treatment_date', start)
+    .lte('treatment_date', end);
+
+  STATE.recoveryRaw = recovery.data || [];
   renderBodyStatus();
+}
+
+// M7-3: recency-decayed recovery credit per exact zone (incl. L/R prefix),
+// summed across all recovery logs in the 14-day window. Mirrors the load
+// recency buckets used by computeBodyStatus so credits and load are comparable.
+// relief level lightly scales the credit; untagged/unknown relief gets a
+// middling factor. Returns { zone: creditPoints }.
+var RECOVERY_RELIEF_FACTOR = { full: 1.0, partial: 0.75, worked: 0.6, tender: 0.3 };
+function recoveryCreditByZone() {
+  var credit = {};
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  (STATE.recoveryRaw || []).forEach(function(log) {
+    var logDate = new Date(log.treatment_date + 'T00:00:00');
+    var daysAgo = Math.round((today - logDate) / 86400000);
+    if (daysAgo < 0 || daysAgo > 13) return;
+    var weight = daysAgo <= 4 ? 1.0 : daysAgo <= 9 ? 0.6 : 0.3;
+
+    (log.areas_treated || []).forEach(function(area) {
+      if (!area || !area.zone) return;
+      var factor = RECOVERY_RELIEF_FACTOR[area.relief];
+      if (factor === undefined) factor = 0.6;
+      credit[area.zone] = (credit[area.zone] || 0) + 2.0 * factor * weight;
+    });
+  });
+
+  return credit;
+}
+
+// M7-3: how many treatments (14-day window) touched each exact zone — used to
+// dial down the rest-needs counter for treated muscles.
+function recoveryTreatmentCountByZone() {
+  var counts = {};
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  (STATE.recoveryRaw || []).forEach(function(log) {
+    var logDate = new Date(log.treatment_date + 'T00:00:00');
+    var daysAgo = Math.round((today - logDate) / 86400000);
+    if (daysAgo < 0 || daysAgo > 13) return;
+    (log.areas_treated || []).forEach(function(area) {
+      if (!area || !area.zone) return;
+      counts[area.zone] = (counts[area.zone] || 0) + 1;
+    });
+  });
+
+  return counts;
 }
 
 // ── M5: 30-DAY FATIGUE TREND ──────────────────────────────
@@ -1812,6 +1911,16 @@ function computeBodyStatus() {
     });
   });
 
+  // M7-3: subtract recovery credit from each body category (a treatment on a
+  // zone offsets accumulated load there). Scores are floored at 0 so a heavily
+  // treated-but-unstrained area never reads as "better than rested".
+  var credit = recoveryCreditByZone();
+  Object.keys(credit).forEach(function(zone) {
+    var cat = zoneToBodyCategory(zone);
+    if (!cat) return;
+    scores[cat] = Math.max(0, (scores[cat] || 0) - credit[zone]);
+  });
+
   return scores;
 }
 
@@ -1843,6 +1952,16 @@ function computeRestNeeds() {
         muscleCounts[zone] = (muscleCounts[zone] || 0) + 1;
       }
     });
+  });
+
+  // M7-3: dial down the counter for treated zones — each treatment in the
+  // window offsets one serious flag, so a sore muscle that's since been worked
+  // on stops nagging once treatments catch up with strain.
+  var treated = recoveryTreatmentCountByZone();
+  Object.keys(treated).forEach(function(zone) {
+    if (muscleCounts[zone]) {
+      muscleCounts[zone] = Math.max(0, muscleCounts[zone] - treated[zone]);
+    }
   });
 
   // Return muscles with 3+ serious feelings in 14 days
@@ -1934,7 +2053,8 @@ function renderBodyStatus() {
 function openDayLogs(day) {
   var source = STATE.perspective === 'yoga' ? STATE.dayLogsYoga : STATE.dayLogs;
   var logs = (source && source[day]) || [];
-  if (!logs.length) return;
+  var recovery = (STATE.dayRecovery && STATE.dayRecovery[day]) || [];
+  if (!logs.length && !recovery.length) return;
 
   var now   = new Date();
   var label = MONTHS[now.getMonth()] + ' ' + day;
@@ -1960,6 +2080,24 @@ function openDayLogs(day) {
         '<button class="dlr-del" onclick="deleteLog(\'' + log.id + '\',' + day + ')">Delete</button>' +
       '</div>' +
       '<div class="dlr-media" id="dlr-media-' + log.id + '"></div>';
+    list.appendChild(row);
+  });
+
+  // M7-3: recovery/treatment entries for this day (🩹 marker; edit → recovery page).
+  recovery.forEach(function(log) {
+    var row = document.createElement('div');
+    row.className = 'day-log-row';
+    var name = '🩹 ' + galleryEsc(log.treatment_type || 'Recovery');
+    if (log.practitioner) name += ' · ' + galleryEsc(log.practitioner);
+    row.innerHTML =
+      '<div class="dlr-info">' +
+        '<span class="dlr-name">' + name + '</span>' +
+        '<span class="dlr-dur">' + (log.duration_minutes || 0) + ' min · recovery</span>' +
+      '</div>' +
+      '<div class="dlr-actions">' +
+        '<a class="dlr-edit" href="lumen-log-recovery.html?edit=' + log.id + '">Edit</a>' +
+        '<button class="dlr-del" onclick="deleteRecovery(\'' + log.id + '\',' + day + ')">Delete</button>' +
+      '</div>';
     list.appendChild(row);
   });
 
@@ -2050,6 +2188,24 @@ async function deleteLog(logId, day) {
   closeDayModal();
   showToast(STRINGS.toastSessionRemoved);
   // Stats counters update via Realtime subscription when trigger fires
+}
+
+// M7-3: delete a recovery/treatment log and refresh the calendar + body status.
+async function deleteRecovery(logId, day) {
+  var result = await db.from('recovery_logs').delete().eq('id', logId);
+  if (result.error) { showToast(STRINGS.toastDeleteFailed); return; }
+
+  if (STATE.dayRecovery && STATE.dayRecovery[day]) {
+    STATE.dayRecovery[day] = STATE.dayRecovery[day].filter(function(l) { return l.id !== logId; });
+    if (!STATE.dayRecovery[day].length) {
+      STATE.recoveryDays.delete(day);
+      delete STATE.dayRecovery[day];
+    }
+  }
+  buildCalendar();
+  closeDayModal();
+  loadBodyStatus(); // recompute mitigation now that a treatment is gone
+  showToast(STRINGS.toastSessionRemoved);
 }
 
 function closeDayModal() {
