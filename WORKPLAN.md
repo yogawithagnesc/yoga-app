@@ -25,7 +25,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M7-3 | Recovery & Treatment Log (massage/physio/needling as a mitigating factor) | §3.2.3 | 🚧 Implemented (pending migration run + live test) | Sonnet 5 |
 | M7-4 | Interactive 3D Anatomy Viewer (rotatable body-map, click-to-select) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
 | M7-5 | 3D Anatomy Layers (skeleton overlay, superficial/deep muscle toggle) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
-| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | 🚧 In progress (7/8 done) | Sonnet 5 / Haiku 4.5 |
+| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | ✅ Done | Sonnet 5 / Haiku 4.5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -795,10 +795,10 @@ clickable and *only* deep zones resolve while deep-layer-only mode is active.
 
 ## M7-6 — Post-3D Enhancements
 
-**Status:** 🚧 In progress. Requested as 8 items after live M7-4/M7-5 testing; being delivered
-one at a time per user instruction. Ambiguous items (M7-6-4, -7, -8) were raised as questions;
-proceeding with stated recommended defaults since no response was received, clearly flagged to
-the user, redirectable at any time.
+**Status:** ✅ Done — all 8 items delivered. Requested after live M7-4/M7-5 testing, delivered one
+at a time per user instruction. Ambiguous items (M7-6-4, -7, -8) were raised as questions; no
+response was received, so each proceeded with its stated recommended default, clearly flagged in
+this document, redirectable at any time.
 
 **Model:** Sonnet 5 for schema/RLS/multi-file items; a one-line SQL bug fix (M7-6-5a) is
 Haiku-level but executed directly rather than delegated, given the small size.
@@ -916,10 +916,27 @@ exact expected insert payload, and shows a "sent" confirmation; separately, seed
 `teacher_to_student` feedback row and loading the student dashboard renders it correctly with
 author, session, and body all present, no console errors.
 
-### Remaining items (in progress)
+### M7-6-8 — Pro tier infrastructure ✅ Done
 
-- **M7-6-8** — Pro tier infrastructure (recommended default: schema + flag only, no payment
-  processing this pass).
+**Recommended default used (no response received):** schema + flag only this pass — no checkout,
+billing, or payment processing. Just the data model + a visible indicator so future features have
+something to gate on, and a developer can flip an account to Pro manually in the interim.
+
+- `schema_phase29_pro_tier.sql`: `profiles.tier` ('free'/'pro', default 'free') + `pro_since`
+  timestamp. A `protect_tier_column()` trigger reverts any change to these columns made by the row
+  owner's own authenticated session (`auth.uid() = OLD.id`) — self-service upgrade is not possible
+  from the client. Direct SQL run in the Supabase Dashboard (no request JWT, so `auth.uid()` is
+  null there) is the only way to grant Pro today; a future checkout-completion function can update
+  the same columns without any further schema change.
+- `profile.html`: teacher/studio accounts see a "🌟 Pro" or "Free" badge next to their role badge.
+  Students don't see a tier badge — Pro is a teacher/studio-only concept per the request.
+
+**Verified:** headless-browser E2E — badge renders "Free" for a free-tier teacher, "🌟 Pro" for a
+pro-tier teacher, and is absent entirely for a student profile.
+
+**Not yet built (future milestone, once actual Pro-only features exist):** checkout/billing
+integration, the specific features to restrict, and an `isProUser()` gating helper — this pass
+only lays the groundwork the user asked for "first."
 
 ---
 
