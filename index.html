@@ -171,9 +171,35 @@
     border-radius: var(--r-sm); padding: 4px 10px;
   }
 
+  /* M7-6-4: manual body-status check-in */
+  .checkin-btn {
+    font-size: 11px; font-weight: 500; background: none; border: 1px solid var(--card-br);
+    border-radius: var(--r-full); color: var(--tx-2); cursor: pointer; padding: 6px 12px;
+    transition: all 0.15s; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; flex-shrink: 0;
+  }
+  .checkin-btn:hover, .checkin-btn.active { border-color: var(--accent); color: var(--accent); }
+  .checkin-panel {
+    background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg);
+    padding: 16px; margin-top: 10px;
+  }
+  .checkin-step-label { font-size: 12px; color: var(--tx-2); margin-bottom: 10px; }
+  .checkin-cat-chips, .checkin-feel-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .checkin-chip {
+    font-size: 12px; padding: 8px 14px; border-radius: var(--r-full); border: 1px solid var(--card-br);
+    background: var(--bg-el); color: var(--tx-2); cursor: pointer; transition: all 0.15s;
+    font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+  }
+  .checkin-chip:hover { border-color: var(--accent); color: var(--tx-1); }
+  .checkin-chip.sel { border-color: var(--accent); background: var(--accent-dim, rgba(200,169,110,0.13)); color: var(--accent); }
+
   /* Calendar */
   .section { margin: 0 28px 24px; }
   .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tx-2); margin-bottom: 14px; }
+  .cal-nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .cal-nav-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-br); color: var(--tx-2); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .cal-nav-btn:disabled:hover { border-color: var(--card-br); color: var(--tx-2); }
   .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
   .cal-head { text-align: center; font-size: 10px; color: var(--tx-3); font-weight: 500; letter-spacing: 0.04em; padding-bottom: 4px; }
   .cal-cell {
@@ -464,12 +490,24 @@
   .feedback-char-count.limit { color: var(--error); }
   .feedback-tone-hint { font-size: 11px; color: var(--tx-3); line-height: 1.5; background: var(--bg-el); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 16px; }
 
-  /* ── M5: 30-day fatigue dashboard ── */
+  /* ── M5/M7-6-5: 30-day fatigue + recovery trend dashboard ── */
   .fatigue-card { background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg); padding: 18px; }
-  .fatigue-chart { display: flex; align-items: flex-end; gap: 2px; height: 60px; margin-top: 12px; }
+  .trend-row-label { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--tx-3); margin-bottom: 4px; }
+  .trend-row-label:not(:first-child) { margin-top: 14px; }
+  .fatigue-chart { display: flex; align-items: flex-end; gap: 2px; height: 50px; }
   .fatigue-bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; opacity: 0.75; }
   .fatigue-bar.high { background: var(--error); opacity: 0.85; }
+  .recovery-bar { flex: 1; background: var(--success); border-radius: 2px 2px 0 0; min-height: 2px; opacity: 0.75; }
   .fatigue-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--tx-3); margin-top: 6px; }
+
+  /* M7-6-7: Teacher feedback card */
+  .tf-item { background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 10px; }
+  .tf-item.unread { border-color: var(--accent); }
+  .tf-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .tf-author { font-size: 12px; font-weight: 600; color: var(--accent); }
+  .tf-date { font-size: 10px; color: var(--tx-3); }
+  .tf-session { font-size: 10px; color: var(--tx-3); margin-bottom: 6px; }
+  .tf-body { font-size: 13px; color: var(--tx-1); line-height: 1.5; }
 
   /* Day-log modal rows */
   .day-log-row {
@@ -698,23 +736,45 @@
       </div>
 
       <div class="section">
-        <div class="section-label" id="cal-label">March 2026</div>
+        <div class="cal-nav-row">
+          <button class="cal-nav-btn" id="cal-prev-btn" onclick="changeCalendarMonth(-1)" aria-label="Previous month">‹</button>
+          <div class="section-label" id="cal-label" style="margin:0">March 2026</div>
+          <button class="cal-nav-btn" id="cal-next-btn" onclick="changeCalendarMonth(1)" aria-label="Next month">›</button>
+        </div>
         <div class="cal-grid" id="cal-grid"></div>
       </div>
 
       <div class="section">
-        <div class="section-label">Body Status <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 14 days</span></div>
+        <div class="cal-nav-row" style="margin-bottom:14px">
+          <div class="section-label" style="margin:0">Body Status <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 14 days</span></div>
+          <button class="checkin-btn" id="checkin-toggle-btn" onclick="toggleCheckinPanel()">🔄 Check In</button>
+        </div>
         <div class="body-status-card">
           <div id="body-status-rows"></div>
+        </div>
+
+        <!-- M7-6-4: manual body-status check-in (feeds the same scoring model as a fresh data point) -->
+        <div class="checkin-panel" id="checkin-panel" style="display:none">
+          <div class="checkin-step-label" id="checkin-step-label">How does this area feel right now?</div>
+          <div class="checkin-cat-chips" id="checkin-cat-chips"></div>
+          <div class="checkin-feel-chips" id="checkin-feel-chips" style="display:none"></div>
         </div>
       </div>
 
       <div class="section" id="fatigue-section" style="display:none">
         <div class="section-label">Progress Trend <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 30 days</span></div>
         <div class="fatigue-card">
+          <div class="trend-row-label">🔥 Practice Fatigue</div>
           <div class="fatigue-chart" id="fatigue-chart"></div>
+          <div class="trend-row-label">🌿 Recovery Activity</div>
+          <div class="fatigue-chart" id="recovery-chart"></div>
           <div class="fatigue-legend"><span>30 days ago</span><span>Today</span></div>
         </div>
+      </div>
+
+      <div class="section" id="teacher-feedback-section" style="display:none">
+        <div class="section-label">Feedback from Teachers</div>
+        <div id="teacher-feedback-list"></div>
       </div>
     </div>
 
@@ -1073,6 +1133,9 @@ function setRandomQuote() {
     // Load 30-day fatigue trend (M5 progress dashboard)
     loadFatigueTrend();
 
+    // Load feedback teachers have left on shared sessions (M7-6-7)
+    loadTeacherFeedback();
+
   } catch (err) {
     console.error('Auth check failed:', err);
   }
@@ -1100,6 +1163,8 @@ const STATE = {
   dayRecovery: {},
   bodyRaw: [],
   recoveryRaw: [],
+  checkinsRaw: [],
+  calendarViewDate: new Date(), // M7-6-3: month currently shown on the calendar (day-of-month is ignored)
   perspective: localStorage.getItem('lumen_perspective') === 'yoga' ? 'yoga' : 'global',
   likes: {}, // keyed by community_feeds.id — { liked, count }, persisted via feed_likes table
   style: 'Hatha',
@@ -1177,8 +1242,14 @@ function setPerspective(mode) {
 ───────────────────────────────────────── */
 function buildCalendar() {
   var now = new Date();
-  var y = now.getFullYear(), m = now.getMonth(), today = now.getDate();
+  var view = STATE.calendarViewDate;
+  var y = view.getFullYear(), m = view.getMonth();
+  var isCurrentMonth = y === now.getFullYear() && m === now.getMonth();
+  var today = isCurrentMonth ? now.getDate() : -1; // -1 never matches any day-of-month
   document.getElementById('cal-label').textContent = MONTHS[m] + ' ' + y;
+
+  // Don't let users navigate into the future — "next" disables on the current month.
+  document.getElementById('cal-next-btn').disabled = isCurrentMonth;
 
   var firstDay = new Date(y, m, 1).getDay();
   var daysInMonth = new Date(y, m + 1, 0).getDate();
@@ -1221,14 +1292,26 @@ function buildCalendar() {
   }
 }
 
+// M7-6-3: navigate the calendar to the previous/next month (never past the
+// current month — see cal-next-btn's disabled state in buildCalendar()).
+function changeCalendarMonth(delta) {
+  var next = new Date(STATE.calendarViewDate.getFullYear(), STATE.calendarViewDate.getMonth() + delta, 1);
+  var now = new Date();
+  if (next.getFullYear() > now.getFullYear() || (next.getFullYear() === now.getFullYear() && next.getMonth() > now.getMonth())) {
+    return; // guard against future months even if triggered outside the disabled button (e.g. fast double-click)
+  }
+  STATE.calendarViewDate = next;
+  loadMonthLogs();
+}
+
 /* ─────────────────────────────────────────
    MONTH LOG LOADER — fetches real practice dates
 ───────────────────────────────────────── */
 async function loadMonthLogs() {
   if (!currentUser) return;
-  var now   = new Date();
-  var start = localDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
-  var end   = localDateStr(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  var view  = STATE.calendarViewDate;
+  var start = localDateStr(new Date(view.getFullYear(), view.getMonth(), 1));
+  var end   = localDateStr(new Date(view.getFullYear(), view.getMonth() + 1, 0));
 
   var result = await db
     .from('practice_logs')
@@ -1800,6 +1883,17 @@ async function loadBodyStatus() {
     .lte('treatment_date', end);
 
   STATE.recoveryRaw = recovery.data || [];
+
+  // M7-6-4: manual check-ins act as a fresh data point in the same scoring
+  // model, keyed directly by body category (coarser than a muscle zone).
+  var checkins = await db
+    .from('body_checkins')
+    .select('checkin_date, category, feeling')
+    .eq('user_id', currentUser.id)
+    .gte('checkin_date', start)
+    .lte('checkin_date', end);
+
+  STATE.checkinsRaw = checkins.data || [];
   renderBodyStatus();
 }
 
@@ -1857,20 +1951,38 @@ function recoveryTreatmentCountByZone() {
 // of is_private). Uses the body_fatigue_30day() SQL helper.
 async function loadFatigueTrend() {
   if (!currentUser) return;
-  var { data, error } = await db.rpc('body_fatigue_30day', { p_user_id: currentUser.id });
-  if (error) { console.error('loadFatigueTrend failed:', error); return; }
+  var [fatigueResult, recoveryResult] = await Promise.all([
+    db.rpc('body_fatigue_30day', { p_user_id: currentUser.id }),
+    db.rpc('body_recovery_30day', { p_user_id: currentUser.id }),
+  ]);
+  if (fatigueResult.error) console.error('loadFatigueTrend (fatigue) failed:', fatigueResult.error);
+  if (recoveryResult.error) console.error('loadFatigueTrend (recovery) failed:', recoveryResult.error);
+
+  var fatigueData  = fatigueResult.data || [];
+  var recoveryData = recoveryResult.data || [];
 
   var section = document.getElementById('fatigue-section');
-  var chartEl = document.getElementById('fatigue-chart');
-  if (!data || !data.length) { section.style.display = 'none'; return; }
-
+  if (!fatigueData.length && !recoveryData.length) { section.style.display = 'none'; return; }
   section.style.display = 'block';
+
+  renderTrendBars('fatigue-chart', fatigueData, 'serious_count', 'fatigue-bar', function(count) {
+    return count + ' fatigue marker' + (count === 1 ? '' : 's');
+  }, true);
+
+  renderTrendBars('recovery-chart', recoveryData, 'treatment_count', 'recovery-bar', function(count) {
+    return count + ' treatment' + (count === 1 ? '' : 's');
+  }, false);
+}
+
+// Renders a dense 30-day bar row (gaps filled with 0 so spacing stays even).
+// `highlightHigh` adds the '.high' class at count>=3 (used for fatigue, not recovery).
+function renderTrendBars(elId, data, countField, barClass, tooltipFn, highlightHigh) {
+  var chartEl = document.getElementById(elId);
   chartEl.innerHTML = '';
 
-  // Build a dense 30-day series (fill gaps with 0) so bar spacing is even
   var byDate = {};
-  data.forEach(function(row) { byDate[row.date] = row.serious_count; });
-  var maxCount = Math.max.apply(null, data.map(function(r) { return r.serious_count; }).concat([1]));
+  data.forEach(function(row) { byDate[row.date] = row[countField]; });
+  var maxCount = Math.max.apply(null, data.map(function(r) { return r[countField]; }).concat([1]));
 
   for (var i = 29; i >= 0; i--) {
     var d = new Date();
@@ -1879,11 +1991,50 @@ async function loadFatigueTrend() {
     var count = byDate[key] || 0;
     var heightPct = Math.max(4, Math.round((count / maxCount) * 100));
     var bar = document.createElement('div');
-    bar.className = 'fatigue-bar' + (count >= 3 ? ' high' : '');
+    bar.className = barClass + (highlightHigh && count >= 3 ? ' high' : '');
     bar.style.height = heightPct + '%';
-    bar.title = key + ': ' + count + ' fatigue marker' + (count === 1 ? '' : 's');
+    bar.title = key + ': ' + tooltipFn(count);
     chartEl.appendChild(bar);
   }
+}
+
+// M7-6-7: feedback teachers/studios have left on the student's own shared
+// sessions. Uses the pre-existing 'feedback' table + 'teacher_to_student'
+// direction (schema_phase13) — RLS's feedback_view policy already scopes
+// this to rows where the student owns the referenced session, so no extra
+// filter beyond direction is needed.
+async function loadTeacherFeedback() {
+  if (!currentUser) return;
+  var section = document.getElementById('teacher-feedback-section');
+  var listEl  = document.getElementById('teacher-feedback-list');
+  if (!section || !listEl) return;
+
+  var { data, error } = await db
+    .from('feedback')
+    .select('id, body, created_at, author_id, session_id, profiles!feedback_author_id_fkey(display_name), practice_logs!feedback_session_id_fkey(style_name, practice_date)')
+    .eq('direction', 'teacher_to_student')
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) { console.error('loadTeacherFeedback failed:', error); return; }
+
+  var items = data || [];
+  if (!items.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  listEl.innerHTML = items.map(function(item) {
+    var authorName = item.profiles ? item.profiles.display_name : 'Your teacher';
+    var session = item.practice_logs;
+    var sessionLabel = session ? (session.style_name || 'Practice') + ' · ' + session.practice_date : '';
+    var dateLabel = new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return (
+      '<div class="tf-item">' +
+        '<div class="tf-hdr"><span class="tf-author">' + esc(authorName) + '</span><span class="tf-date">' + dateLabel + '</span></div>' +
+        (sessionLabel ? '<div class="tf-session">On: ' + esc(sessionLabel) + '</div>' : '') +
+        '<div class="tf-body">' + esc(item.body) + '</div>' +
+      '</div>'
+    );
+  }).join('');
 }
 
 function computeBodyStatus() {
@@ -1909,6 +2060,19 @@ function computeBodyStatus() {
       if (fw === undefined) return;
       scores[cat] += fw * weight;
     });
+  });
+
+  // M7-6-4: manual check-ins feed the same weighted-decay model as a fresh
+  // data point, keyed directly by category (perspective-independent — a
+  // check-in isn't tied to a practice type, same treatment as recovery credit).
+  (STATE.checkinsRaw || []).forEach(function(checkin) {
+    var checkinDate = new Date(checkin.checkin_date + 'T00:00:00');
+    var daysAgo = Math.round((today - checkinDate) / 86400000);
+    if (daysAgo < 0 || daysAgo > 13) return;
+    var weight = daysAgo <= 4 ? 1.0 : daysAgo <= 9 ? 0.6 : 0.3;
+    var fw = BODY_FEELING_WEIGHT[checkin.feeling];
+    if (fw === undefined) return;
+    scores[checkin.category] += fw * weight;
   });
 
   // M7-3: subtract recovery credit from each body category (a treatment on a
@@ -2007,7 +2171,8 @@ function renderBodyStatus() {
   var el = document.getElementById('body-status-rows');
   if (!el) return;
 
-  var hasAnyFeelings = STATE.bodyRaw.some(function(log) { return (log.muscle_feelings || []).length; });
+  var hasAnyFeelings = STATE.bodyRaw.some(function(log) { return (log.muscle_feelings || []).length; })
+    || (STATE.checkinsRaw && STATE.checkinsRaw.length > 0);
   if (!hasAnyFeelings) {
     el.innerHTML = '<div class="feed-empty">' + STRINGS.bodyStatusEmpty + '</div>';
     return;
@@ -2048,6 +2213,82 @@ function renderBodyStatus() {
 }
 
 /* ─────────────────────────────────────────
+   M7-6-4: MANUAL BODY-STATUS CHECK-IN
+───────────────────────────────────────── */
+var CHECKIN_FEELINGS = {
+  relax:     { emoji: '😌', label: 'Relax' },
+  feelgood:  { emoji: '💪', label: 'Feel Good' },
+  sweetpain: { emoji: '🔥', label: 'Sweet Pain' },
+  tight:     { emoji: '⚡', label: 'Tight' },
+  sore:      { emoji: '🟠', label: 'Sore' },
+  pain:      { emoji: '🔴', label: 'Pain' },
+  injured:   { emoji: '🚨', label: 'Injured' },
+};
+var checkinSelectedCategory = null;
+
+function toggleCheckinPanel() {
+  var panel = document.getElementById('checkin-panel');
+  var btn = document.getElementById('checkin-toggle-btn');
+  var show = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  btn.classList.toggle('active', show);
+  if (show) {
+    checkinSelectedCategory = null;
+    document.getElementById('checkin-step-label').textContent = 'Which area?';
+    document.getElementById('checkin-feel-chips').style.display = 'none';
+    buildCheckinCategoryChips();
+  }
+}
+
+function buildCheckinCategoryChips() {
+  var wrap = document.getElementById('checkin-cat-chips');
+  wrap.innerHTML = '';
+  BODY_CATEGORIES.forEach(function(cat) {
+    var chip = document.createElement('button');
+    chip.className = 'checkin-chip';
+    chip.textContent = cat;
+    chip.onclick = function() {
+      checkinSelectedCategory = cat;
+      wrap.querySelectorAll('.checkin-chip').forEach(function(c) { c.classList.toggle('sel', c === chip); });
+      document.getElementById('checkin-step-label').textContent = 'How does your ' + cat.toLowerCase() + ' feel right now?';
+      buildCheckinFeelingChips();
+      document.getElementById('checkin-feel-chips').style.display = 'flex';
+    };
+    wrap.appendChild(chip);
+  });
+}
+
+function buildCheckinFeelingChips() {
+  var wrap = document.getElementById('checkin-feel-chips');
+  wrap.innerHTML = '';
+  Object.keys(CHECKIN_FEELINGS).forEach(function(key) {
+    var f = CHECKIN_FEELINGS[key];
+    var chip = document.createElement('button');
+    chip.className = 'checkin-chip';
+    chip.textContent = f.emoji + ' ' + f.label;
+    chip.onclick = function() { submitCheckin(key); };
+    wrap.appendChild(chip);
+  });
+}
+
+async function submitCheckin(feeling) {
+  if (!currentUser || !checkinSelectedCategory) return;
+  var { error } = await db.from('body_checkins').insert({
+    user_id: currentUser.id,
+    category: checkinSelectedCategory,
+    feeling: feeling,
+  });
+  if (error) {
+    console.error('submitCheckin failed:', error);
+    showToast('Could not save check-in — please try again');
+    return;
+  }
+  toggleCheckinPanel(); // close the panel
+  showToast('Check-in saved ✦');
+  await loadBodyStatus(); // recompute + re-render immediately
+}
+
+/* ─────────────────────────────────────────
    DAY LOGS MODAL — tap a logged day to see / delete sessions
 ───────────────────────────────────────── */
 function openDayLogs(day) {
@@ -2056,8 +2297,7 @@ function openDayLogs(day) {
   var recovery = (STATE.dayRecovery && STATE.dayRecovery[day]) || [];
   if (!logs.length && !recovery.length) return;
 
-  var now   = new Date();
-  var label = MONTHS[now.getMonth()] + ' ' + day;
+  var label = MONTHS[STATE.calendarViewDate.getMonth()] + ' ' + day;
   document.getElementById('day-modal-title').textContent = label;
 
   var list = document.getElementById('day-log-list');

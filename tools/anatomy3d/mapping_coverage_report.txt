@@ -1,6 +1,6 @@
 Mesh-to-Zone Mapping Coverage Report
-Generated: 2026-07-26T08:08:16.609Z
-Zones: 59 | Mapped mesh entries: 135 / 467 total meshes
+Generated: 2026-08-01T09:45:40.369Z
+Zones: 59 | Mapped mesh entries: 135 / 135 total meshes
 
 [OK (override)] Deltoid Anterior Head (bilateral) <- 2 mesh(es): clavicular part of left deltoid | clavicular part of right deltoid
 [OK (override)] Deltoid Middle Head (bilateral) <- 2 mesh(es): acromial part of left deltoid | acromial part of right deltoid

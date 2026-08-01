@@ -24,6 +24,8 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M7-2 | Post-Launch Polish: UX refinements (signup, quotes, rename/delete, account mgmt) | §3.2, §3.7 | ✅ Done (8/8 items QA'd) | Haiku 4.5 / Sonnet 5 |
 | M7-3 | Recovery & Treatment Log (massage/physio/needling as a mitigating factor) | §3.2.3 | 🚧 Implemented (pending migration run + live test) | Sonnet 5 |
 | M7-4 | Interactive 3D Anatomy Viewer (rotatable body-map, click-to-select) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
+| M7-5 | 3D Anatomy Layers (skeleton overlay, superficial/deep muscle toggle) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
+| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | ✅ Done | Sonnet 5 / Haiku 4.5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -713,6 +715,228 @@ commit. Full interactive/mobile QA still recommended once deployed.
 
 **Attribution:** `assets/anatomy3d/ATTRIBUTION.md` — CC BY-SA 2.1 JP (BodyParts3D) / CC BY-SA
 4.0 (Z-Anatomy) credit, also surfaced in-app in the 3D mode footer.
+
+---
+
+## M7-5 — 3D Anatomy Layers (Skeleton Overlay + Superficial/Deep Muscle Toggle)
+
+**Status:** ✅ Implemented + verified (headless browser E2E on both log pages, real UI clicks)
+
+**Model:** Sonnet 5 — a genuine feature extension with real engineering risk (a subtle
+three.js API gotcha was caught during testing, see below).
+
+**Rationale (user request):** after trying M7-4, the user found the 3D model "doesn't look
+like a real body" and asked to brainstorm improvements, then chose the medium-effort option:
+see different muscles in various layers. There is no skin mesh in the open-source dataset
+(BodyExplorer ships muscles + a full skeleton, no integument), so rather than fake a skin
+layer, this milestone delivers what's genuinely available and anatomically real: a
+**skeleton overlay** visible through translucent muscles, and a **superficial/deep muscle
+layer toggle** (hide the outer muscle layer to reveal what's underneath — rotator cuff,
+erector spinae, serratus anterior, etc.) — literally "different muscles in various layers."
+
+**Asset pipeline addition:** confirmed `public/skeleton.glb` exists in BodyExplorer's source
+(201 individually-named bones — the retired old 3D model, by contrast, was only 3 unnamed
+merged blobs, confirming it could never have supported this). Verified the skeleton and
+muscle meshes share the same bounding-box origin/scale/axes (both come from the same source
+pipeline), so no coordinate reconciliation was needed. Draco-compressed 9.8 MB → 1.8 MB (kept
+in full — bones are visual context only, not individually clickable, so no pruning needed).
+Both assets are independently lazy-loaded: opening the 3D view costs ~1.6 MB (muscles only);
+the skeleton's extra ~1.8 MB only downloads if a user actually toggles it on.
+
+**Superficial/deep classification:** `tools/anatomy3d/generate_mesh_zone_map.cjs` now also
+emits `MUSCLE_LAYER` (superficial | deep) for every canonical zone, based on standard gross
+anatomy — e.g. rotator cuff muscles (infraspinatus, teres minor), erector spinae, rhomboid
+major, serratus anterior, and soleus are classic deep-layer examples; deltoid, pectoralis
+major, latissimus dorsi, trapezius, rectus abdominis, gluteus maximus, and gastrocnemius are
+classic superficial examples. 37 of 114 zone-entries classified deep.
+
+**Viewer additions (`assets/anatomy3d/anatomy-viewer.js`):**
+- `setSkeletonVisible(show)` — lazy-loads `skeleton.glb` on first use, adds it under the same
+  rotation as the muscle model, and fades muscle opacity (1.0 → 0.4) so bones show through.
+- `setDeepLayerOnly(show)` — hides superficial-layer meshes to expose deep ones.
+- Per-layer base coloring: superficial muscles keep the warm-tan tone; deep muscles render in
+  a distinct deeper red-brown tone (independent of the feeling/relief color overlay), so the
+  two layers read as anatomically different tissue even before any toggle is touched.
+- Added a rim light (in addition to the existing key + fill lights) — the single biggest
+  lighting change for making the model read as anatomical form rather than a flat, unshaded
+  "plastic" surface, since rim lighting is what separates overlapping muscle bellies visually.
+
+**Critical bug caught during testing — `.visible` does not affect raycasting.** Three.js's
+`Raycaster.intersectObject()` only checks `object.layers`, never `object.visible` — a
+genuine, easy-to-miss characteristic of the library (confirmed by reading the vendored
+three.js source directly). Setting `mesh.visible = false` on superficial meshes correctly
+hid them visually, but the raycaster kept "hitting" them anyway, so tapping where a hidden
+superficial muscle used to be still (incorrectly) resolved to that hidden zone instead of the
+now-exposed deep one underneath. Fixed by explicitly filtering raycaster hits by
+`.object.visible` in the click handler. Caught via a targeted headless-browser regression
+test (find a superficial zone by click → enable deep-only → click the same point → assert
+the previous zone never resolves again) before this reached the user — not something code
+review alone would have caught, since the bug is a library API characteristic, not a typo.
+
+**UI:** both log pages gained two independent toggle buttons (🦴 Skeleton, 🔬 Deep Layer)
+alongside the existing Front/Back camera presets in 3D mode. Buttons reset to off each time
+the viewer is freshly mounted (layer state doesn't persist across 3D-mode close/reopen,
+keeping the mental model simple).
+
+**Verification:** headless Chromium E2E via real UI clicks (not direct API calls) on both
+pages — mount, Skeleton button toggle, Deep Layer button toggle, click-to-select against an
+exposed deep muscle (resolved correctly, e.g. "Right Rhomboid Major"), and the full
+mount → toggle layers → switch to 2D → close lifecycle, all confirmed with zero errors before
+commit. A broader grid-click regression test confirmed 9 distinct deep zones remain
+clickable and *only* deep zones resolve while deep-layer-only mode is active.
+
+**Deferred / follow-up:**
+- Mobile-specific opacity/lighting tuning once live on real devices.
+- A "peel" animation (rather than an instant show/hide) for the deep-layer toggle.
+- Per-muscle-group coloring (beyond the two-tone superficial/deep split) if further visual
+  differentiation is wanted.
+
+---
+
+## M7-6 — Post-3D Enhancements
+
+**Status:** ✅ Done — all 8 items delivered. Requested after live M7-4/M7-5 testing, delivered one
+at a time per user instruction. Ambiguous items (M7-6-4, -7, -8) were raised as questions; no
+response was received, so each proceeded with its stated recommended default, clearly flagged in
+this document, redirectable at any time.
+
+**Model:** Sonnet 5 for schema/RLS/multi-file items; a one-line SQL bug fix (M7-6-5a) is
+Haiku-level but executed directly rather than delegated, given the small size.
+
+### M7-6-5 — Progress Trend showed no data + add Recovery trend ✅ Done
+
+**Bug found:** `body_fatigue_30day()` (schema_phase13) compared feelings against capitalized
+`'Sore'/'Pain'/'Injured'`, but every feeling value the app ever writes is lowercase
+(`sore`/`pain`/`injured` — see `FEELINGS` in `lumen-log-practice-3d.html`). The comparison could
+never match, so `serious_count` was always 0 — for every user, since the function shipped. This
+explains "Progress Trend shows no data."
+
+**Fix + addition (`schema_phase26_fatigue_fix_and_recovery_trend.sql`):**
+- `body_fatigue_30day()`: lowercase the comparison.
+- New `body_recovery_30day()`: mirrors the fatigue helper but counts `recovery_logs` treatment
+  activity per day (session count + areas-treated count).
+- `index.html`: `loadFatigueTrend()` now fetches both in parallel and renders two labeled bar
+  rows ("🔥 Practice Fatigue" existing, "🌿 Recovery Activity" new) sharing one 30-day x-axis;
+  the section shows if *either* series has data (previously required fatigue data specifically).
+
+### M7-6-3 — Calendar month navigation ✅ Done
+
+Added `STATE.calendarViewDate` (previously the calendar always read `new Date()`, so users could
+only ever see the current month). `buildCalendar()`, `loadMonthLogs()`, and `openDayLogs()` now
+all read the viewed month instead of always assuming "today." Added ‹ › nav buttons; "next" is
+disabled once the viewed month reaches the current month (no browsing into the future).
+
+### M7-6-6 — Teacher selection when logging practice ✅ Done
+
+**Scope note:** delivered the minimal slice requested — student-side teacher attribution on a
+practice log. Deferred the broader "informal attendance" studio-analytics aggregation from the
+pre-existing M8 Follow-up note (class_id linkage, `studio_class_tiers()` updates) until a studio
+actually needs that reporting; that stays a separate future milestone.
+
+- `schema_phase27_practice_log_teacher.sql`: adds nullable `teacher_id` (FK to `profiles`) +
+  `teacher_name` (free-text fallback) to `practice_logs`. No RLS change needed — the existing
+  owner-only policy already covers writing these columns on the student's own rows.
+- `lumen-log-practice-3d.html`: fetches the student's active `teacher`-type linkages; if 1+
+  exist, shows an optional "With Teacher" selector (Self-practice / a linked teacher / "Other…"
+  free-text) in the Practice Type section. Hidden entirely for solo practitioners. Prefills
+  correctly in edit mode.
+
+### M7-6-1 + M7-6-2 — Retire 2D body map; feeling picker moved to top ✅ Done
+
+Per user's explicit choice to go 3D-only. The M3c 2D reference-photo + click-list interaction
+(List/3D toggle, front/back photo swap, `renderMuscleList()`) is fully removed from both
+`lumen-log-practice-3d.html` and `lumen-log-recovery.html` — the 3D viewer now mounts immediately
+when the body-map modal opens, no mode selection needed. `MUSCLE_LIST` itself is kept (it's the
+canonical zone taxonomy the 3D mesh-mapping pipeline parses directly from this file — see
+`tools/anatomy3d/generate_mesh_zone_map.cjs`), but is no longer rendered as a full list.
+
+**M7-6-2 (moved with this change):** the feeling-picker + a persistent hint line are now anchored
+at the **top** of the modal (immediately below the header, before the 3D canvas/controls) instead
+of below the model — addressing the reported difficulty of needing to scroll down to reach the
+picker after tapping a muscle.
+
+**Gap-zone fallback (recommended default, no response received):** the 3 zones with no
+corresponding 3D mesh (Achilles, Iliotibial Band, Tendinous Inscriptions — tendon/fascia
+structures absent from the open-source muscle dataset) get a small collapsed `<details>` list
+below the 3D model, reusing the same row/tap/feeling-picker mechanics. Collapsed by default so it
+doesn't clutter the primary 3D experience; expands on tap.
+
+**Verified:** headless-browser E2E on both pages — mode toggle and 2D wrap confirmed absent from
+the DOM, 3D mounts on open with no extra click, feeling-picker area precedes the 3D container in
+DOM order, all 3 gap zones render and are independently tappable/markable, the main 3D model
+click-to-select still resolves correctly, and close→reopen remounts cleanly with no errors.
+
+### M7-6-4 — Manual body-status check-in ✅ Done
+
+**Recommended default used (no response received):** a check-in is **not** a manual override of
+the computed Body Status — it's stored as its own signal and folded into the same weighted-decay
+scoring model already used for practice-log muscle feelings, keyed by body category rather than a
+specific muscle zone (coarser-grained, since a check-in isn't tied to a practice session). This
+avoids two competing sources of truth for the same widget.
+
+- `schema_phase28_body_checkins.sql`: new `body_checkins` table (`user_id`, `checkin_date`,
+  `category` — one of the 6 `BODY_CATEGORIES` — `feeling` — one of the 7 canonical feeling keys).
+  Owner-only RLS; deliberately **no** linked-teacher SELECT policy (private signal, unlike
+  practice/recovery logs which are shareable). Scoped to the Body Status widget only — does not
+  feed the per-zone Rest Engine, which needs a specific muscle zone it can't derive from a
+  category-level check-in.
+- `index.html`: added a "🔄 Check In" button on the Body Status card, opening a 2-step chip picker
+  (pick a body area → pick how it feels right now). Submitting inserts into `body_checkins` and
+  immediately re-runs `loadBodyStatus()`/`computeBodyStatus()` so the widget reflects it without a
+  page reload. `computeBodyStatus()` applies the same recency-decay buckets and
+  `BODY_FEELING_WEIGHT` values used for practice-log feelings, so a check-in and a practice-log
+  feeling are worth the same.
+
+**Verified:** headless-browser E2E — check-in button opens the panel, all 6 category chips and 7
+feeling chips render, selecting a category reveals the feeling step, selecting a feeling submits
+the exact expected `{user_id, category, feeling}` payload, closes the panel, shows a confirmation
+toast, and triggers a Body Status refresh — no console errors.
+
+### M7-6-7 — Teacher→student feedback ✅ Done
+
+**Scope pivot from the originally-flagged default:** while investigating, found the `feedback`
+table already had full teacher→student support built in `schema_phase13_community_architecture.sql`
+(direction field, `feedback_teacher_insert` RLS policy requiring a non-private, consented, actively
+linked session) — this table + policy was a P2 placeholder wired for exactly this feature but never
+given a UI. Delivered the session-tied form (matches "especially after the class") rather than the
+originally-flagged untied general note, since the existing schema/RLS already enforces the
+session-tied shape and it fits the user's stated trigger better. **No new schema required.**
+
+- `teacher.html`: each shared session row in the student roster gets a "💬 Send Feedback" button
+  that expands an inline composer; submitting inserts `{author_id, direction:
+  'teacher_to_student', session_id, body}` into `feedback` — RLS confirms the session belongs to a
+  linked, consenting student before allowing the insert.
+- `index.html`: new "Feedback from Teachers" dashboard card (`loadTeacherFeedback()`), listing
+  feedback received on the student's own sessions, author name, session context, and date — RLS's
+  `feedback_view` policy already scopes results to the student's own sessions, so the query only
+  needs to filter on `direction`.
+
+**Verified:** headless-browser E2E on both pages — teacher composer opens on click, submits the
+exact expected insert payload, and shows a "sent" confirmation; separately, seeding a
+`teacher_to_student` feedback row and loading the student dashboard renders it correctly with
+author, session, and body all present, no console errors.
+
+### M7-6-8 — Pro tier infrastructure ✅ Done
+
+**Recommended default used (no response received):** schema + flag only this pass — no checkout,
+billing, or payment processing. Just the data model + a visible indicator so future features have
+something to gate on, and a developer can flip an account to Pro manually in the interim.
+
+- `schema_phase29_pro_tier.sql`: `profiles.tier` ('free'/'pro', default 'free') + `pro_since`
+  timestamp. A `protect_tier_column()` trigger reverts any change to these columns made by the row
+  owner's own authenticated session (`auth.uid() = OLD.id`) — self-service upgrade is not possible
+  from the client. Direct SQL run in the Supabase Dashboard (no request JWT, so `auth.uid()` is
+  null there) is the only way to grant Pro today; a future checkout-completion function can update
+  the same columns without any further schema change.
+- `profile.html`: teacher/studio accounts see a "🌟 Pro" or "Free" badge next to their role badge.
+  Students don't see a tier badge — Pro is a teacher/studio-only concept per the request.
+
+**Verified:** headless-browser E2E — badge renders "Free" for a free-tier teacher, "🌟 Pro" for a
+pro-tier teacher, and is absent entirely for a student profile.
+
+**Not yet built (future milestone, once actual Pro-only features exist):** checkout/billing
+integration, the specific features to restrict, and an `isProUser()` gating helper — this pass
+only lays the groundwork the user asked for "first."
 
 ---
 

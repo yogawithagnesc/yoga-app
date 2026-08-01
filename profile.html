@@ -47,6 +47,9 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .id-name{font-family:'Cormorant Garamond','Noto Serif TC',serif;font-size:22px;color:var(--tx-1);line-height:1.2}
 .id-email{font-size:12px;color:var(--tx-3);margin-top:2px}
 .role-badge{margin-top:6px;display:inline-block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border-radius:var(--r-sm);padding:3px 9px}
+.tier-badge{margin-left:6px}
+.tier-badge.pro{color:var(--bg);background:var(--accent)}
+.tier-badge.free{color:var(--tx-2);background:var(--bg-el);border:1px solid var(--br-def)}
 
 /* Join code display */
 .code-row{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:14px 16px;margin-bottom:10px}
@@ -153,6 +156,7 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
           </div>
           <div class="id-email" id="id-email">—</div>
           <span class="role-badge" id="id-role">—</span>
+          <span class="role-badge tier-badge" id="id-tier" style="display:none">—</span>
         </div>
       </div>
       <div class="username-section">
@@ -242,7 +246,7 @@ let currentUserRole = null
     currentUser = session.user
 
     const { data: profile, error: profileError } = await db.from('profiles')
-      .select('display_name, email, role, username')
+      .select('display_name, email, role, username, tier')
       .eq('id', currentUser.id)
       .single()
 
@@ -266,6 +270,16 @@ let currentUserRole = null
       usernameInput.dataset.original = profile.username
     }
     usernameInput.addEventListener('input', debounceUsernameCheck)
+
+    // M7-6-8: Pro tier badge (teacher/studio only — no self-service upgrade
+    // yet, this just surfaces the flag a developer can set via SQL Editor)
+    if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
+      const tierEl = document.getElementById('id-tier')
+      const isPro = profile.tier === 'pro'
+      tierEl.textContent = isPro ? '🌟 Pro' : 'Free'
+      tierEl.className = 'role-badge tier-badge ' + (isPro ? 'pro' : 'free')
+      tierEl.style.display = 'inline-block'
+    }
 
     // Show/hide sections based on role (synchronous, no flashing)
     if (currentUserRole === 'teacher' || currentUserRole === 'studio') {

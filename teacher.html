@@ -149,6 +149,13 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
 .bulletin-compose textarea:focus{border-color:var(--accent)}
 .bulletin-send{background:var(--accent);border:none;border-radius:var(--r-md);padding:0 16px;color:var(--tx-inv);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
 .bulletin-send:hover{background:var(--accent-h)}
+.sr-feedback-btn{font-size:11px;color:var(--accent);margin-top:8px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;background:none;border:none;padding:0;font-family:inherit}
+.sr-feedback-compose{display:flex;gap:8px;margin-top:8px}
+.sr-feedback-compose textarea{flex:1;background:var(--bg);border:1px solid var(--br-def);border-radius:var(--r-md);padding:8px 10px;font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:12px;color:var(--tx-1);outline:none;resize:none;min-height:38px}
+.sr-feedback-compose textarea:focus{border-color:var(--accent)}
+.sr-feedback-send{background:var(--accent);border:none;border-radius:var(--r-md);padding:0 14px;color:var(--tx-inv);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
+.sr-feedback-send:hover{background:var(--accent-h)}
+.sr-feedback-sent{font-size:11px;color:var(--success);margin-top:8px}
 .create-group-btn{width:100%;background:transparent;border:1px dashed var(--accent);border-radius:var(--r-lg);padding:14px;color:var(--accent);font-family:'DM Sans','Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px}
 .create-group-btn:hover{background:var(--accent-dim)}
 .group-form{background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);padding:16px;margin-bottom:16px}
@@ -513,8 +520,45 @@ function buildSessionRowHtml(s) {
       (muscles ? '<div class="sr-muscles">' + muscles + '</div>' : '') +
       notesHtml +
       mediaBtn +
+      '<button class="sr-feedback-btn" id="fb-toggle-' + s.id + '" onclick="toggleFeedbackComposer(\'' + s.id + '\')">💬 Send Feedback</button>' +
+      '<div class="sr-feedback-compose" id="fb-compose-' + s.id + '" style="display:none">' +
+        '<textarea id="fb-input-' + s.id + '" placeholder="Share an enhancement area or note for this session…" maxlength="2000"></textarea>' +
+        '<button class="sr-feedback-send" onclick="sendSessionFeedback(\'' + s.id + '\')">Send</button>' +
+      '</div>' +
     '</div>'
   )
+}
+
+// M7-6-7: Teacher → student feedback on a shared session. Uses the
+// feedback table's pre-existing 'teacher_to_student' direction + RLS
+// (schema_phase13) — no new schema needed, only this compose UI.
+function toggleFeedbackComposer(sessionId) {
+  const box = document.getElementById('fb-compose-' + sessionId)
+  if (!box) return
+  box.style.display = box.style.display === 'none' ? 'flex' : 'none'
+}
+
+async function sendSessionFeedback(sessionId) {
+  const input = document.getElementById('fb-input-' + sessionId)
+  const body = input.value.trim()
+  if (!body) return
+
+  const { error } = await db.from('feedback').insert({
+    author_id: currentUser.id,
+    direction: 'teacher_to_student',
+    session_id: sessionId,
+    body: body,
+  })
+
+  if (error) { console.error('Send feedback failed:', error); return }
+
+  const box = document.getElementById('fb-compose-' + sessionId)
+  const btn = document.getElementById('fb-toggle-' + sessionId)
+  box.style.display = 'none'
+  input.value = ''
+  if (btn) {
+    btn.outerHTML = '<div class="sr-feedback-sent">✓ Feedback sent</div>'
+  }
 }
 
 function escapeHtmlTeacher(s) {

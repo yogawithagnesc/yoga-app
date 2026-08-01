@@ -112,17 +112,12 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .area-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-full);font-size:11px;border:1px solid;font-weight:500;animation:fadeIn .15s ease}
 .empty-hint{font-size:12px;color:var(--tx-3);padding:4px 0}
 
-/* SVG Body Map (M3c: primary interface) */
-.svg-fallback{display:grid;grid-template-columns:40px 1fr 40px;grid-template-rows:auto auto auto;align-items:center;gap:12px 8px;padding:20px;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);margin-bottom:12px}
-.svg-fallback::before{content:'🖐 Tap to\AMark';grid-column:1;grid-row:1/4;white-space:pre;font-size:11px;color:var(--tx-3);text-align:center;line-height:1.3;align-self:center}
-.svg-fallback::after{content:'🖐 Tap to\AMark';grid-column:3;grid-row:1/4;white-space:pre;font-size:11px;color:var(--tx-3);text-align:center;line-height:1.3;align-self:center}
-.svg-view-toggle{grid-column:2;grid-row:1;display:flex;gap:6px;justify-content:center}
+/* Body Map (M7-6-1: 3D-only entry point + modal controls) */
+.svg-view-toggle{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
 .svg-toggle-btn{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .svg-toggle-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-.view-full-btn{grid-column:2;grid-row:3;display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-ov);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif;justify-content:center}
+.view-full-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-ov);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif;justify-content:center}
 .view-full-btn:hover{border-color:var(--accent);color:var(--accent)}
-.bodymap-photo{grid-column:2;grid-row:2;width:100%;max-width:260px;border-radius:var(--r-md);display:block}
-.bodymap-photo-full{width:100%;max-width:380px;border-radius:var(--r-md);display:block}
 
 /* Full-screen anatomy modal */
 .anatomy-modal{position:fixed;inset:0;z-index:300;background:var(--bg);display:none;flex-direction:column}
@@ -314,55 +309,48 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       Toggle front/back, then tap a muscle to mark it as treated and note how much relief you felt. Treated areas help ease the rest alarm for those muscles.
     </div>
 
-    <div class="svg-fallback" id="svg-fallback">
-      <div class="svg-view-toggle" id="svg-view-toggle">
-        <button class="svg-toggle-btn active" data-view="front">Front</button>
-        <button class="svg-toggle-btn" data-view="back">Back</button>
-      </div>
-      <img id="bodymap-photo" class="bodymap-photo" src="assets/bodymap-front.png" alt="Body map">
-      <button class="view-full-btn" onclick="openFullAnatomy()">🔍 Tap to Mark Areas</button>
-    </div>
+    <!-- M7-6-1: 3D body map is now the only entry point (2D reference-photo
+         list retired). Opens directly into the 3D-only modal below. -->
+    <button class="view-full-btn" onclick="openFullAnatomy()" style="width:100%;justify-content:center;padding:16px">🧊 Open 3D Body Map</button>
 
+    <!-- M7-6-1/M7-6-2: 3D-only body-map modal. The feeling picker is
+         anchored at the TOP (right below the header) so marking a muscle
+         never requires scrolling past the model. -->
     <div class="anatomy-modal" id="anatomy-modal">
       <div class="am-header">
         <div class="am-title">Areas Treated</div>
         <button class="am-close" onclick="closeFullAnatomy()">✕</button>
       </div>
       <div class="am-body">
-        <!-- M7-4: 2D List / 3D Model mode toggle -->
-        <div class="svg-view-toggle" id="anatomy-mode-toggle">
-          <button class="svg-toggle-btn active" data-mode="list">☰ List</button>
-          <button class="svg-toggle-btn" data-mode="3d">🧊 3D Model</button>
-        </div>
-
-        <!-- 2D mode (M3c, default) -->
-        <div id="anatomy-2d-wrap" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:14px">
-          <div class="svg-view-toggle" id="svg-view-toggle-full">
-            <button class="svg-toggle-btn active" data-view="front">Front</button>
-            <button class="svg-toggle-btn" data-view="back">Back</button>
+        <!-- M7-6-2: feeling picker + hint, anchored at top -->
+        <div style="width:100%;max-width:420px">
+          <div class="am-footer" id="anatomy-footer-hint" style="padding:0 0 10px">🖐 Drag to rotate · Tap a muscle to mark it as treated</div>
+          <div class="feel-pick" id="feel-pick-full">
+            <div class="fp-title" id="fp-muscle-name-full">—</div>
+            <div class="fp-row" id="fp-row-full"></div>
           </div>
-          <img id="bodymap-photo-full" class="bodymap-photo-full" src="assets/bodymap-front.png" alt="Body map">
-          <div class="muscle-list" id="muscle-list"></div>
         </div>
 
-        <!-- 3D mode (M7-4) -->
-        <div id="anatomy-3d-wrap" style="width:100%;display:none;flex-direction:column;align-items:center;gap:10px">
-          <div class="svg-view-toggle" id="anatomy3d-view-toggle">
-            <button class="svg-toggle-btn active" data-view3d="front">Front</button>
-            <button class="svg-toggle-btn" data-view3d="back">Back</button>
-          </div>
-          <div id="anatomy3d-container" style="width:100%;max-width:420px;height:420px;border-radius:var(--r-md);overflow:hidden;background:var(--bg-el)"></div>
-          <div id="anatomy3d-loading" style="font-size:12px;color:var(--tx-3)">Loading 3D model…</div>
-          <div class="info-note" style="text-align:center">Drag to rotate · Tap a muscle to mark it as treated · <span id="anatomy3d-gaps-note"></span></div>
-          <div class="info-note" style="text-align:center;opacity:.6">3D anatomy data: BodyParts3D / Z-Anatomy (CC BY-SA)</div>
+        <div class="svg-view-toggle" id="anatomy3d-view-toggle">
+          <button class="svg-toggle-btn active" data-view3d="front">Front</button>
+          <button class="svg-toggle-btn" data-view3d="back">Back</button>
         </div>
-
-        <div class="feel-pick" id="feel-pick-full" style="width:100%;max-width:420px">
-          <div class="fp-title" id="fp-muscle-name-full">—</div>
-          <div class="fp-row" id="fp-row-full"></div>
+        <!-- M7-5: anatomical layer controls -->
+        <div class="svg-view-toggle" id="anatomy3d-layer-toggle">
+          <button class="svg-toggle-btn" data-layer="skeleton">🦴 Skeleton</button>
+          <button class="svg-toggle-btn" data-layer="deep">🔬 Deep Layer</button>
         </div>
+        <div id="anatomy3d-container" style="width:100%;max-width:420px;height:420px;border-radius:var(--r-md);overflow:hidden;background:var(--bg-el)"></div>
+        <div id="anatomy3d-loading" style="font-size:12px;color:var(--tx-3)">Loading 3D model…</div>
 
-        <div class="am-footer" id="anatomy-footer-hint">🖐 Tap a muscle name to mark it as treated</div>
+        <!-- M7-6-1: fallback for the handful of tendon/fascia zones with no
+             3D mesh in the open-source dataset (Achilles, IT Band, etc.) -->
+        <details id="anatomy-gap-fallback" style="width:100%;max-width:420px;display:none">
+          <summary style="cursor:pointer;font-size:12px;color:var(--tx-2);padding:8px 0">Other areas not shown in 3D</summary>
+          <div id="gap-zone-list" style="display:flex;flex-direction:column;gap:6px;padding:6px 0 0"></div>
+        </details>
+
+        <div class="info-note" style="text-align:center;opacity:.6">3D anatomy data: BodyParts3D / Z-Anatomy (CC BY-SA)</div>
       </div>
     </div>
 
@@ -861,8 +849,14 @@ async function saveRecovery() {
     : await db.from('recovery_logs').insert(payload);
 
   if (error) {
-    console.error('Save error:', error);
-    showToast(STRINGS.saveFailed);
+    console.error('Save error:', error.message || error, error);
+    let msg = STRINGS.saveFailed;
+    if (error.code === '42P01' || /relation .* does not exist/i.test(error.message || '')) {
+      msg = 'Recovery logging isn\'t set up yet on the server (missing database table). Please contact support.';
+    } else if (error.message) {
+      msg = 'Save failed: ' + error.message;
+    }
+    showToast(msg);
     btn.disabled = false;
     btn.innerHTML = editSessionId ? 'Update Recovery ✎' : 'Save Recovery ✦';
     return;
@@ -882,12 +876,11 @@ function showToast(msg) {
 window.showToast = showToast;
 
 // ══════════════════════════════════════
-//  BODY MAP — reference photo + clickable muscle-name list
-//  (shared taxonomy with lumen-log-practice-3d.html so the
-//   canonical `zone` keys line up with BODY_ZONE_MAP + rest engine)
+//  BODY MAP ZONE TAXONOMY (shared with lumen-log-practice-3d.html so
+//  canonical `zone` keys line up with BODY_ZONE_MAP + rest engine).
+//  Interaction is 3D-only (M7-6-1); MUSCLE_LIST is still consulted
+//  directly for the small gap-zone fallback list (renderGapZoneList()).
 // ══════════════════════════════════════
-const BODYMAP_IMG = { front: 'assets/bodymap-front.png', back: 'assets/bodymap-back.png' };
-
 const MUSCLE_LIST = {
   front: [
     { header: 'Neck', items: [
@@ -1005,56 +998,36 @@ const MUSCLE_LIST = {
 };
 
 const muscleStates = {}; // zone -> relief key
-let bodymapViewCompact = 'front';
-let bodymapViewFull = 'front';
 
 function initBodyMap() {
-  document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
-  document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
   buildFeelPickerButtons('fp-row-full');
   buildBodyLegend();
   renderAreaTags();
 }
 
+// M7-6-1: 3D is now the only body-map interaction mode — opening the modal
+// mounts it immediately (previously gated behind a List/3D toggle).
 function openFullAnatomy() {
   document.getElementById('anatomy-modal').classList.add('show');
-  bodymapViewFull = bodymapViewCompact;
-  syncFullToggleUI();
-  document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
-  renderMuscleList(bodymapViewFull);
+  mountAnatomy3D();
 }
 function closeFullAnatomy() {
   document.getElementById('anatomy-modal').classList.remove('show');
   document.getElementById('feel-pick-full').classList.remove('show');
   window.pendingZone = null;
-  bodymapViewCompact = bodymapViewFull;
-  document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
-  syncCompactToggleUI();
   disposeAnatomy3D(); // reclaim the WebGL context; muscles.glb itself stays cached for next open
 }
 window.openFullAnatomy = openFullAnatomy;
 window.closeFullAnatomy = closeFullAnatomy;
 
-// ─── M7-4: 2D LIST / 3D MODEL MODE TOGGLE ───
-let anatomy3DViewer = null; // mounted viewer instance, or null when not in 3D mode
-
-document.querySelectorAll('#anatomy-mode-toggle .svg-toggle-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const mode = e.currentTarget.getAttribute('data-mode');
-    document.querySelectorAll('#anatomy-mode-toggle .svg-toggle-btn').forEach(b => b.classList.toggle('active', b === e.currentTarget));
-    document.getElementById('anatomy-2d-wrap').style.display = mode === 'list' ? 'flex' : 'none';
-    document.getElementById('anatomy-3d-wrap').style.display = mode === '3d' ? 'flex' : 'none';
-    document.getElementById('anatomy-footer-hint').textContent = mode === '3d'
-      ? '🖐 Drag to rotate · Tap a muscle to mark it as treated'
-      : '🖐 Tap a muscle name to mark it as treated';
-    if (mode === '3d') mountAnatomy3D(); else disposeAnatomy3D();
-  });
-});
+let anatomy3DViewer = null; // mounted viewer instance, or null when the modal is closed
 
 function mountAnatomy3D() {
   if (anatomy3DViewer || !window.LumenAnatomyViewer) return; // already mounted, or module still loading
   const loadingEl = document.getElementById('anatomy3d-loading');
   loadingEl.style.display = 'block';
+  // A fresh viewer always starts with layers off — reset the buttons to match.
+  document.querySelectorAll('#anatomy3d-layer-toggle .svg-toggle-btn').forEach(b => b.classList.remove('active'));
 
   window.LumenAnatomyViewer.mount(document.getElementById('anatomy3d-container'), {
     onZoneTap: (zone, label) => muscleTap(zone, label),
@@ -1063,12 +1036,10 @@ function mountAnatomy3D() {
   }).then((viewer) => {
     anatomy3DViewer = viewer;
     loadingEl.style.display = 'none';
-    const gaps = window.ANATOMY3D_GAPS || [];
-    document.getElementById('anatomy3d-gaps-note').textContent = gaps.length
-      ? `Not shown in 3D: ${gaps.join(', ')} — use the List view for these` : '';
+    renderGapZoneList(); // M7-6-1: window.ANATOMY3D_GAPS is populated once mount() resolves
   }).catch((err) => {
     console.error('3D anatomy viewer failed to load:', err);
-    loadingEl.textContent = 'Could not load the 3D model — please use List view';
+    loadingEl.textContent = 'Could not load the 3D model — please try again';
   });
 }
 
@@ -1085,34 +1056,67 @@ document.querySelectorAll('#anatomy3d-view-toggle .svg-toggle-btn').forEach(btn 
   });
 });
 
-function syncCompactToggleUI() {
-  document.querySelectorAll('#svg-view-toggle .svg-toggle-btn').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('data-view') === bodymapViewCompact);
+// M7-5: layer controls (independent toggles, not mutually exclusive like front/back).
+document.querySelectorAll('#anatomy3d-layer-toggle .svg-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    if (!anatomy3DViewer) return;
+    const isNowOn = !e.currentTarget.classList.contains('active');
+    e.currentTarget.classList.toggle('active', isNowOn);
+    const layer = e.currentTarget.getAttribute('data-layer');
+    if (layer === 'skeleton') anatomy3DViewer.setSkeletonVisible(isNowOn);
+    else if (layer === 'deep') anatomy3DViewer.setDeepLayerOnly(isNowOn);
   });
-}
-function syncFullToggleUI() {
-  document.querySelectorAll('#svg-view-toggle-full .svg-toggle-btn').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('data-view') === bodymapViewFull);
-  });
-}
+});
 
-document.querySelectorAll('#svg-view-toggle .svg-toggle-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    bodymapViewCompact = e.currentTarget.getAttribute('data-view');
-    syncCompactToggleUI();
-    document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
+// M7-6-1: fallback list for the handful of tendon/fascia zones with no 3D
+// mesh in the open-source dataset (window.ANATOMY3D_GAPS, set by
+// mesh-zone-map.js — see assets/anatomy3d/). Reuses the M3c muscle-list
+// row styling. Looked up against MUSCLE_LIST (still the canonical zone
+// taxonomy source) purely for display label + bilateral metadata.
+function renderGapZoneList() {
+  const gaps = window.ANATOMY3D_GAPS || [];
+  const details = document.getElementById('anatomy-gap-fallback');
+  const list = document.getElementById('gap-zone-list');
+  if (!gaps.length) { details.style.display = 'none'; return; }
+  details.style.display = 'block';
+  list.innerHTML = '';
+
+  const allItems = [...MUSCLE_LIST.front, ...MUSCLE_LIST.back].flatMap(g => g.items);
+  gaps.forEach(zoneName => {
+    const item = allItems.find(it => it.zone === zoneName);
+    if (!item) return;
+    const row = document.createElement('div');
+    row.className = 'ml-row';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'ml-name';
+    nameEl.textContent = item.label;
+    row.appendChild(nameEl);
+
+    if (item.bilateral) {
+      const sides = document.createElement('div');
+      sides.className = 'ml-sides';
+      ['L', 'R'].forEach(side => {
+        const zone = `${side} ${item.zone}`;
+        const btn = document.createElement('button');
+        btn.className = 'ml-side';
+        btn.textContent = side;
+        const relief = muscleStates[zone];
+        if (relief && RELIEF[relief]) { btn.classList.add('marked'); btn.style.background = RELIEF[relief].color; }
+        btn.onclick = () => muscleTap(zone, `${item.label} (${side === 'L' ? 'Left' : 'Right'})`);
+        sides.appendChild(btn);
+      });
+      row.appendChild(sides);
+    } else {
+      const dot = document.createElement('div');
+      dot.className = 'ml-dot';
+      const relief = muscleStates[item.zone];
+      if (relief && RELIEF[relief]) { dot.classList.add('marked'); dot.style.background = RELIEF[relief].color; }
+      nameEl.onclick = () => muscleTap(item.zone, item.label);
+      row.appendChild(dot);
+    }
+    list.appendChild(row);
   });
-});
-document.querySelectorAll('#svg-view-toggle-full .svg-toggle-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    bodymapViewFull = e.currentTarget.getAttribute('data-view');
-    syncFullToggleUI();
-    document.getElementById('feel-pick-full').classList.remove('show');
-    window.pendingZone = null;
-    document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
-    renderMuscleList(bodymapViewFull);
-  });
-});
+}
 
 // ─── RELIEF SCALE (recovery equivalent of the practice feeling scale) ───
 const RELIEF = {
@@ -1121,59 +1125,6 @@ const RELIEF = {
   worked:  { emoji: '💆', label: 'Worked On',    color: '#6E9FB0' },
   tender:  { emoji: '🟠', label: 'Still Tender', color: '#D4956A' },
 };
-
-function renderMuscleList(view) {
-  const container = document.getElementById('muscle-list');
-  container.innerHTML = '';
-  MUSCLE_LIST[view].forEach(group => {
-    const g = document.createElement('div');
-    g.className = 'ml-group';
-    const h = document.createElement('div');
-    h.className = 'ml-header';
-    h.textContent = group.header;
-    g.appendChild(h);
-
-    group.items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'ml-row';
-      const nameEl = document.createElement('span');
-      nameEl.className = 'ml-name';
-      nameEl.textContent = item.label;
-      row.appendChild(nameEl);
-
-      if (item.bilateral) {
-        const sides = document.createElement('div');
-        sides.className = 'ml-sides';
-        ['L', 'R'].forEach(side => {
-          const zone = `${side} ${item.zone}`;
-          const btn = document.createElement('button');
-          btn.className = 'ml-side';
-          btn.textContent = side;
-          const relief = muscleStates[zone];
-          if (relief && RELIEF[relief]) {
-            btn.classList.add('marked');
-            btn.style.background = RELIEF[relief].color;
-          }
-          btn.onclick = () => muscleTap(zone, `${item.label} (${side === 'L' ? 'Left' : 'Right'})`);
-          sides.appendChild(btn);
-        });
-        row.appendChild(sides);
-      } else {
-        const dot = document.createElement('div');
-        dot.className = 'ml-dot';
-        const relief = muscleStates[item.zone];
-        if (relief && RELIEF[relief]) {
-          dot.classList.add('marked');
-          dot.style.background = RELIEF[relief].color;
-        }
-        nameEl.onclick = () => muscleTap(item.zone, item.label);
-        row.appendChild(dot);
-      }
-      g.appendChild(row);
-    });
-    container.appendChild(g);
-  });
-}
 
 function muscleTap(zone, displayLabel) {
   window.pendingZone = { zone, label: displayLabel };
@@ -1217,9 +1168,9 @@ window.applyFeeling = function(relief) {
   else delete muscleStates[zone];
   document.getElementById('feel-pick-full').classList.remove('show');
   window.pendingZone = null;
-  renderMuscleList(bodymapViewFull);
+  renderGapZoneList(); // updates marked state if the zone was a gap-fallback entry
   renderAreaTags();
-  if (anatomy3DViewer) anatomy3DViewer.refresh(); // keep 3D colors in sync regardless of which mode was used to set this
+  if (anatomy3DViewer) anatomy3DViewer.refresh();
   showToast(relief ? `${label}: ${RELIEF[relief].label}` : `${label} cleared`);
 };
 
