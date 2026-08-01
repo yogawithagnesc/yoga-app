@@ -1,15 +1,10 @@
 # Lumen — Terms of Service
 
-**Version:** 0.1 (draft — pending legal review)
-**Last updated:** [DATE]
-
-> **Important — not legal advice.** This document is an AI-drafted starting point engineered
-> for accuracy against the Lumen product. It is **not a substitute for review by a qualified
-> attorney** licensed in the governing jurisdiction. Bracketed values `[LIKE THIS]` must be
-> completed, and the whole document reviewed, before it is relied upon.
+**Version:** 1 (draft)
+**Last updated:** [1 August 2026]
 
 Welcome to Lumen ("**Lumen**", "**we**", "**us**"), a practice-tracking companion for yoga
-practitioners, teachers, and studios operated by **[OPERATOR NAME]** ("the Operator"). These
+practitioners, teachers, and studios operated by **[Yoga with AgnesC]** ("the Operator"). These
 Terms of Service ("**Terms**") govern your access to and use of the Lumen application and
 website (the "**Service**"). By creating an account or using the Service, you agree to these
 Terms and to our [Privacy Policy](privacy-policy.md).
@@ -66,7 +61,7 @@ in the Privacy Policy and for any copies others were permitted to save.
 4.3 **We do not sell Your Content or your personal data**, and we do not use it for advertising.
 
 4.4 **Ownership of the Service and our materials.** The Service — this website and application —
-belongs to and is owned by **[OPERATOR NAME]** ("the Operator"). All rights, title, and interest
+belongs to and is owned by **[Yoga with AgnesC]** ("the Operator"). All rights, title, and interest
 in the Service and its contents are and remain the exclusive property of the Operator or its
 licensors. This includes, without limitation, the **"Lumen" name and any names**, the **logo**,
 branding, trademarks and trade dress, the software and source code, the user-interface and visual
@@ -126,15 +121,13 @@ available,"** without warranties of any kind, express or implied.
 
 9.2 To the maximum extent permitted by applicable law, the Operator will not be liable for
 indirect, incidental, special, or consequential damages, or for loss of data or profits, arising
-from your use of the Service. **[Insert any jurisdiction-specific liability cap or carve-outs;
-some consumer-protection and personal-injury liabilities cannot be excluded.]**
+from your use of the Service. 
 
 Nothing in these Terms excludes liability that cannot be excluded under applicable law.
 
 ## 10. Governing Law and Disputes
 
-These Terms are governed by the laws of **Hong Kong and Singapore** (to be confirmed by counsel
-as to which jurisdiction is primary in case of conflict). Disputes arising under these Terms shall
+These Terms are governed by the laws of **Hong Kong and Singapore**. Disputes arising under these Terms shall
 be subject to the **courts of Hong Kong and Singapore**, without prejudice to any mandatory
 consumer-protection rights you have where you live.
 
@@ -146,4 +139,4 @@ you accept the updated Terms.
 
 ## 12. Contact
 
-Questions about these Terms: **yogawithagnesc@gmail.com**, **[OPERATOR NAME AND ADDRESS]**.
+Questions about these Terms: **yogawithagnesc@gmail.com**, **[Yoga with AgnesC]**.
