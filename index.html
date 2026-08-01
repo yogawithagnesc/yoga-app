@@ -1021,26 +1021,18 @@ function localDateStr(d) {
 let currentUser     = null;
 let currentUserRole = null;
 
-// Quotes array for Home page rotation
-const QUOTES = [
-  { text: 'Yoga is the journey of the self, through the self, to the self.', author: '— The Bhagavad Gita' },
-  { text: 'Your body is not who you are. Your mind is not who you are. Your spirit is who you are.', author: '— Unknown' },
-  { text: 'The present moment is filled with joy and happiness. If you are attentive, you will see it.', author: '— Thich Nhat Hanh' },
-  { text: 'Yoga is the calming of the fluctuations of the mind.', author: '— Yoga Sutras of Patanjali' },
-  { text: 'Health is a state of complete physical, mental and social well-being.', author: '— WHO Definition of Health' },
-  { text: 'Healing does not mean the damage never existed. It means the damage no longer controls our lives.', author: '— Thema Davis' },
-  { text: 'The greatest wealth is health.', author: '— Virgil' },
-  { text: 'Take care of your body. It\'s the only place you have to live.', author: '— Jim Rohn' },
-  { text: 'Every accomplishment starts with the decision to try.', author: '— Unknown' },
-  { text: 'The only impossible journey is the one you never begin.', author: '— Tony Robbins' },
-  { text: 'Strength does not come from what you can do. It comes from overcoming the things you once thought you couldn\'t.', author: '— Unknown' },
-  { text: 'Your only limit is your soul.', author: '— Unknown' }
-];
-
-function setRandomQuote() {
-  const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-  document.querySelector('.quote-text').textContent = quote.text;
-  document.querySelector('.quote-author').textContent = quote.author;
+// Quotes are stored in quotes.json (edit that file to add/change quotes)
+async function setRandomQuote() {
+  try {
+    const res = await fetch('quotes.json');
+    const quotes = await res.json();
+    if (!Array.isArray(quotes) || quotes.length === 0) return;
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
+    document.querySelector('.quote-text').textContent = quote.text;
+    document.querySelector('.quote-author').textContent = quote.author;
+  } catch (err) {
+    console.error('Failed to load quotes.json, keeping default quote', err);
+  }
 }
 
 (async function checkAuth() {
@@ -1085,7 +1077,7 @@ function setRandomQuote() {
     updateStats();
 
     // Set a random inspirational quote on the home page
-    setRandomQuote();
+    await setRandomQuote();
 
     // Personalised greeting
     if (profile.display_name) {
