@@ -171,6 +171,27 @@
     border-radius: var(--r-sm); padding: 4px 10px;
   }
 
+  /* M7-6-4: manual body-status check-in */
+  .checkin-btn {
+    font-size: 11px; font-weight: 500; background: none; border: 1px solid var(--card-br);
+    border-radius: var(--r-full); color: var(--tx-2); cursor: pointer; padding: 6px 12px;
+    transition: all 0.15s; font-family: 'DM Sans', 'Noto Sans TC', sans-serif; flex-shrink: 0;
+  }
+  .checkin-btn:hover, .checkin-btn.active { border-color: var(--accent); color: var(--accent); }
+  .checkin-panel {
+    background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg);
+    padding: 16px; margin-top: 10px;
+  }
+  .checkin-step-label { font-size: 12px; color: var(--tx-2); margin-bottom: 10px; }
+  .checkin-cat-chips, .checkin-feel-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .checkin-chip {
+    font-size: 12px; padding: 8px 14px; border-radius: var(--r-full); border: 1px solid var(--card-br);
+    background: var(--bg-el); color: var(--tx-2); cursor: pointer; transition: all 0.15s;
+    font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+  }
+  .checkin-chip:hover { border-color: var(--accent); color: var(--tx-1); }
+  .checkin-chip.sel { border-color: var(--accent); background: var(--accent-dim, rgba(200,169,110,0.13)); color: var(--accent); }
+
   /* Calendar */
   .section { margin: 0 28px 24px; }
   .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tx-2); margin-bottom: 14px; }
@@ -715,9 +736,19 @@
       </div>
 
       <div class="section">
-        <div class="section-label">Body Status <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 14 days</span></div>
+        <div class="cal-nav-row" style="margin-bottom:14px">
+          <div class="section-label" style="margin:0">Body Status <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx-3)">· last 14 days</span></div>
+          <button class="checkin-btn" id="checkin-toggle-btn" onclick="toggleCheckinPanel()">🔄 Check In</button>
+        </div>
         <div class="body-status-card">
           <div id="body-status-rows"></div>
+        </div>
+
+        <!-- M7-6-4: manual body-status check-in (feeds the same scoring model as a fresh data point) -->
+        <div class="checkin-panel" id="checkin-panel" style="display:none">
+          <div class="checkin-step-label" id="checkin-step-label">How does this area feel right now?</div>
+          <div class="checkin-cat-chips" id="checkin-cat-chips"></div>
+          <div class="checkin-feel-chips" id="checkin-feel-chips" style="display:none"></div>
         </div>
       </div>
 
@@ -1115,6 +1146,7 @@ const STATE = {
   dayRecovery: {},
   bodyRaw: [],
   recoveryRaw: [],
+  checkinsRaw: [],
   calendarViewDate: new Date(), // M7-6-3: month currently shown on the calendar (day-of-month is ignored)
   perspective: localStorage.getItem('lumen_perspective') === 'yoga' ? 'yoga' : 'global',
   likes: {}, // keyed by community_feeds.id — { liked, count }, persisted via feed_likes table
@@ -1834,6 +1866,17 @@ async function loadBodyStatus() {
     .lte('treatment_date', end);
 
   STATE.recoveryRaw = recovery.data || [];
+
+  // M7-6-4: manual check-ins act as a fresh data point in the same scoring
+  // model, keyed directly by body category (coarser than a muscle zone).
+  var checkins = await db
+    .from('body_checkins')
+    .select('checkin_date, category, feeling')
+    .eq('user_id', currentUser.id)
+    .gte('checkin_date', start)
+    .lte('checkin_date', end);
+
+  STATE.checkinsRaw = checkins.data || [];
   renderBodyStatus();
 }
 
@@ -1963,6 +2006,19 @@ function computeBodyStatus() {
     });
   });
 
+  // M7-6-4: manual check-ins feed the same weighted-decay model as a fresh
+  // data point, keyed directly by category (perspective-independent — a
+  // check-in isn't tied to a practice type, same treatment as recovery credit).
+  (STATE.checkinsRaw || []).forEach(function(checkin) {
+    var checkinDate = new Date(checkin.checkin_date + 'T00:00:00');
+    var daysAgo = Math.round((today - checkinDate) / 86400000);
+    if (daysAgo < 0 || daysAgo > 13) return;
+    var weight = daysAgo <= 4 ? 1.0 : daysAgo <= 9 ? 0.6 : 0.3;
+    var fw = BODY_FEELING_WEIGHT[checkin.feeling];
+    if (fw === undefined) return;
+    scores[checkin.category] += fw * weight;
+  });
+
   // M7-3: subtract recovery credit from each body category (a treatment on a
   // zone offsets accumulated load there). Scores are floored at 0 so a heavily
   // treated-but-unstrained area never reads as "better than rested".
@@ -2059,7 +2115,8 @@ function renderBodyStatus() {
   var el = document.getElementById('body-status-rows');
   if (!el) return;
 
-  var hasAnyFeelings = STATE.bodyRaw.some(function(log) { return (log.muscle_feelings || []).length; });
+  var hasAnyFeelings = STATE.bodyRaw.some(function(log) { return (log.muscle_feelings || []).length; })
+    || (STATE.checkinsRaw && STATE.checkinsRaw.length > 0);
   if (!hasAnyFeelings) {
     el.innerHTML = '<div class="feed-empty">' + STRINGS.bodyStatusEmpty + '</div>';
     return;
@@ -2097,6 +2154,82 @@ function renderBodyStatus() {
       '<span class="bsr-badge" style="color:' + lvl.color + ';background:' + lvl.bg + '">' + lvl.label + '</span>';
     el.appendChild(row);
   });
+}
+
+/* ─────────────────────────────────────────
+   M7-6-4: MANUAL BODY-STATUS CHECK-IN
+───────────────────────────────────────── */
+var CHECKIN_FEELINGS = {
+  relax:     { emoji: '😌', label: 'Relax' },
+  feelgood:  { emoji: '💪', label: 'Feel Good' },
+  sweetpain: { emoji: '🔥', label: 'Sweet Pain' },
+  tight:     { emoji: '⚡', label: 'Tight' },
+  sore:      { emoji: '🟠', label: 'Sore' },
+  pain:      { emoji: '🔴', label: 'Pain' },
+  injured:   { emoji: '🚨', label: 'Injured' },
+};
+var checkinSelectedCategory = null;
+
+function toggleCheckinPanel() {
+  var panel = document.getElementById('checkin-panel');
+  var btn = document.getElementById('checkin-toggle-btn');
+  var show = panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+  btn.classList.toggle('active', show);
+  if (show) {
+    checkinSelectedCategory = null;
+    document.getElementById('checkin-step-label').textContent = 'Which area?';
+    document.getElementById('checkin-feel-chips').style.display = 'none';
+    buildCheckinCategoryChips();
+  }
+}
+
+function buildCheckinCategoryChips() {
+  var wrap = document.getElementById('checkin-cat-chips');
+  wrap.innerHTML = '';
+  BODY_CATEGORIES.forEach(function(cat) {
+    var chip = document.createElement('button');
+    chip.className = 'checkin-chip';
+    chip.textContent = cat;
+    chip.onclick = function() {
+      checkinSelectedCategory = cat;
+      wrap.querySelectorAll('.checkin-chip').forEach(function(c) { c.classList.toggle('sel', c === chip); });
+      document.getElementById('checkin-step-label').textContent = 'How does your ' + cat.toLowerCase() + ' feel right now?';
+      buildCheckinFeelingChips();
+      document.getElementById('checkin-feel-chips').style.display = 'flex';
+    };
+    wrap.appendChild(chip);
+  });
+}
+
+function buildCheckinFeelingChips() {
+  var wrap = document.getElementById('checkin-feel-chips');
+  wrap.innerHTML = '';
+  Object.keys(CHECKIN_FEELINGS).forEach(function(key) {
+    var f = CHECKIN_FEELINGS[key];
+    var chip = document.createElement('button');
+    chip.className = 'checkin-chip';
+    chip.textContent = f.emoji + ' ' + f.label;
+    chip.onclick = function() { submitCheckin(key); };
+    wrap.appendChild(chip);
+  });
+}
+
+async function submitCheckin(feeling) {
+  if (!currentUser || !checkinSelectedCategory) return;
+  var { error } = await db.from('body_checkins').insert({
+    user_id: currentUser.id,
+    category: checkinSelectedCategory,
+    feeling: feeling,
+  });
+  if (error) {
+    console.error('submitCheckin failed:', error);
+    showToast('Could not save check-in — please try again');
+    return;
+  }
+  toggleCheckinPanel(); // close the panel
+  showToast('Check-in saved ✦');
+  await loadBodyStatus(); // recompute + re-render immediately
 }
 
 /* ─────────────────────────────────────────

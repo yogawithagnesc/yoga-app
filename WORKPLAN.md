@@ -25,7 +25,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M7-3 | Recovery & Treatment Log (massage/physio/needling as a mitigating factor) | §3.2.3 | 🚧 Implemented (pending migration run + live test) | Sonnet 5 |
 | M7-4 | Interactive 3D Anatomy Viewer (rotatable body-map, click-to-select) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
 | M7-5 | 3D Anatomy Layers (skeleton overlay, superficial/deep muscle toggle) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
-| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | 🚧 In progress (5/8 done) | Sonnet 5 / Haiku 4.5 |
+| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | 🚧 In progress (6/8 done) | Sonnet 5 / Haiku 4.5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -866,10 +866,34 @@ the DOM, 3D mounts on open with no extra click, feeling-picker area precedes the
 DOM order, all 3 gap zones render and are independently tappable/markable, the main 3D model
 click-to-select still resolves correctly, and close→reopen remounts cleanly with no errors.
 
+### M7-6-4 — Manual body-status check-in ✅ Done
+
+**Recommended default used (no response received):** a check-in is **not** a manual override of
+the computed Body Status — it's stored as its own signal and folded into the same weighted-decay
+scoring model already used for practice-log muscle feelings, keyed by body category rather than a
+specific muscle zone (coarser-grained, since a check-in isn't tied to a practice session). This
+avoids two competing sources of truth for the same widget.
+
+- `schema_phase28_body_checkins.sql`: new `body_checkins` table (`user_id`, `checkin_date`,
+  `category` — one of the 6 `BODY_CATEGORIES` — `feeling` — one of the 7 canonical feeling keys).
+  Owner-only RLS; deliberately **no** linked-teacher SELECT policy (private signal, unlike
+  practice/recovery logs which are shareable). Scoped to the Body Status widget only — does not
+  feed the per-zone Rest Engine, which needs a specific muscle zone it can't derive from a
+  category-level check-in.
+- `index.html`: added a "🔄 Check In" button on the Body Status card, opening a 2-step chip picker
+  (pick a body area → pick how it feels right now). Submitting inserts into `body_checkins` and
+  immediately re-runs `loadBodyStatus()`/`computeBodyStatus()` so the widget reflects it without a
+  page reload. `computeBodyStatus()` applies the same recency-decay buckets and
+  `BODY_FEELING_WEIGHT` values used for practice-log feelings, so a check-in and a practice-log
+  feeling are worth the same.
+
+**Verified:** headless-browser E2E — check-in button opens the panel, all 6 category chips and 7
+feeling chips render, selecting a category reveals the feeling step, selecting a feeling submits
+the exact expected `{user_id, category, feeling}` payload, closes the panel, shows a confirmation
+toast, and triggers a Body Status refresh — no console errors.
+
 ### Remaining items (in progress)
 
-- **M7-6-4** — Manual body-status check-in (recommended default: a quick check-in that feeds the
-  same decay/scoring model as a fresh data point, not a direct override).
 - **M7-6-7** — Teacher→student feedback (recommended default: general note to a linked student,
   not tied to a specific session).
 - **M7-6-8** — Pro tier infrastructure (recommended default: schema + flag only, no payment
