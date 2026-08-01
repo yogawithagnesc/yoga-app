@@ -1,11 +1,7 @@
 # Lumen — Data Sharing Agreement
 
-**Version:** 0.1 (draft — pending legal review)
-**Last updated:** [DATE]
-
-> **Important — not legal advice.** AI-drafted starting point, accurate to the product as built.
-> Requires review by a qualified attorney before use. See the [Privacy Policy](privacy-policy.md)
-> for full detail on how Lumen handles your data.
+**Version:** 1 (draft)
+**Last updated:** [1 August 2026]
 
 This Agreement explains what happens when you **link** your Lumen account to another account
 using a **join code**. You accept it at the moment you link. You can **disconnect at any time.**
