@@ -25,7 +25,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M7-3 | Recovery & Treatment Log (massage/physio/needling as a mitigating factor) | §3.2.3 | 🚧 Implemented (pending migration run + live test) | Sonnet 5 |
 | M7-4 | Interactive 3D Anatomy Viewer (rotatable body-map, click-to-select) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
 | M7-5 | 3D Anatomy Layers (skeleton overlay, superficial/deep muscle toggle) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
-| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | 🚧 In progress (6/8 done) | Sonnet 5 / Haiku 4.5 |
+| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | 🚧 In progress (7/8 done) | Sonnet 5 / Haiku 4.5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -892,10 +892,32 @@ feeling chips render, selecting a category reveals the feeling step, selecting a
 the exact expected `{user_id, category, feeling}` payload, closes the panel, shows a confirmation
 toast, and triggers a Body Status refresh — no console errors.
 
+### M7-6-7 — Teacher→student feedback ✅ Done
+
+**Scope pivot from the originally-flagged default:** while investigating, found the `feedback`
+table already had full teacher→student support built in `schema_phase13_community_architecture.sql`
+(direction field, `feedback_teacher_insert` RLS policy requiring a non-private, consented, actively
+linked session) — this table + policy was a P2 placeholder wired for exactly this feature but never
+given a UI. Delivered the session-tied form (matches "especially after the class") rather than the
+originally-flagged untied general note, since the existing schema/RLS already enforces the
+session-tied shape and it fits the user's stated trigger better. **No new schema required.**
+
+- `teacher.html`: each shared session row in the student roster gets a "💬 Send Feedback" button
+  that expands an inline composer; submitting inserts `{author_id, direction:
+  'teacher_to_student', session_id, body}` into `feedback` — RLS confirms the session belongs to a
+  linked, consenting student before allowing the insert.
+- `index.html`: new "Feedback from Teachers" dashboard card (`loadTeacherFeedback()`), listing
+  feedback received on the student's own sessions, author name, session context, and date — RLS's
+  `feedback_view` policy already scopes results to the student's own sessions, so the query only
+  needs to filter on `direction`.
+
+**Verified:** headless-browser E2E on both pages — teacher composer opens on click, submits the
+exact expected insert payload, and shows a "sent" confirmation; separately, seeding a
+`teacher_to_student` feedback row and loading the student dashboard renders it correctly with
+author, session, and body all present, no console errors.
+
 ### Remaining items (in progress)
 
-- **M7-6-7** — Teacher→student feedback (recommended default: general note to a linked student,
-  not tied to a specific session).
 - **M7-6-8** — Pro tier infrastructure (recommended default: schema + flag only, no payment
   processing this pass).
 

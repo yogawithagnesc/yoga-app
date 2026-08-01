@@ -500,6 +500,15 @@
   .recovery-bar { flex: 1; background: var(--success); border-radius: 2px 2px 0 0; min-height: 2px; opacity: 0.75; }
   .fatigue-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--tx-3); margin-top: 6px; }
 
+  /* M7-6-7: Teacher feedback card */
+  .tf-item { background: var(--card-bg); border: 1px solid var(--card-br); border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 10px; }
+  .tf-item.unread { border-color: var(--accent); }
+  .tf-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .tf-author { font-size: 12px; font-weight: 600; color: var(--accent); }
+  .tf-date { font-size: 10px; color: var(--tx-3); }
+  .tf-session { font-size: 10px; color: var(--tx-3); margin-bottom: 6px; }
+  .tf-body { font-size: 13px; color: var(--tx-1); line-height: 1.5; }
+
   /* Day-log modal rows */
   .day-log-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -761,6 +770,11 @@
           <div class="fatigue-chart" id="recovery-chart"></div>
           <div class="fatigue-legend"><span>30 days ago</span><span>Today</span></div>
         </div>
+      </div>
+
+      <div class="section" id="teacher-feedback-section" style="display:none">
+        <div class="section-label">Feedback from Teachers</div>
+        <div id="teacher-feedback-list"></div>
       </div>
     </div>
 
@@ -1118,6 +1132,9 @@ function setRandomQuote() {
 
     // Load 30-day fatigue trend (M5 progress dashboard)
     loadFatigueTrend();
+
+    // Load feedback teachers have left on shared sessions (M7-6-7)
+    loadTeacherFeedback();
 
   } catch (err) {
     console.error('Auth check failed:', err);
@@ -1979,6 +1996,45 @@ function renderTrendBars(elId, data, countField, barClass, tooltipFn, highlightH
     bar.title = key + ': ' + tooltipFn(count);
     chartEl.appendChild(bar);
   }
+}
+
+// M7-6-7: feedback teachers/studios have left on the student's own shared
+// sessions. Uses the pre-existing 'feedback' table + 'teacher_to_student'
+// direction (schema_phase13) — RLS's feedback_view policy already scopes
+// this to rows where the student owns the referenced session, so no extra
+// filter beyond direction is needed.
+async function loadTeacherFeedback() {
+  if (!currentUser) return;
+  var section = document.getElementById('teacher-feedback-section');
+  var listEl  = document.getElementById('teacher-feedback-list');
+  if (!section || !listEl) return;
+
+  var { data, error } = await db
+    .from('feedback')
+    .select('id, body, created_at, author_id, session_id, profiles!feedback_author_id_fkey(display_name), practice_logs!feedback_session_id_fkey(style_name, practice_date)')
+    .eq('direction', 'teacher_to_student')
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (error) { console.error('loadTeacherFeedback failed:', error); return; }
+
+  var items = data || [];
+  if (!items.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  listEl.innerHTML = items.map(function(item) {
+    var authorName = item.profiles ? item.profiles.display_name : 'Your teacher';
+    var session = item.practice_logs;
+    var sessionLabel = session ? (session.style_name || 'Practice') + ' · ' + session.practice_date : '';
+    var dateLabel = new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return (
+      '<div class="tf-item">' +
+        '<div class="tf-hdr"><span class="tf-author">' + esc(authorName) + '</span><span class="tf-date">' + dateLabel + '</span></div>' +
+        (sessionLabel ? '<div class="tf-session">On: ' + esc(sessionLabel) + '</div>' : '') +
+        '<div class="tf-body">' + esc(item.body) + '</div>' +
+      '</div>'
+    );
+  }).join('');
 }
 
 function computeBodyStatus() {
