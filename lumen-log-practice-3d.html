@@ -138,20 +138,13 @@ body{background:#000;font-family:'DM Sans','Noto Sans TC',sans-serif;min-height:
 .area-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-full);font-size:11px;border:1px solid;font-weight:500;animation:fadeIn .15s ease}
 .empty-hint{font-size:12px;color:var(--tx-3);padding:4px 0}
 
-/* SVG Body Map (M3c: primary interface) */
-.svg-fallback{display:grid;grid-template-columns:40px 1fr 40px;grid-template-rows:auto auto auto;align-items:center;gap:12px 8px;padding:20px;background:var(--bg-el);border:1px solid var(--br-def);border-radius:var(--r-lg);margin-bottom:12px}
-.svg-fallback::before{content:'🖐 Tap to\AMark';grid-column:1;grid-row:1/4;white-space:pre;font-size:11px;color:var(--tx-3);text-align:center;line-height:1.3;align-self:center}
-.svg-fallback::after{content:'🖐 Tap to\AMark';grid-column:3;grid-row:1/4;white-space:pre;font-size:11px;color:var(--tx-3);text-align:center;line-height:1.3;align-self:center}
-.svg-view-toggle{grid-column:2;grid-row:1;display:flex;gap:6px;justify-content:center}
+/* Body Map (M7-6-1: 3D-only entry point + modal controls) */
+.svg-view-toggle{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
 .svg-toggle-btn{padding:6px 14px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-el);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .svg-toggle-btn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
 .fallback-note{font-size:11px;color:var(--tx-3);text-align:center;line-height:1.6;max-width:280px}
-.view-full-btn{grid-column:2;grid-row:3;display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-ov);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif;justify-content:center}
+.view-full-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-full);font-size:11px;border:1px solid var(--br-def);background:var(--bg-ov);color:var(--tx-2);cursor:pointer;transition:all .15s;font-family:'DM Sans','Noto Sans TC',sans-serif}
 .view-full-btn:hover{border-color:var(--accent);color:var(--accent)}
-/* M3c: reference photo body map (decorative — interaction happens via the
-   clickable muscle-name list, not by tapping the image). */
-.bodymap-photo{grid-column:2;grid-row:2;width:100%;max-width:260px;border-radius:var(--r-md);display:block}
-.bodymap-photo-full{width:100%;max-width:380px;border-radius:var(--r-md);display:block}
 
 /* Full-screen anatomy modal */
 .anatomy-modal{position:fixed;inset:0;z-index:300;background:var(--bg);display:none;flex-direction:column}
@@ -356,6 +349,16 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
     </div>
     <div class="info-note">✦ Add your own, or use one shared by your teacher/studio</div>
+
+    <!-- M7-6-6: optional teacher attribution, shown only when the student has 1+ linked teachers -->
+    <div id="teacher-select-wrap" style="display:none;margin-top:14px">
+      <div class="flbl" style="margin-bottom:8px">With Teacher (optional)</div>
+      <select class="finput" id="teacher-select" onchange="onTeacherSelectChange()">
+        <option value="">— Self-practice —</option>
+        <option value="__other__">Other teacher…</option>
+      </select>
+      <input class="finput" id="teacher-other-name" placeholder="Teacher's name" maxlength="80" style="display:none;margin-top:8px">
+    </div>
   </div>
 
   <div class="divider"></div>
@@ -381,63 +384,49 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       Toggle front/back, then tap a muscle to log how it feels — from Relax to Injured. Data is used to track injury patterns over time.
     </div>
 
-    <!-- BODY MAP (M3c: reference photo + click-the-name interaction) -->
-    <div class="svg-fallback" id="svg-fallback">
-      <div class="svg-view-toggle" id="svg-view-toggle">
-        <button class="svg-toggle-btn active" data-view="front">Front</button>
-        <button class="svg-toggle-btn" data-view="back">Back</button>
-      </div>
-      <img id="bodymap-photo" class="bodymap-photo" src="assets/bodymap-front.png" alt="Body map">
-      <button class="view-full-btn" onclick="openFullAnatomy()">🔍 Tap to Mark Muscles</button>
-    </div>
+    <!-- M7-6-1: 3D body map is now the only entry point (2D reference-photo
+         list retired). Opens directly into the 3D-only modal below. -->
+    <button class="view-full-btn" onclick="openFullAnatomy()" style="width:100%;justify-content:center;padding:16px">🧊 Open 3D Body Map</button>
 
-    <!-- M3c: full-screen viewer — photo + clickable muscle-name list -->
+    <!-- M7-6-1/M7-6-2: 3D-only body-map modal. The feeling picker is
+         anchored at the TOP (right below the header) so marking a muscle
+         never requires scrolling past the model — the #1 complaint about
+         the old bottom-anchored picker. -->
     <div class="anatomy-modal" id="anatomy-modal">
       <div class="am-header">
         <div class="am-title">Body Map</div>
         <button class="am-close" onclick="closeFullAnatomy()">✕</button>
       </div>
       <div class="am-body">
-        <!-- M7-4: 2D List / 3D Model mode toggle -->
-        <div class="svg-view-toggle" id="anatomy-mode-toggle">
-          <button class="svg-toggle-btn active" data-mode="list">☰ List</button>
-          <button class="svg-toggle-btn" data-mode="3d">🧊 3D Model</button>
-        </div>
-
-        <!-- 2D mode (M3c, default) -->
-        <div id="anatomy-2d-wrap" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:14px">
-          <div class="svg-view-toggle" id="svg-view-toggle-full">
-            <button class="svg-toggle-btn active" data-view="front">Front</button>
-            <button class="svg-toggle-btn" data-view="back">Back</button>
+        <!-- M7-6-2: feeling picker + hint, anchored at top -->
+        <div style="width:100%;max-width:420px">
+          <div class="am-footer" id="anatomy-footer-hint" style="padding:0 0 10px">🖐 Drag to rotate · Tap a muscle to mark it</div>
+          <div class="feel-pick" id="feel-pick-full">
+            <div class="fp-title" id="fp-muscle-name-full">—</div>
+            <div class="fp-row" id="fp-row-full"></div>
           </div>
-          <img id="bodymap-photo-full" class="bodymap-photo-full" src="assets/bodymap-front.png" alt="Body map">
-          <div class="muscle-list" id="muscle-list"></div>
         </div>
 
-        <!-- 3D mode (M7-4/M7-5) -->
-        <div id="anatomy-3d-wrap" style="width:100%;display:none;flex-direction:column;align-items:center;gap:10px">
-          <div class="svg-view-toggle" id="anatomy3d-view-toggle">
-            <button class="svg-toggle-btn active" data-view3d="front">Front</button>
-            <button class="svg-toggle-btn" data-view3d="back">Back</button>
-          </div>
-          <!-- M7-5: anatomical layer controls -->
-          <div class="svg-view-toggle" id="anatomy3d-layer-toggle">
-            <button class="svg-toggle-btn" data-layer="skeleton">🦴 Skeleton</button>
-            <button class="svg-toggle-btn" data-layer="deep">🔬 Deep Layer</button>
-          </div>
-          <div id="anatomy3d-container" style="width:100%;max-width:420px;height:420px;border-radius:var(--r-md);overflow:hidden;background:var(--bg-el)"></div>
-          <div id="anatomy3d-loading" style="font-size:12px;color:var(--tx-3)">Loading 3D model…</div>
-          <div class="info-note" style="text-align:center">Drag to rotate · Tap a muscle to mark it · <span id="anatomy3d-gaps-note"></span></div>
-          <div class="info-note" style="text-align:center;opacity:.6">3D anatomy data: BodyParts3D / Z-Anatomy (CC BY-SA)</div>
+        <div class="svg-view-toggle" id="anatomy3d-view-toggle">
+          <button class="svg-toggle-btn active" data-view3d="front">Front</button>
+          <button class="svg-toggle-btn" data-view3d="back">Back</button>
         </div>
-
-        <!-- Feeling picker (shown after clicking a muscle, either mode) -->
-        <div class="feel-pick" id="feel-pick-full" style="width:100%;max-width:420px">
-          <div class="fp-title" id="fp-muscle-name-full">—</div>
-          <div class="fp-row" id="fp-row-full"></div>
+        <!-- M7-5: anatomical layer controls -->
+        <div class="svg-view-toggle" id="anatomy3d-layer-toggle">
+          <button class="svg-toggle-btn" data-layer="skeleton">🦴 Skeleton</button>
+          <button class="svg-toggle-btn" data-layer="deep">🔬 Deep Layer</button>
         </div>
+        <div id="anatomy3d-container" style="width:100%;max-width:420px;height:420px;border-radius:var(--r-md);overflow:hidden;background:var(--bg-el)"></div>
+        <div id="anatomy3d-loading" style="font-size:12px;color:var(--tx-3)">Loading 3D model…</div>
 
-        <div class="am-footer" id="anatomy-footer-hint">🖐 Tap a muscle name to mark</div>
+        <!-- M7-6-1: fallback for the handful of tendon/fascia zones with no
+             3D mesh in the open-source dataset (Achilles, IT Band, etc.) -->
+        <details id="anatomy-gap-fallback" style="width:100%;max-width:420px;display:none">
+          <summary style="cursor:pointer;font-size:12px;color:var(--tx-2);padding:8px 0">Other areas not shown in 3D</summary>
+          <div id="gap-zone-list" style="display:flex;flex-direction:column;gap:6px;padding:6px 0 0"></div>
+        </details>
+
+        <div class="info-note" style="text-align:center;opacity:.6">3D anatomy data: BodyParts3D / Z-Anatomy (CC BY-SA)</div>
       </div>
     </div>
 
@@ -555,6 +544,7 @@ let CATEGORIES = [];    // practice_categories rows visible to this user (system
 let FOCUS_AREAS = [];   // focus_areas rows (system + own + linked/recommended)
 let GROUPS = [];        // practice_groups rows (this user's Yoga/Fitness/custom containers)
 let GROUP_ITEMS = {};   // practice_category_id -> group_id (explicit per-user placement overrides)
+let LINKED_TEACHERS = []; // M7-6-6: { id, display_name } for this student's active teacher/studio linkages
 
 // User-facing JS-rendered text, kept in one place for a future language
 // switch (Cantonese/Chinese, per the Noto TC fonts already loaded).
@@ -584,7 +574,7 @@ async function initPage() {
   if (!session) { window.location.href = 'login.html'; return; }
   currentUser = session.user;
 
-  const [{ data: profile }, { data: cats }, { data: focusAreas }, { data: groups }, { data: groupItems }] = await Promise.all([
+  const [{ data: profile }, { data: cats }, { data: focusAreas }, { data: groups }, { data: groupItems }, { data: linkages }] = await Promise.all([
     db.from('profiles').select('role').eq('id', currentUser.id).single(),
     db.from('practice_categories')
       .select('id,name,category_type,icon,subtitle,sort_order,is_system,visibility,created_by')
@@ -594,6 +584,9 @@ async function initPage() {
       .eq('is_active', true).order('sort_order'),
     db.from('practice_groups').select('id,name,sort_order,default_key').eq('user_id', currentUser.id).order('sort_order'),
     db.from('practice_group_items').select('practice_category_id,group_id').eq('user_id', currentUser.id),
+    db.from('studio_linkages')
+      .select('entity_id, profiles!studio_linkages_entity_id_fkey(display_name)')
+      .eq('student_id', currentUser.id).eq('status', 'active').eq('entity_type', 'teacher'),
   ]);
 
   currentUserRole = profile?.role || 'student';
@@ -602,6 +595,9 @@ async function initPage() {
   GROUPS = groups || [];
   GROUP_ITEMS = {};
   (groupItems || []).forEach(row => { GROUP_ITEMS[row.practice_category_id] = row.group_id; });
+  LINKED_TEACHERS = (linkages || [])
+    .filter(l => l.profiles)
+    .map(l => ({ id: l.entity_id, display_name: l.profiles.display_name || 'Unnamed' }));
 
   if (GROUPS.length) activeGroupId = (GROUPS.find(g => g.default_key === 'yoga') || GROUPS[0]).id;
 
@@ -611,9 +607,38 @@ async function initPage() {
 
   buildTypes();
   buildFocus();
+  buildTeacherSelect(); // M7-6-6
   initBodyMap(); // M3c: reference photo + clickable muscle-name list
 
   if (editId) applyEditPrefillToDOM();
+}
+
+// ─── M7-6-6: OPTIONAL TEACHER ATTRIBUTION ───
+// Only shown when the student has 1+ active teacher/studio linkages —
+// solo practitioners never see an empty/pointless selector.
+function buildTeacherSelect() {
+  const wrap = document.getElementById('teacher-select-wrap');
+  if (!LINKED_TEACHERS.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  const select = document.getElementById('teacher-select');
+  // Rebuild options, keeping the fixed "Self-practice" and "Other" entries.
+  select.innerHTML = '<option value="">— Self-practice —</option>';
+  LINKED_TEACHERS.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.display_name;
+    select.appendChild(opt);
+  });
+  const otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'Other teacher…';
+  select.appendChild(otherOpt);
+}
+
+function onTeacherSelectChange() {
+  const select = document.getElementById('teacher-select');
+  document.getElementById('teacher-other-name').style.display = select.value === '__other__' ? 'block' : 'none';
 }
 
 // Which group a practice type currently belongs to for this user: an
@@ -647,7 +672,7 @@ let editRow = null;       // the fetched row being edited, held for DOM prefill 
 // ─── EDIT AN EXISTING SESSION (?edit=<id>) ───
 async function loadEditLog(id) {
   const { data: row, error } = await db.from('practice_logs')
-    .select('id,category_id,practice_date,start_time,mood,notes,intensity,muscle_feelings,focus_area_ids,is_private,notes_shared,duration_minutes')
+    .select('id,category_id,practice_date,start_time,mood,notes,intensity,muscle_feelings,focus_area_ids,is_private,notes_shared,duration_minutes,teacher_id,teacher_name')
     .eq('id', id)
     .eq('user_id', currentUser.id)
     .maybeSingle();
@@ -723,6 +748,16 @@ function applyEditPrefillToDOM() {
   document.querySelectorAll('.mood-btn').forEach(b => {
     b.classList.toggle('sel', b.querySelector('.mood-lbl')?.textContent === row.mood);
   });
+
+  // M7-6-6: prefill teacher selection
+  const teacherSelect = document.getElementById('teacher-select');
+  if (row.teacher_id && LINKED_TEACHERS.some(t => t.id === row.teacher_id)) {
+    teacherSelect.value = row.teacher_id;
+  } else if (row.teacher_name) {
+    teacherSelect.value = '__other__';
+    document.getElementById('teacher-other-name').value = row.teacher_name;
+    document.getElementById('teacher-other-name').style.display = 'block';
+  }
 
   const cta = document.querySelector('.cta-btn[onclick="savePractice()"]');
   if (cta) cta.textContent = 'Update Practice ✎';
@@ -1578,6 +1613,13 @@ async function savePractice() {
   const durationVal    = parseInt(document.getElementById('dur-val').value) || 45;
   const sessionId      = editSessionId || crypto.randomUUID();
 
+  // M7-6-6: optional teacher attribution
+  const teacherSelectVal = document.getElementById('teacher-select')?.value || '';
+  const teacherId   = teacherSelectVal && teacherSelectVal !== '__other__' ? teacherSelectVal : null;
+  const teacherName = teacherSelectVal === '__other__'
+    ? (document.getElementById('teacher-other-name').value || '').trim() || null
+    : null;
+
   const payload = {
     category_id:      category.id,
     style_name:       category.name,
@@ -1592,6 +1634,8 @@ async function savePractice() {
     focus_area_ids:   Array.from(selFocus),
     is_private:       isPrivate,
     notes_shared:     notesShared,
+    teacher_id:       teacherId,
+    teacher_name:     teacherName,
   };
   if (!editSessionId) { payload.id = sessionId; payload.user_id = currentUser.id; }
 
@@ -1637,21 +1681,20 @@ function showToast(msg) {
 }
 window.showToast = showToast;
 
-// ─── BODY MAP: REFERENCE PHOTO + CLICKABLE MUSCLE-NAME LIST (M3c) ───
-// Interaction moved from tapping shapes on an SVG figure to clicking a
-// real, plain-text muscle name in a grouped list (Neck/Chest/Shoulders/…)
-// alongside the reference photo — the photo is decorative only. This
-// removes the need for pixel-accurate hit-regions entirely, so every
-// individually named muscle from the reference (down to each wrist/thumb
-// muscle) gets its own row instead of being grouped for touch-target size.
+// ─── BODY MAP ZONE TAXONOMY ───
+// MUSCLE_LIST is the canonical zone taxonomy for the whole app (this exact
+// constant is parsed directly by tools/anatomy3d/generate_mesh_zone_map.cjs
+// to build the 3D mesh-to-zone map — do not restructure its shape).
+// Interaction is now 3D-only (M7-6-1): the 3D viewer (assets/anatomy3d/
+// anatomy-viewer.js) resolves a tapped mesh to one of these zones via
+// MESH_TO_ZONE. MUSCLE_LIST is still consulted directly for the small
+// gap-zone fallback list (renderGapZoneList()) — the handful of tendon/
+// fascia zones with no corresponding 3D mesh.
 //
-// Display labels mirror the reference photo's wording; each maps to a
-// clean canonical `zone` key (reused from the M3b taxonomy so historical
-// data, index.html's BODY_ZONE_MAP, and the rest engine all keep working
-// unchanged). `bilateral: true` items render L/R chip buttons and store
-// under "L <zone>"/"R <zone>" (same convention every prior milestone
-// used); `bilateral: false` items are single midline structures.
-const BODYMAP_IMG = { front: 'assets/bodymap-front.png', back: 'assets/bodymap-back.png' };
+// Display labels mirror the reference-photo wording this taxonomy was
+// originally built from; each maps to a clean canonical `zone` key.
+// `bilateral: true` items store under "L <zone>"/"R <zone>"; `bilateral:
+// false` items are single midline structures.
 
 const MUSCLE_LIST = {
   front: [
@@ -1770,52 +1813,29 @@ const MUSCLE_LIST = {
 };
 
 const muscleStates = {}; // zone -> feeling
-let bodymapViewCompact = 'front';
-let bodymapViewFull = 'front';
 
 function initBodyMap() {
-  document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
-  document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
   buildFeelPickerButtons('fp-row-full');
   buildBodyLegend();
   renderAreaTags();
 }
 
+// M7-6-1: 3D is now the only body-map interaction mode — opening the modal
+// mounts it immediately (previously gated behind a List/3D toggle).
 function openFullAnatomy() {
   document.getElementById('anatomy-modal').classList.add('show');
-  bodymapViewFull = bodymapViewCompact; // open on whichever view the compact photo was showing
-  syncFullToggleUI();
-  document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
-  renderMuscleList(bodymapViewFull);
+  mountAnatomy3D();
 }
 function closeFullAnatomy() {
   document.getElementById('anatomy-modal').classList.remove('show');
   document.getElementById('feel-pick-full').classList.remove('show');
   window.pendingZone = null;
-  // Keep the compact widget's photo in sync with whatever view was last shown in the modal.
-  bodymapViewCompact = bodymapViewFull;
-  document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
-  syncCompactToggleUI();
   disposeAnatomy3D(); // reclaim the WebGL context; muscles.glb itself stays cached for next open
 }
 window.openFullAnatomy = openFullAnatomy;
 window.closeFullAnatomy = closeFullAnatomy;
 
-// ─── M7-4: 2D LIST / 3D MODEL MODE TOGGLE ───
-let anatomy3DViewer = null; // mounted viewer instance, or null when not in 3D mode
-
-document.querySelectorAll('#anatomy-mode-toggle .svg-toggle-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const mode = e.currentTarget.getAttribute('data-mode');
-    document.querySelectorAll('#anatomy-mode-toggle .svg-toggle-btn').forEach(b => b.classList.toggle('active', b === e.currentTarget));
-    document.getElementById('anatomy-2d-wrap').style.display = mode === 'list' ? 'flex' : 'none';
-    document.getElementById('anatomy-3d-wrap').style.display = mode === '3d' ? 'flex' : 'none';
-    document.getElementById('anatomy-footer-hint').textContent = mode === '3d'
-      ? '🖐 Drag to rotate · Tap a muscle to mark'
-      : '🖐 Tap a muscle name to mark';
-    if (mode === '3d') mountAnatomy3D(); else disposeAnatomy3D();
-  });
-});
+let anatomy3DViewer = null; // mounted viewer instance, or null when the modal is closed
 
 function mountAnatomy3D() {
   if (anatomy3DViewer || !window.LumenAnatomyViewer) return; // already mounted, or module still loading
@@ -1831,12 +1851,10 @@ function mountAnatomy3D() {
   }).then((viewer) => {
     anatomy3DViewer = viewer;
     loadingEl.style.display = 'none';
-    const gaps = window.ANATOMY3D_GAPS || [];
-    document.getElementById('anatomy3d-gaps-note').textContent = gaps.length
-      ? `Not shown in 3D: ${gaps.join(', ')} — use the List view for these` : '';
+    renderGapZoneList(); // M7-6-1: window.ANATOMY3D_GAPS is populated once mount() resolves
   }).catch((err) => {
     console.error('3D anatomy viewer failed to load:', err);
-    loadingEl.textContent = 'Could not load the 3D model — please use List view';
+    loadingEl.textContent = 'Could not load the 3D model — please try again';
   });
 }
 
@@ -1865,34 +1883,55 @@ document.querySelectorAll('#anatomy3d-layer-toggle .svg-toggle-btn').forEach(btn
   });
 });
 
-function syncCompactToggleUI() {
-  document.querySelectorAll('#svg-view-toggle .svg-toggle-btn').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('data-view') === bodymapViewCompact);
-  });
-}
-function syncFullToggleUI() {
-  document.querySelectorAll('#svg-view-toggle-full .svg-toggle-btn').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('data-view') === bodymapViewFull);
-  });
-}
+// M7-6-1: fallback list for the handful of tendon/fascia zones with no 3D
+// mesh in the open-source dataset (window.ANATOMY3D_GAPS, set by
+// mesh-zone-map.js — see assets/anatomy3d/). Reuses the M3c muscle-list
+// row styling. Looked up against MUSCLE_LIST (still the canonical zone
+// taxonomy source) purely for display label + bilateral metadata.
+function renderGapZoneList() {
+  const gaps = window.ANATOMY3D_GAPS || [];
+  const details = document.getElementById('anatomy-gap-fallback');
+  const list = document.getElementById('gap-zone-list');
+  if (!gaps.length) { details.style.display = 'none'; return; }
+  details.style.display = 'block';
+  list.innerHTML = '';
 
-document.querySelectorAll('#svg-view-toggle .svg-toggle-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    bodymapViewCompact = e.currentTarget.getAttribute('data-view');
-    syncCompactToggleUI();
-    document.getElementById('bodymap-photo').src = BODYMAP_IMG[bodymapViewCompact];
+  const allItems = [...MUSCLE_LIST.front, ...MUSCLE_LIST.back].flatMap(g => g.items);
+  gaps.forEach(zoneName => {
+    const item = allItems.find(it => it.zone === zoneName);
+    if (!item) return;
+    const row = document.createElement('div');
+    row.className = 'ml-row';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'ml-name';
+    nameEl.textContent = item.label;
+    row.appendChild(nameEl);
+
+    if (item.bilateral) {
+      const sides = document.createElement('div');
+      sides.className = 'ml-sides';
+      ['L', 'R'].forEach(side => {
+        const zone = `${side} ${item.zone}`;
+        const btn = document.createElement('button');
+        btn.className = 'ml-side';
+        btn.textContent = side;
+        const feeling = muscleStates[zone];
+        if (feeling && FEELINGS[feeling]) { btn.classList.add('marked'); btn.style.background = FEELINGS[feeling].color; }
+        btn.onclick = () => muscleTap(zone, `${item.label} (${side === 'L' ? 'Left' : 'Right'})`);
+        sides.appendChild(btn);
+      });
+      row.appendChild(sides);
+    } else {
+      const dot = document.createElement('div');
+      dot.className = 'ml-dot';
+      const feeling = muscleStates[item.zone];
+      if (feeling && FEELINGS[feeling]) { dot.classList.add('marked'); dot.style.background = FEELINGS[feeling].color; }
+      nameEl.onclick = () => muscleTap(item.zone, item.label);
+      row.appendChild(dot);
+    }
+    list.appendChild(row);
   });
-});
-document.querySelectorAll('#svg-view-toggle-full .svg-toggle-btn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    bodymapViewFull = e.currentTarget.getAttribute('data-view');
-    syncFullToggleUI();
-    document.getElementById('feel-pick-full').classList.remove('show');
-    window.pendingZone = null;
-    document.getElementById('bodymap-photo-full').src = BODYMAP_IMG[bodymapViewFull];
-    renderMuscleList(bodymapViewFull);
-  });
-});
+}
 
 // ─── 7-STATE MUSCLE FEELING SCALE ───
 const FEELINGS = {
@@ -1904,62 +1943,6 @@ const FEELINGS = {
   pain:      { emoji: '🔴', label: 'Pain',       color: '#C47070' },
   injured:   { emoji: '🚨', label: 'Injured',    color: '#8B3A3A' },
 };
-
-// ─── CLICKABLE MUSCLE LIST ───
-function renderMuscleList(view) {
-  const container = document.getElementById('muscle-list');
-  container.innerHTML = '';
-  MUSCLE_LIST[view].forEach(group => {
-    const g = document.createElement('div');
-    g.className = 'ml-group';
-
-    const h = document.createElement('div');
-    h.className = 'ml-header';
-    h.textContent = group.header;
-    g.appendChild(h);
-
-    group.items.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'ml-row';
-
-      const nameEl = document.createElement('span');
-      nameEl.className = 'ml-name';
-      nameEl.textContent = item.label;
-      row.appendChild(nameEl);
-
-      if (item.bilateral) {
-        const sides = document.createElement('div');
-        sides.className = 'ml-sides';
-        ['L', 'R'].forEach(side => {
-          const zone = `${side} ${item.zone}`;
-          const btn = document.createElement('button');
-          btn.className = 'ml-side';
-          btn.textContent = side;
-          const feeling = muscleStates[zone];
-          if (feeling && FEELINGS[feeling]) {
-            btn.classList.add('marked');
-            btn.style.background = FEELINGS[feeling].color;
-          }
-          btn.onclick = () => muscleTap(zone, `${item.label} (${side === 'L' ? 'Left' : 'Right'})`);
-          sides.appendChild(btn);
-        });
-        row.appendChild(sides);
-      } else {
-        const dot = document.createElement('div');
-        dot.className = 'ml-dot';
-        const feeling = muscleStates[item.zone];
-        if (feeling && FEELINGS[feeling]) {
-          dot.classList.add('marked');
-          dot.style.background = FEELINGS[feeling].color;
-        }
-        nameEl.onclick = () => muscleTap(item.zone, item.label);
-        row.appendChild(dot);
-      }
-      g.appendChild(row);
-    });
-    container.appendChild(g);
-  });
-}
 
 function muscleTap(zone, displayLabel) {
   window.pendingZone = { zone, label: displayLabel };
@@ -2009,9 +1992,9 @@ window.applyFeeling = function(feeling) {
 
   document.getElementById('feel-pick-full').classList.remove('show');
   window.pendingZone = null;
-  renderMuscleList(bodymapViewFull);
+  renderGapZoneList(); // updates marked state if the zone was a gap-fallback entry
   renderAreaTags();
-  if (anatomy3DViewer) anatomy3DViewer.refresh(); // keep 3D colors in sync regardless of which mode was used to set this
+  if (anatomy3DViewer) anatomy3DViewer.refresh();
   showToast(feeling ? `${label}: ${FEELINGS[feeling].label}` : `${label} cleared`);
 };
 

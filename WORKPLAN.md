@@ -25,6 +25,7 @@ This workplan sequences all remaining work to fulfill PRD v2.0. Milestones are o
 | M7-3 | Recovery & Treatment Log (massage/physio/needling as a mitigating factor) | §3.2.3 | 🚧 Implemented (pending migration run + live test) | Sonnet 5 |
 | M7-4 | Interactive 3D Anatomy Viewer (rotatable body-map, click-to-select) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
 | M7-5 | 3D Anatomy Layers (skeleton overlay, superficial/deep muscle toggle) | §3.2.3 | ✅ Implemented + verified | Sonnet 5 |
+| M7-6 | Post-3D Enhancements (8 items — 3D-only body map, calendar nav, body-status check-in, trend fix, teacher select, teacher feedback, Pro tier) | §3.2.3, §3.7 | 🚧 In progress (5/8 done) | Sonnet 5 / Haiku 4.5 |
 | M8 | Pre-Published Checklist (polish, i18n, OAuth + legal wiring) | §2, §6 | Not started | Haiku 4.5 (+ Sonnet 5 for OAuth) |
 
 ---
@@ -789,6 +790,90 @@ clickable and *only* deep zones resolve while deep-layer-only mode is active.
 - A "peel" animation (rather than an instant show/hide) for the deep-layer toggle.
 - Per-muscle-group coloring (beyond the two-tone superficial/deep split) if further visual
   differentiation is wanted.
+
+---
+
+## M7-6 — Post-3D Enhancements
+
+**Status:** 🚧 In progress. Requested as 8 items after live M7-4/M7-5 testing; being delivered
+one at a time per user instruction. Ambiguous items (M7-6-4, -7, -8) were raised as questions;
+proceeding with stated recommended defaults since no response was received, clearly flagged to
+the user, redirectable at any time.
+
+**Model:** Sonnet 5 for schema/RLS/multi-file items; a one-line SQL bug fix (M7-6-5a) is
+Haiku-level but executed directly rather than delegated, given the small size.
+
+### M7-6-5 — Progress Trend showed no data + add Recovery trend ✅ Done
+
+**Bug found:** `body_fatigue_30day()` (schema_phase13) compared feelings against capitalized
+`'Sore'/'Pain'/'Injured'`, but every feeling value the app ever writes is lowercase
+(`sore`/`pain`/`injured` — see `FEELINGS` in `lumen-log-practice-3d.html`). The comparison could
+never match, so `serious_count` was always 0 — for every user, since the function shipped. This
+explains "Progress Trend shows no data."
+
+**Fix + addition (`schema_phase26_fatigue_fix_and_recovery_trend.sql`):**
+- `body_fatigue_30day()`: lowercase the comparison.
+- New `body_recovery_30day()`: mirrors the fatigue helper but counts `recovery_logs` treatment
+  activity per day (session count + areas-treated count).
+- `index.html`: `loadFatigueTrend()` now fetches both in parallel and renders two labeled bar
+  rows ("🔥 Practice Fatigue" existing, "🌿 Recovery Activity" new) sharing one 30-day x-axis;
+  the section shows if *either* series has data (previously required fatigue data specifically).
+
+### M7-6-3 — Calendar month navigation ✅ Done
+
+Added `STATE.calendarViewDate` (previously the calendar always read `new Date()`, so users could
+only ever see the current month). `buildCalendar()`, `loadMonthLogs()`, and `openDayLogs()` now
+all read the viewed month instead of always assuming "today." Added ‹ › nav buttons; "next" is
+disabled once the viewed month reaches the current month (no browsing into the future).
+
+### M7-6-6 — Teacher selection when logging practice ✅ Done
+
+**Scope note:** delivered the minimal slice requested — student-side teacher attribution on a
+practice log. Deferred the broader "informal attendance" studio-analytics aggregation from the
+pre-existing M8 Follow-up note (class_id linkage, `studio_class_tiers()` updates) until a studio
+actually needs that reporting; that stays a separate future milestone.
+
+- `schema_phase27_practice_log_teacher.sql`: adds nullable `teacher_id` (FK to `profiles`) +
+  `teacher_name` (free-text fallback) to `practice_logs`. No RLS change needed — the existing
+  owner-only policy already covers writing these columns on the student's own rows.
+- `lumen-log-practice-3d.html`: fetches the student's active `teacher`-type linkages; if 1+
+  exist, shows an optional "With Teacher" selector (Self-practice / a linked teacher / "Other…"
+  free-text) in the Practice Type section. Hidden entirely for solo practitioners. Prefills
+  correctly in edit mode.
+
+### M7-6-1 + M7-6-2 — Retire 2D body map; feeling picker moved to top ✅ Done
+
+Per user's explicit choice to go 3D-only. The M3c 2D reference-photo + click-list interaction
+(List/3D toggle, front/back photo swap, `renderMuscleList()`) is fully removed from both
+`lumen-log-practice-3d.html` and `lumen-log-recovery.html` — the 3D viewer now mounts immediately
+when the body-map modal opens, no mode selection needed. `MUSCLE_LIST` itself is kept (it's the
+canonical zone taxonomy the 3D mesh-mapping pipeline parses directly from this file — see
+`tools/anatomy3d/generate_mesh_zone_map.cjs`), but is no longer rendered as a full list.
+
+**M7-6-2 (moved with this change):** the feeling-picker + a persistent hint line are now anchored
+at the **top** of the modal (immediately below the header, before the 3D canvas/controls) instead
+of below the model — addressing the reported difficulty of needing to scroll down to reach the
+picker after tapping a muscle.
+
+**Gap-zone fallback (recommended default, no response received):** the 3 zones with no
+corresponding 3D mesh (Achilles, Iliotibial Band, Tendinous Inscriptions — tendon/fascia
+structures absent from the open-source muscle dataset) get a small collapsed `<details>` list
+below the 3D model, reusing the same row/tap/feeling-picker mechanics. Collapsed by default so it
+doesn't clutter the primary 3D experience; expands on tap.
+
+**Verified:** headless-browser E2E on both pages — mode toggle and 2D wrap confirmed absent from
+the DOM, 3D mounts on open with no extra click, feeling-picker area precedes the 3D container in
+DOM order, all 3 gap zones render and are independently tappable/markable, the main 3D model
+click-to-select still resolves correctly, and close→reopen remounts cleanly with no errors.
+
+### Remaining items (in progress)
+
+- **M7-6-4** — Manual body-status check-in (recommended default: a quick check-in that feeds the
+  same decay/scoring model as a fresh data point, not a direct override).
+- **M7-6-7** — Teacher→student feedback (recommended default: general note to a linked student,
+  not tied to a specific session).
+- **M7-6-8** — Pro tier infrastructure (recommended default: schema + flag only, no payment
+  processing this pass).
 
 ---
 
