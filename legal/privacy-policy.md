@@ -1,17 +1,11 @@
 # Lumen — Privacy Policy
 
-**Version:** 0.1 (draft — pending legal review)
-**Last updated:** [DATE]
-
-> **Important — not legal advice.** This document is an AI-drafted starting point engineered
-> for accuracy against the Lumen product. It is **not a substitute for review by a qualified
-> attorney** licensed in the governing jurisdiction. Bracketed values `[LIKE THIS]` must be
-> completed, and the whole document reviewed, before it is relied upon. It is drafted to a
-> combined GDPR / CCPA / HK-PDPO baseline; confirm which regime is primary for your users.
+**Version:** 1 (draft)
+**Last updated:** [1 August 2026]
 
 ## 1. Who We Are
 
-Lumen is operated by **[OPERATOR NAME]** ("we", "us"), the data controller responsible for your
+Lumen is operated by **[Yoga with AgnesC]** ("we", "us"), the data controller responsible for your
 personal data. Contact us about privacy at **yogawithagnesc@gmail.com**, **[POSTAL ADDRESS]**.
 
 This policy explains what we collect, why, how we share it, and the rights you have. It applies
@@ -140,4 +134,4 @@ email before they take effect.
 
 ## 12. Contact
 
-Privacy questions or requests: **yogawithagnesc@gmail.com**, **[OPERATOR NAME AND ADDRESS]**.
+Privacy questions or requests: **yogawithagnesc@gmail.com**, **[Yoga with AgnesC]**.
