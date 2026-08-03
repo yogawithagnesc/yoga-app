@@ -1024,7 +1024,7 @@ let currentUserRole = null;
 // Quotes are stored in quotes.json (edit that file to add/change quotes)
 async function setRandomQuote() {
   try {
-    const res = await fetch('quotes.json');
+    const res = await fetch('quotes.json', { cache: 'no-cache' });
     const quotes = await res.json();
     if (!Array.isArray(quotes) || quotes.length === 0) return;
     const quote = quotes[Math.floor(Math.random() * quotes.length)];
