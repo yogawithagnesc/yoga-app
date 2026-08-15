@@ -296,7 +296,11 @@ html, body { height:100%; background:var(--bg); font-family:'DM Sans','Noto Sans
 // ── Check session ───────────────────────────────────────
 ;(async () => {
   const { data: { session } } = await db.auth.getSession()
-  if (session) window.location.href = 'index.html'
+  if (session) {
+    // User already logged in, check if they have a role
+    const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single()
+    window.location.href = profile?.role ? 'index.html' : 'role-select.html'
+  }
 })()
 
 // ── Password toggle ──────────────────────────────────────
