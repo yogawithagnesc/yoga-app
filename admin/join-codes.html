@@ -271,7 +271,7 @@ tr:hover { background:var(--bg-ov); }
 </div>
 
 <!-- Modal: Create/Edit Code -->
-<div class="modal" id="modal-code">
+<div class="modal" id="modal-code-form">
   <div class="modal-content">
     <div class="modal-title" id="modal-title">New Join Code</div>
 
@@ -424,7 +424,7 @@ function openCreateModal() {
   document.getElementById('modal-code').disabled = false
   document.getElementById('modal-btn-save').textContent = 'Create Code'
   clearForm()
-  openModal('modal-code')
+  openModal('modal-code-form')
 }
 
 // ── Edit code ───────────────────────────────────────────────
@@ -442,7 +442,7 @@ function editCode(codeId) {
   document.getElementById('modal-features').value = JSON.stringify(code.feature_flags || {}, null, 2)
   document.getElementById('modal-active').checked = code.active
   document.getElementById('modal-btn-save').textContent = 'Update Code'
-  openModal('modal-code')
+  openModal('modal-code-form')
 }
 
 // ── Save code ───────────────────────────────────────────────
@@ -578,7 +578,7 @@ function openModal(id) {
 }
 
 function closeModal() {
-  document.getElementById('modal-code').classList.remove('show')
+  document.getElementById('modal-code-form').classList.remove('show')
   document.getElementById('modal-delete').classList.remove('show')
   deleteCodeId = null
 }
