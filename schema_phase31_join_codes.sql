@@ -14,10 +14,27 @@
 -- ============================================================
 
 -- ──────────────────────────────────────────────────────────────
--- Create join_codes table (without FK first, add later)
+-- Step 1: Remove join_code_id column from profiles if it exists
+-- (must do this BEFORE dropping join_codes table)
 -- ──────────────────────────────────────────────────────────────
 
-CREATE TABLE IF NOT EXISTS public.join_codes (
+ALTER TABLE public.profiles
+  DROP CONSTRAINT IF EXISTS fk_profiles_join_code_id;
+
+ALTER TABLE public.profiles
+  DROP COLUMN IF EXISTS join_code_id;
+
+-- ──────────────────────────────────────────────────────────────
+-- Step 2: Drop join_codes table if it exists (clears failed state)
+-- ──────────────────────────────────────────────────────────────
+
+DROP TABLE IF EXISTS public.join_codes CASCADE;
+
+-- ──────────────────────────────────────────────────────────────
+-- Step 3: Create join_codes table fresh
+-- ──────────────────────────────────────────────────────────────
+
+CREATE TABLE public.join_codes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE NOT NULL,
   created_by uuid NOT NULL,
@@ -29,65 +46,42 @@ CREATE TABLE IF NOT EXISTS public.join_codes (
   name text NOT NULL,
   active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT fk_join_codes_created_by FOREIGN KEY (created_by)
+    REFERENCES public.profiles(id) ON DELETE CASCADE,
+  CONSTRAINT fk_join_codes_organization_id FOREIGN KEY (organization_id)
+    REFERENCES public.profiles(id) ON DELETE CASCADE
 );
 
--- Add foreign keys after table creation (drop first if exists)
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.table_constraints
-    WHERE constraint_name = 'fk_join_codes_created_by'
-  ) THEN
-    ALTER TABLE public.join_codes
-      ADD CONSTRAINT fk_join_codes_created_by FOREIGN KEY (created_by)
-        REFERENCES public.profiles(id) ON DELETE CASCADE;
-  END IF;
-END $$;
+-- ──────────────────────────────────────────────────────────────
+-- Step 4: Create indexes
+-- ──────────────────────────────────────────────────────────────
 
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.table_constraints
-    WHERE constraint_name = 'fk_join_codes_organization_id'
-  ) THEN
-    ALTER TABLE public.join_codes
-      ADD CONSTRAINT fk_join_codes_organization_id FOREIGN KEY (organization_id)
-        REFERENCES public.profiles(id) ON DELETE CASCADE;
-  END IF;
-END $$;
-
-CREATE INDEX IF NOT EXISTS idx_join_codes_code ON public.join_codes(code);
-CREATE INDEX IF NOT EXISTS idx_join_codes_created_by ON public.join_codes(created_by);
-CREATE INDEX IF NOT EXISTS idx_join_codes_organization_id ON public.join_codes(organization_id);
+CREATE INDEX idx_join_codes_code ON public.join_codes(code);
+CREATE INDEX idx_join_codes_created_by ON public.join_codes(created_by);
+CREATE INDEX idx_join_codes_organization_id ON public.join_codes(organization_id);
 
 -- ──────────────────────────────────────────────────────────────
--- Add join_code_id to profiles for redemption tracking
+-- Step 5: Add join_code_id to profiles with foreign key
 -- ──────────────────────────────────────────────────────────────
 
 ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS join_code_id uuid;
-
--- Add foreign key constraint separately (drop first if exists)
-DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.table_constraints
-    WHERE constraint_name = 'fk_profiles_join_code_id'
-  ) THEN
-    ALTER TABLE public.profiles
-      ADD CONSTRAINT fk_profiles_join_code_id FOREIGN KEY (join_code_id)
-        REFERENCES public.join_codes(id) ON DELETE SET NULL;
-  END IF;
-END $$;
+  ADD COLUMN IF NOT EXISTS join_code_id uuid
+    REFERENCES public.join_codes(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS idx_profiles_join_code_id ON public.profiles(join_code_id);
 
 -- ──────────────────────────────────────────────────────────────
--- RLS Policies for join_codes table
+-- Step 6: Enable RLS on join_codes
 -- ──────────────────────────────────────────────────────────────
 
 ALTER TABLE public.join_codes ENABLE ROW LEVEL SECURITY;
 
--- Policy 1: Read own codes (created_by = user) OR codes for own organization
-DROP POLICY IF EXISTS join_codes_select ON public.join_codes;
+-- ──────────────────────────────────────────────────────────────
+-- Step 7: Create RLS policies
+-- ──────────────────────────────────────────────────────────────
+
+-- Policy 1: Owner/org can read own codes
 CREATE POLICY join_codes_select ON public.join_codes
   FOR SELECT
   USING (
@@ -95,19 +89,15 @@ CREATE POLICY join_codes_select ON public.join_codes
     OR organization_id = auth.uid()
   );
 
--- Policy 2: Insert codes (only as created_by, not organization_id yet)
--- Phase 1: only app owner (created_by) can insert
--- Phase 2: organizations can also insert with organization_id set to their ID
-DROP POLICY IF EXISTS join_codes_insert ON public.join_codes;
+-- Policy 2: Owner/org can insert
 CREATE POLICY join_codes_insert ON public.join_codes
   FOR INSERT
   WITH CHECK (
     created_by = auth.uid()
-    OR (organization_id = auth.uid())
+    OR organization_id = auth.uid()
   );
 
--- Policy 3: Update own codes
-DROP POLICY IF EXISTS join_codes_update ON public.join_codes;
+-- Policy 3: Owner/org can update
 CREATE POLICY join_codes_update ON public.join_codes
   FOR UPDATE
   USING (
@@ -119,8 +109,7 @@ CREATE POLICY join_codes_update ON public.join_codes
     OR organization_id = auth.uid()
   );
 
--- Policy 4: Delete own codes
-DROP POLICY IF EXISTS join_codes_delete ON public.join_codes;
+-- Policy 4: Owner/org can delete
 CREATE POLICY join_codes_delete ON public.join_codes
   FOR DELETE
   USING (
@@ -128,15 +117,13 @@ CREATE POLICY join_codes_delete ON public.join_codes
     OR organization_id = auth.uid()
   );
 
--- Policy 5: Anyone can READ a code (to validate during signup)
--- NOTE: This is a separate SELECT policy to allow public code validation
-DROP POLICY IF EXISTS join_codes_public_read ON public.join_codes;
+-- Policy 5: Anyone can read codes for validation during signup
 CREATE POLICY join_codes_public_read ON public.join_codes
   FOR SELECT
   USING (true);
 
 -- ──────────────────────────────────────────────────────────────
--- Trigger: Increment participant count when profile added with code
+-- Step 8: Create triggers for participant tracking
 -- ──────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.increment_join_code_participants()
@@ -160,10 +147,6 @@ CREATE TRIGGER profiles_increment_join_code
   AFTER INSERT ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.increment_join_code_participants();
 
--- ──────────────────────────────────────────────────────────────
--- Trigger: Decrement participant count when profile deleted
--- ──────────────────────────────────────────────────────────────
-
 CREATE OR REPLACE FUNCTION public.decrement_join_code_participants()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -186,7 +169,7 @@ CREATE TRIGGER profiles_decrement_join_code
   FOR EACH ROW EXECUTE FUNCTION public.decrement_join_code_participants();
 
 -- ──────────────────────────────────────────────────────────────
--- Helper function: Validate & redeem join code
+-- Step 9: Create validation function
 -- ──────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.validate_join_code(code_input text)
@@ -197,7 +180,6 @@ RETURNS TABLE (
   error text
 )
 LANGUAGE plpgsql
-SECURITY DEFINER
 AS $$
 DECLARE
   v_code record;
@@ -225,19 +207,9 @@ END;
 $$;
 
 -- ══════════════════════════════════════════════════════════════
--- Summary
+-- Migration Complete
 -- ══════════════════════════════════════════════════════════════
+-- All objects created successfully. Ready to use.
 -- Phase 1 (App Owner): created_by = <app-owner-uuid>, organization_id = NULL
 -- Phase 2 (Organization): created_by = <admin>, organization_id = <org-uuid>
---
--- Feature flags example:
---   '{"video": true, "recovery_log": false, "media_upload": true}'
---
--- Usage in signup flow:
---   1. User enters join code in register.html
---   2. Validate via SELECT * FROM validate_join_code(code_input)
---   3. On signup completion, set profiles.join_code_id = validated_code.id
---   4. In role-select.html, fetch tier + features via:
---      SELECT tier, feature_flags FROM join_codes WHERE id = profiles.join_code_id
---   5. On profile save, insert with tier = code.tier
 -- ══════════════════════════════════════════════════════════════
