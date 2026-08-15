@@ -400,7 +400,9 @@ html, body {
 (async () => {
   const { data: { session } } = await db.auth.getSession()
   if (session) {
-    window.location.href = 'index.html'
+    // User already logged in, check if they have a role
+    const { data: profile } = await db.from('profiles').select('role').eq('id', session.user.id).single()
+    window.location.href = profile?.role ? 'index.html' : 'role-select.html'
   }
 })()
 
@@ -491,7 +493,8 @@ document.addEventListener('keydown', (e) => {
 async function signInWithProvider(provider) {
   const { error } = await db.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: window.location.origin + '/index.html' }
+    // Redirect to role-select which will check for role and route appropriately
+    options: { redirectTo: window.location.origin + '/role-select.html' }
   })
   if (error) {
     const alert = document.getElementById('alert-box')
