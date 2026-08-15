@@ -14,14 +14,14 @@
 -- ============================================================
 
 -- ──────────────────────────────────────────────────────────────
--- Create join_codes table
+-- Create join_codes table (without FK first, add later)
 -- ──────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.join_codes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   code text UNIQUE NOT NULL,
-  created_by uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  organization_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_by uuid NOT NULL,
+  organization_id uuid,
   tier text NOT NULL DEFAULT 'free' CHECK (tier IN ('free', 'pro')),
   max_participants int,
   current_participants int NOT NULL DEFAULT 0,
@@ -32,6 +32,29 @@ CREATE TABLE IF NOT EXISTS public.join_codes (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Add foreign keys after table creation (drop first if exists)
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_join_codes_created_by'
+  ) THEN
+    ALTER TABLE public.join_codes
+      ADD CONSTRAINT fk_join_codes_created_by FOREIGN KEY (created_by)
+        REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_join_codes_organization_id'
+  ) THEN
+    ALTER TABLE public.join_codes
+      ADD CONSTRAINT fk_join_codes_organization_id FOREIGN KEY (organization_id)
+        REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_join_codes_code ON public.join_codes(code);
 CREATE INDEX IF NOT EXISTS idx_join_codes_created_by ON public.join_codes(created_by);
 CREATE INDEX IF NOT EXISTS idx_join_codes_organization_id ON public.join_codes(organization_id);
@@ -41,7 +64,19 @@ CREATE INDEX IF NOT EXISTS idx_join_codes_organization_id ON public.join_codes(o
 -- ──────────────────────────────────────────────────────────────
 
 ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS join_code_id uuid REFERENCES public.join_codes(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS join_code_id uuid;
+
+-- Add foreign key constraint separately (drop first if exists)
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_profiles_join_code_id'
+  ) THEN
+    ALTER TABLE public.profiles
+      ADD CONSTRAINT fk_profiles_join_code_id FOREIGN KEY (join_code_id)
+        REFERENCES public.join_codes(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_profiles_join_code_id ON public.profiles(join_code_id);
 
