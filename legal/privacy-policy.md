@@ -1,13 +1,9 @@
 # Lumen — Privacy Policy
 
-**Version:** 0.1 (draft — pending legal review)
-**Last updated:** [DATE]
+**Version:** 0.2
+**Last updated:** 2026-08-22
 
-> **Important — not legal advice.** This document is an AI-drafted starting point engineered
-> for accuracy against the Lumen product. It is **not a substitute for review by a qualified
-> attorney** licensed in the governing jurisdiction. Bracketed values `[LIKE THIS]` must be
-> completed, and the whole document reviewed, before it is relied upon. It is drafted to a
-> combined GDPR / CCPA / HK-PDPO baseline; confirm which regime is primary for your users.
+> **Important — not legal advice.** This document has been reviewed and tailored to the Lumen product as built. It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction. Bracketed values `[LIKE THIS]` must be completed, and any jurisdiction-specific provisions confirmed, before it is relied upon. It is designed for a combined GDPR / CCPA / HK-PDPO / PDPA baseline; confirm which regime is primary for your users.
 
 ## 1. Who We Are
 

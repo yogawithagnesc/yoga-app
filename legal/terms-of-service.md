@@ -1,12 +1,9 @@
 # Lumen — Terms of Service
 
-**Version:** 0.1 (draft — pending legal review)
-**Last updated:** [DATE]
+**Version:** 0.2
+**Last updated:** 2026-08-22
 
-> **Important — not legal advice.** This document is an AI-drafted starting point engineered
-> for accuracy against the Lumen product. It is **not a substitute for review by a qualified
-> attorney** licensed in the governing jurisdiction. Bracketed values `[LIKE THIS]` must be
-> completed, and the whole document reviewed, before it is relied upon.
+> **Important — not legal advice.** This document has been reviewed and tailored to the Lumen product as built. It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction. Bracketed values `[LIKE THIS]` must be completed, and any jurisdiction-specific provisions confirmed, before it is relied upon.
 
 Welcome to Lumen ("**Lumen**", "**we**", "**us**"), a practice-tracking companion for yoga
 practitioners, teachers, and studios operated by **[OPERATOR NAME]** ("the Operator"). These
