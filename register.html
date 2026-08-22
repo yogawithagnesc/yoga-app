@@ -415,13 +415,16 @@ async function handleRegister() {
     })
 
     if (error) {
+      console.error('Auth signup error:', error)
       let msg = 'Registration failed. Please try again.'
       if (error.message.includes('already registered')) msg = 'This email is already registered. Try logging in instead.'
       if (error.message.includes('password')) msg = 'Password is too weak. Use at least 8 characters with numbers.'
+      if (error.message.includes('network')) msg = 'Network error. Please check your connection.'
       alert.textContent = msg
       alert.classList.add('show')
       btn.disabled = false
       btn.innerHTML = 'Create Account'
+      console.error('Full error:', JSON.stringify(error, null, 2))
       return
     }
 
