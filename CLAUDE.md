@@ -29,14 +29,14 @@ Each `.html` file is self-contained: all CSS is inline `<style>` tags, all JS is
 | File | Role | Authenticated |
 |---|---|---|
 | `login.html` | Email/password auth, OAuth prep | No |
-| `register.html` | Email signup with email verification | No |
-| `role-select.html` | First-time role picker (student/teacher/studio) | Yes, new user |
+| `register.html` | Email signup with email verification + optional join code | No |
+| `role-select.html` | First-time role picker (student/teacher/studio); applies tier from join code | Yes, new user |
 | `reset-password.html` | Email recovery link handler | No |
 | `index.html` | Dashboard: stats, body status widget, activity feed, calendar, videos | Yes |
 | `profile.html` | User profile, join-code management, category customization | Yes |
 | `teacher.html` | Teacher/Studio view: shared categories, focus areas, linked student roster | Yes, teacher/studio role |
 | `lumen-log-practice-3d.html` | Main log form: practice date/type, muscle map, focus selection, mood, intensity, notes, media upload | Yes |
-| `role-select.html` | Role selector (appears after email verification or OAuth signup) | Yes, new user |
+| `admin/join-codes.html` | Admin dashboard: create/edit/delete join codes, view stats, manage participant caps | Yes, app owner |
 
 ### Key Tables & RLS
 
@@ -51,6 +51,7 @@ Each `.html` file is self-contained: all CSS is inline `<style>` tags, all JS is
 | `practice_groups` | User | Self only | User-owned category containers (Yoga, Fitness, custom) |
 | `practice_group_items` | User | Self only | Per-user placement overrides (type → group mapping) |
 | `studio_linkages` | Mutual | Self (owner/student) | Join-code connections (teacher/studio to student) |
+| `join_codes` | App Owner / Org | Self (owner/org) | Promo/invite codes (tier assignment, participant caps) |
 | `community_feeds` | System-triggered | Self + linked-read | Activity broadcast (non-private logs) |
 | `classes` | Teacher/Studio | Self + linked-read | Class schedules (foundation for M4) |
 
@@ -86,6 +87,7 @@ Recent phases:
 - **Phase 8** (M0): Feed-likes count fix (`sync_feed_like_count` trigger + SECURITY DEFINER)
 - **Phase 9** (M2): Dynamic category engine (`practice_groups`, `practice_group_items`, focus_areas extensions)
 - **Phase 10** (M2): Focus-areas curation (replace 15 focuses with curated 9)
+- **Phase 31** (M9): Join Codes system (`join_codes` table, participant tracking, RLS for app owner & orgs)
 
 ## Development Workflow
 
@@ -190,6 +192,65 @@ Dark + gold system (PRD §2.2):
 ```
 
 Use these tokens consistently; hardcoded colors are discouraged (except in SVG fallback paths where dynamic theming isn't practical).
+
+## Join Codes System (M9)
+
+### Overview
+The join codes system enables:
+- **Phase 1 (Current):** App owner controls early access, pricing tier assignment, and participant limits per code
+- **Phase 2 (Future):** Organizations (studios) manage their own join codes for member invitations
+
+### Architecture
+
+**Tables:**
+- `join_codes` (schema_phase31): Stores code metadata, tracks current/max participants via triggers
+- `profiles.join_code_id` (schema_phase31): Foreign key link to which code the user redeemed
+
+**RLS Strategy:**
+- Phase 1: `created_by = auth.uid() AND organization_id IS NULL`
+- Phase 2: `created_by = auth.uid() OR organization_id = auth.uid()`
+- Public read allowed for code validation during signup (no org filter)
+
+**Signup Flow:**
+1. `register.html`: User enters optional join code (validated via `validate_join_code()` RPC)
+2. `auth.signUp()` stores `join_code_id` in user metadata
+3. `role-select.html`: Applies `tier` and `feature_flags` from `join_codes` to new profile
+4. Profile insert triggers increment participant count on the code
+
+**Feature Flags:**
+Stored as JSONB on `join_codes.feature_flags`. Example:
+```json
+{"video": true, "recovery_log": false, "media_upload": true}
+```
+Use in UI to conditionally show/hide features per code tier.
+
+### Admin Dashboard
+- **Location:** `admin/join-codes.html`
+- **Access:** Restricted to `created_by = currentUser.id` (Phase 1)
+- **Capabilities:** Create, edit, soft-delete, view stats
+
+### Common Join Code Tasks
+
+#### Create a New Join Code (via admin dashboard)
+1. Navigate to `/admin/join-codes.html`
+2. Click "+ New Code"
+3. Enter: code name, tier (free/pro), max participants, feature flags (optional JSON)
+4. Optionally set as inactive to prevent redemptions
+
+#### Query Join Code Info in Code
+```javascript
+const { data: code } = await db
+  .from('join_codes')
+  .select('tier, feature_flags')
+  .eq('id', currentUser.join_code_id)
+  .single()
+```
+
+#### Check Feature Flag at Signup
+```javascript
+const videoEnabled = code?.feature_flags?.video !== false
+if (videoEnabled) { /* show video feature */ }
+```
 
 ## Common Tasks
 

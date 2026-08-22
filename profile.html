@@ -173,12 +173,6 @@ body{background:var(--bg);font-family:'DM Sans','Noto Sans TC',sans-serif;min-he
       <span class="view-students-arrow">→</span>
     </button>
 
-    <!-- Teacher/Studio: Generate Join Code -->
-    <div class="card" id="codes-card" style="display:none">
-      <div class="card-title">Generate Join Code</div>
-      <div id="codes-list"></div>
-      <button class="btn-primary" id="new-code-btn" style="margin-top:6px" onclick="createNewCode()">✦ Generate New Code</button>
-    </div>
 
     <!-- Student: Link to a Teacher/Studio · Teacher: Bind to a Studio -->
     <div class="card" id="link-card" style="display:none">
@@ -284,7 +278,6 @@ let currentUserRole = null
     // Show/hide sections based on role (synchronous, no flashing)
     if (currentUserRole === 'teacher' || currentUserRole === 'studio') {
       document.getElementById('view-students-btn').style.display = 'flex'
-      document.getElementById('codes-card').style.display = 'block'
       document.getElementById('links-card').style.display = 'block'
       document.getElementById('links-title').textContent = 'Linked Students'
 
@@ -297,7 +290,6 @@ let currentUserRole = null
       }
 
       // Load data in background (non-blocking)
-      loadCodes().catch(err => console.error('loadCodes failed:', err))
       loadEntityLinks().catch(err => console.error('loadEntityLinks failed:', err))
       if (currentUserRole === 'teacher') {
         loadTeacherStudios().catch(err => console.error('loadTeacherStudios failed:', err))
@@ -409,70 +401,6 @@ async function saveUsernameExplicit() {
   setTimeout(() => checkEl.classList.remove('show'), 2000)
 }
 
-// ── JOIN CODES (teacher/studio) ──────────────────────────
-async function loadCodes() {
-  const { data } = await db.from('join_codes')
-    .select('code, is_active, created_at')
-    .eq('owner_id', currentUser.id)
-    .order('created_at', { ascending: false })
-
-  let codes = data || []
-
-  // Auto-provision a first code so the card is never empty for a new teacher/studio
-  if (!codes.length) {
-    const { data: created, error } = await db.rpc('create_join_code')
-    if (!error && created) codes = [created]
-  }
-
-  renderCodes(codes)
-}
-
-function renderCodes(codes) {
-  const el = document.getElementById('codes-list')
-  el.innerHTML = ''
-  if (!codes.length) {
-    el.innerHTML = '<div class="empty-hint">Could not load your join codes.</div>'
-    return
-  }
-  codes.forEach(c => {
-    const row = document.createElement('div')
-    row.className = 'code-row' + (c.is_active ? '' : ' inactive')
-    row.innerHTML =
-      '<span class="code-val">' + c.code + '</span>' +
-      '<span class="code-meta">' + (c.is_active ? 'Active' : 'Deactivated') + '</span>' +
-      '<div class="code-actions">' +
-        '<button class="code-btn" onclick="copyCode(\'' + c.code + '\')">Copy</button>' +
-        (c.is_active ? '<button class="code-btn danger" onclick="deactivateCode(\'' + c.code + '\')">Deactivate</button>' : '') +
-      '</div>'
-    el.appendChild(row)
-  })
-}
-
-function copyCode(code) {
-  navigator.clipboard.writeText(code).then(() => showToast('Join code copied!'))
-}
-
-async function deactivateCode(code) {
-  const { error } = await db.from('join_codes')
-    .update({ is_active: false })
-    .eq('code', code)
-    .eq('owner_id', currentUser.id)
-  if (error) { showToast('Could not deactivate — please try again'); return }
-  showToast('Code deactivated')
-  await loadCodes()
-}
-
-async function createNewCode() {
-  const btn = document.getElementById('new-code-btn')
-  btn.disabled = true
-  btn.innerHTML = '<div class="spinner"></div> Generating…'
-  const { error } = await db.rpc('create_join_code')
-  btn.disabled = false
-  btn.innerHTML = '✦ Generate New Code'
-  if (error) { showToast('Could not generate a new code'); return }
-  await loadCodes()
-  showToast('New join code generated ✓')
-}
 
 // ── ENTITY VIEW: linked students ─────────────────────────
 async function loadEntityLinks() {

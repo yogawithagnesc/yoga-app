@@ -241,6 +241,13 @@ html, body { height:100%; background:var(--bg); font-family:'DM Sans','Noto Sans
         <div class="err-msg" id="pw-err">Password must be at least 8 characters</div>
       </div>
 
+      <!-- Join Code (Optional) -->
+      <div class="field">
+        <label class="fl" for="join-code">Join Code <span style="color:var(--tx-3)">(optional)</span></label>
+        <input class="fi" type="text" id="join-code" placeholder="e.g. YOGA2026" autocomplete="off" oninput="this.value=this.value.toUpperCase()"/>
+        <div class="err-msg" id="join-code-err">Join code is invalid or at capacity</div>
+      </div>
+
       <!-- Terms -->
       <label class="terms">
         <input type="checkbox" id="terms-check"/>
@@ -342,16 +349,17 @@ async function handleRegister() {
   const name     = document.getElementById('name').value.trim()
   const email    = document.getElementById('email').value.trim()
   const password = document.getElementById('password').value
+  const joinCode = document.getElementById('join-code').value.trim().toUpperCase()
   const terms    = document.getElementById('terms-check').checked
   const btn      = document.getElementById('register-btn')
   const alert    = document.getElementById('alert-box')
 
   // Clear errors
   alert.classList.remove('show')
-  ;['name-err','email-err','pw-err','terms-err'].forEach(id => {
+  ;['name-err','email-err','pw-err','terms-err','join-code-err'].forEach(id => {
     document.getElementById(id).classList.remove('show')
   })
-  ;['name','email','password'].forEach(id => {
+  ;['name','email','password','join-code'].forEach(id => {
     document.getElementById(id).classList.remove('err')
   })
 
@@ -376,6 +384,20 @@ async function handleRegister() {
     document.getElementById('terms-err').classList.add('show')
     hasErr = true
   }
+
+  // Validate join code if provided
+  let validatedCodeId = null
+  if (joinCode) {
+    const { data: codeData, error: codeError } = await db.rpc('validate_join_code', { code_input: joinCode })
+    if (codeError || !codeData || codeData[0]?.error) {
+      document.getElementById('join-code-err').classList.add('show')
+      document.getElementById('join-code').classList.add('err')
+      hasErr = true
+    } else {
+      validatedCodeId = codeData[0].id
+    }
+  }
+
   if (hasErr) return
 
   // Loading
@@ -387,19 +409,22 @@ async function handleRegister() {
       email,
       password,
       options: {
-        data: { display_name: name },
+        data: { display_name: name, join_code_id: validatedCodeId },
         emailRedirectTo: window.location.origin + '/login.html',
       }
     })
 
     if (error) {
+      console.error('Auth signup error:', error)
       let msg = 'Registration failed. Please try again.'
       if (error.message.includes('already registered')) msg = 'This email is already registered. Try logging in instead.'
       if (error.message.includes('password')) msg = 'Password is too weak. Use at least 8 characters with numbers.'
+      if (error.message.includes('network')) msg = 'Network error. Please check your connection.'
       alert.textContent = msg
       alert.classList.add('show')
       btn.disabled = false
       btn.innerHTML = 'Create Account'
+      console.error('Full error:', JSON.stringify(error, null, 2))
       return
     }
 
