@@ -394,7 +394,7 @@ async function handleRegister() {
       document.getElementById('join-code').classList.add('err')
       hasErr = true
     } else {
-      validatedCodeId = codeData[0].id
+      validatedCodeId = codeData[0].id ? String(codeData[0].id) : null
     }
   }
 
