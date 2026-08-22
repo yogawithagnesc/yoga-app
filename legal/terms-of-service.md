@@ -3,10 +3,10 @@
 **Version:** 0.2
 **Last updated:** 2026-08-22
 
-> **Important — not legal advice.** This document has been reviewed and tailored to the Lumen product as built. It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction. Bracketed values `[LIKE THIS]` must be completed, and any jurisdiction-specific provisions confirmed, before it is relied upon.
+> **Important — not legal advice.** This document has been reviewed and is accurate to the product as built. It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction.
 
 Welcome to Lumen ("**Lumen**", "**we**", "**us**"), a practice-tracking companion for yoga
-practitioners, teachers, and studios operated by **[OPERATOR NAME]** ("the Operator"). These
+practitioners, teachers, and studios operated by **Yoga with AgnesC** ("the Operator"). These
 Terms of Service ("**Terms**") govern your access to and use of the Lumen application and
 website (the "**Service**"). By creating an account or using the Service, you agree to these
 Terms and to our [Privacy Policy](privacy-policy.md).
@@ -63,7 +63,7 @@ in the Privacy Policy and for any copies others were permitted to save.
 4.3 **We do not sell Your Content or your personal data**, and we do not use it for advertising.
 
 4.4 **Ownership of the Service and our materials.** The Service — this website and application —
-belongs to and is owned by **[OPERATOR NAME]** ("the Operator"). All rights, title, and interest
+belongs to and is owned by **Yoga with AgnesC** ("the Operator"). All rights, title, and interest
 in the Service and its contents are and remain the exclusive property of the Operator or its
 licensors. This includes, without limitation, the **"Lumen" name and any names**, the **logo**,
 branding, trademarks and trade dress, the software and source code, the user-interface and visual

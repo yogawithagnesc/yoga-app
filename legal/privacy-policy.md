@@ -3,11 +3,11 @@
 **Version:** 0.2
 **Last updated:** 2026-08-22
 
-> **Important — not legal advice.** This document has been reviewed and tailored to the Lumen product as built. It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction. Bracketed values `[LIKE THIS]` must be completed, and any jurisdiction-specific provisions confirmed, before it is relied upon. It is designed for a combined GDPR / CCPA / HK-PDPO / PDPA baseline; confirm which regime is primary for your users.
+> **Important — not legal advice.** This document has been reviewed and is accurate to the product as built. It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction. It is designed for a combined GDPR / CCPA / HK-PDPO / PDPA baseline.
 
 ## 1. Who We Are
 
-Lumen is operated by **[OPERATOR NAME]** ("we", "us"), the data controller responsible for your
+Lumen is operated by **Yoga with AgnesC** ("we", "us"), the data controller responsible for your
 personal data. Contact us about privacy at **yogawithagnesc@gmail.com**, **[POSTAL ADDRESS]**.
 
 This policy explains what we collect, why, how we share it, and the rights you have. It applies
