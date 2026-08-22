@@ -3,10 +3,6 @@
 **Version:** 0.2
 **Last updated:** 2026-08-22
 
-> **Important — not legal advice.** This document has been reviewed and is accurate to the product as built.
-> It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction before use. See the [Privacy Policy](privacy-policy.md)
-> for full detail on how Lumen handles your data.
-
 This Agreement explains what happens when you **link** your Lumen account to another account
 using a **join code**. You accept it at the moment you link. You can **disconnect at any time.**
 

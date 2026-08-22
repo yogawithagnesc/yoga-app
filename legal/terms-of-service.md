@@ -3,8 +3,6 @@
 **Version:** 0.2
 **Last updated:** 2026-08-22
 
-> **Important — not legal advice.** This document has been reviewed and is accurate to the product as built. It remains **not a substitute for review by a qualified attorney** licensed in your governing jurisdiction.
-
 Welcome to Lumen ("**Lumen**", "**we**", "**us**"), a practice-tracking companion for yoga
 practitioners, teachers, and studios operated by **Yoga with AgnesC** ("the Operator"). These
 Terms of Service ("**Terms**") govern your access to and use of the Lumen application and
