@@ -358,7 +358,6 @@ async function loadCodes() {
       .from('join_codes')
       .select('*')
       .eq('created_by', currentUser.id)
-      .eq('organization_id', null)
       .order('created_at', { ascending: false })
 
     if (error) throw error
