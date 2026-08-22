@@ -323,13 +323,15 @@ tr:hover { background:var(--bg-ov); }
 <!-- Modal: Confirm Delete -->
 <div class="modal" id="modal-delete">
   <div class="modal-content" style="max-width:400px">
-    <div class="modal-title">Deactivate Code?</div>
+    <div class="modal-title">Manage Code</div>
     <div style="font-size:13px; color:var(--tx-2); line-height:1.6; margin-bottom:20px">
-      This will prevent new users from joining with this code. Existing participants are unaffected.
+      <strong style="display:block; margin-bottom:8px; color:var(--tx-1)">What would you like to do?</strong>
+      Choose to temporarily deactivate (prevent new signups) or permanently delete this code.
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn-danger" onclick="confirmDelete()">Deactivate</button>
+      <button class="btn-secondary" onclick="confirmDeactivate()" style="background:rgba(212,149,106,0.15); color:var(--warning); border-color:rgba(212,149,106,0.3)">Deactivate</button>
+      <button class="btn-danger" onclick="confirmHardDelete()">Delete Permanently</button>
     </div>
   </div>
 </div>
@@ -540,8 +542,8 @@ function promptDelete(codeId) {
   openModal('modal-delete')
 }
 
-// ── Confirm delete ──────────────────────────────────────────
-async function confirmDelete() {
+// ── Confirm deactivate (soft delete) ─────────────────────
+async function confirmDeactivate() {
   if (!deleteCodeId) return
   const btn = event.target
   btn.disabled = true
@@ -557,8 +559,32 @@ async function confirmDelete() {
     await loadCodes()
     showAlert('Code deactivated', 'ok')
   } catch (e) {
-    console.error('Delete error:', e)
+    console.error('Deactivate error:', e)
     showAlert('Failed to deactivate code', 'err')
+  } finally {
+    btn.disabled = false
+  }
+}
+
+// ── Confirm hard delete ──────────────────────────────────
+async function confirmHardDelete() {
+  if (!deleteCodeId) return
+  const btn = event.target
+  btn.disabled = true
+
+  try {
+    const { error } = await db
+      .from('join_codes')
+      .delete()
+      .eq('id', deleteCodeId)
+
+    if (error) throw error
+    closeModal()
+    await loadCodes()
+    showAlert('Code permanently deleted', 'ok')
+  } catch (e) {
+    console.error('Hard delete error:', e)
+    showAlert('Failed to delete code', 'err')
   } finally {
     btn.disabled = false
   }
