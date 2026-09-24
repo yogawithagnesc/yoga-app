@@ -6,7 +6,7 @@
 ## 1. Who We Are
 
 Lumen is operated by **Yoga with AgnesC** ("we", "us"), the data controller responsible for your
-personal data. Contact us about privacy at **yogawithagnesc@gmail.com**, **[POSTAL ADDRESS]**.
+personal data. Contact us about privacy at **yogawithagnesc@gmail.com**.
 
 This policy explains what we collect, why, how we share it, and the rights you have. It applies
 to all account holders — Students, Teachers, and Studios.
@@ -124,8 +124,7 @@ from children. If you believe a minor has provided us data, contact us and we wi
 ## 10. Cookies and Local Storage
 
 We use only the **essential storage** needed to keep you signed in (your authentication session).
-We do not currently use third-party advertising or analytics cookies. **[Confirm before
-publishing; if analytics are added, disclose them and add consent controls where required.]**
+We do not currently use third-party advertising or analytics cookies.
 
 ## 11. Changes to This Policy
 
@@ -134,4 +133,4 @@ email before they take effect.
 
 ## 12. Contact
 
-Privacy questions or requests: **yogawithagnesc@gmail.com**, **[OPERATOR NAME AND ADDRESS]**.
+Privacy questions or requests: **yogawithagnesc@gmail.com**.

@@ -121,8 +121,8 @@ available,"** without warranties of any kind, express or implied.
 
 9.2 To the maximum extent permitted by applicable law, the Operator will not be liable for
 indirect, incidental, special, or consequential damages, or for loss of data or profits, arising
-from your use of the Service. **[Insert any jurisdiction-specific liability cap or carve-outs;
-some consumer-protection and personal-injury liabilities cannot be excluded.]**
+from your use of the Service, except where prohibited by Hong Kong law or where mandatory
+consumer-protection or personal-injury liabilities cannot be excluded.
 
 Nothing in these Terms excludes liability that cannot be excluded under applicable law.
 
@@ -141,4 +141,4 @@ you accept the updated Terms.
 
 ## 12. Contact
 
-Questions about these Terms: **yogawithagnesc@gmail.com**, **[OPERATOR NAME AND ADDRESS]**.
+Questions about these Terms: **yogawithagnesc@gmail.com**.
